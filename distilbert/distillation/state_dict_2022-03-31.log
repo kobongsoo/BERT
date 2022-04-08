@@ -1,0 +1,76 @@
+2022-03-31 16:18:43,754 - state_dict - INFO - [Epoch 1/10] Iteration 6136 -> Train Loss: 0.1094, student_loss: 1.0828, tearch_loss: 1.1001
+2022-03-31 16:35:30,924 - state_dict - INFO - [Epoch 1/10] Iteration 12272 -> Train Loss: 0.1076, student_loss: 1.0515, tearch_loss: 1.0999
+2022-03-31 16:35:31,184 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 16:35:34,966 - state_dict - INFO - [Epoch 1/10] Validatation Accuracy:0.6598802395209581
+2022-03-31 16:35:34,968 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 16:35:34,969 - state_dict - INFO - === 처리시간: 3.785 초 ===
+2022-03-31 16:35:34,970 - state_dict - INFO - -END-
+
+2022-03-31 16:52:54,737 - state_dict - INFO - [Epoch 2/10] Iteration 18408 -> Train Loss: 0.1067, student_loss: 1.0353, tearch_loss: 1.1000
+2022-03-31 17:10:24,689 - state_dict - INFO - [Epoch 2/10] Iteration 24544 -> Train Loss: 0.1064, student_loss: 1.0291, tearch_loss: 1.1001
+2022-03-31 17:10:24,977 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 17:10:28,782 - state_dict - INFO - [Epoch 2/10] Validatation Accuracy:0.7065868263473054
+2022-03-31 17:10:28,783 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 17:10:28,784 - state_dict - INFO - === 처리시간: 3.807 초 ===
+2022-03-31 17:10:28,786 - state_dict - INFO - -END-
+
+2022-03-31 17:28:08,164 - state_dict - INFO - [Epoch 3/10] Iteration 30680 -> Train Loss: 0.1055, student_loss: 1.0132, tearch_loss: 1.0999
+2022-03-31 18:04:52,927 - state_dict - INFO - *total_steps: 122720, save_steps: 36816.0, p_itr: 6136.0
+2022-03-31 18:06:15,194 - state_dict - INFO - *total_steps: 122720, save_steps: 24544.0, p_itr: 6136.0
+2022-03-31 18:23:48,527 - state_dict - INFO - [Epoch 1/10] Iteration 6136 -> Train Loss: 0.1094, student_loss: 1.0829, tearch_loss: 1.1001
+2022-03-31 18:37:19,305 - state_dict - INFO - *total_steps: 61360, save_steps: 12272.0, p_itr: 3068.0
+2022-03-31 18:46:17,853 - state_dict - INFO - [Epoch 1/5] Iteration 3068 -> Train Loss: 0.1098, student_loss: 1.0909, tearch_loss: 1.1001
+2022-03-31 18:55:16,293 - state_dict - INFO - [Epoch 1/5] Iteration 6136 -> Train Loss: 0.1082, student_loss: 1.0623, tearch_loss: 1.1002
+2022-03-31 19:04:07,766 - state_dict - INFO - [Epoch 1/5] Iteration 9204 -> Train Loss: 0.1075, student_loss: 1.0492, tearch_loss: 1.0999
+2022-03-31 19:12:59,615 - state_dict - INFO - [Epoch 1/5] Iteration 12272 -> Train Loss: 0.1070, student_loss: 1.0412, tearch_loss: 1.1000
+2022-03-31 19:13:01,189 - state_dict - INFO - Iteration 12272 -> save model:../../model/distilbert/distilbert-0331-TS-nli-0.1-10/12272
+2022-03-31 19:13:01,461 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 19:13:05,429 - state_dict - INFO - [Epoch 1/5] Validatation Accuracy:0.680439121756487
+2022-03-31 19:13:05,431 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 19:13:05,432 - state_dict - INFO - === 처리시간: 3.970 초 ===
+2022-03-31 19:13:05,433 - state_dict - INFO - -END-
+
+2022-03-31 19:22:02,248 - state_dict - INFO - [Epoch 2/5] Iteration 15340 -> Train Loss: 0.1064, student_loss: 1.0295, tearch_loss: 1.1000
+2022-03-31 19:30:39,494 - state_dict - INFO - [Epoch 2/5] Iteration 18408 -> Train Loss: 0.1063, student_loss: 1.0272, tearch_loss: 1.1000
+2022-03-31 19:39:09,601 - state_dict - INFO - [Epoch 2/5] Iteration 21476 -> Train Loss: 0.1061, student_loss: 1.0251, tearch_loss: 1.0999
+2022-03-31 19:47:36,818 - state_dict - INFO - [Epoch 2/5] Iteration 24544 -> Train Loss: 0.1061, student_loss: 1.0236, tearch_loss: 1.1002
+2022-03-31 19:47:38,306 - state_dict - INFO - Iteration 24544 -> save model:../../model/distilbert/distilbert-0331-TS-nli-0.1-10/24544
+2022-03-31 19:47:38,616 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 19:47:42,596 - state_dict - INFO - [Epoch 2/5] Validatation Accuracy:0.7163672654690619
+2022-03-31 19:47:42,599 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 19:47:42,600 - state_dict - INFO - === 처리시간: 3.984 초 ===
+2022-03-31 19:47:42,601 - state_dict - INFO - -END-
+
+2022-03-31 19:56:33,571 - state_dict - INFO - [Epoch 3/5] Iteration 27612 -> Train Loss: 0.1052, student_loss: 1.0085, tearch_loss: 1.0999
+2022-03-31 20:05:26,688 - state_dict - INFO - [Epoch 3/5] Iteration 30680 -> Train Loss: 0.1052, student_loss: 1.0086, tearch_loss: 1.0999
+2022-03-31 20:14:17,318 - state_dict - INFO - [Epoch 3/5] Iteration 33748 -> Train Loss: 0.1052, student_loss: 1.0078, tearch_loss: 1.1001
+2022-03-31 20:23:04,171 - state_dict - INFO - [Epoch 3/5] Iteration 36816 -> Train Loss: 0.1052, student_loss: 1.0079, tearch_loss: 1.1002
+2022-03-31 20:23:05,723 - state_dict - INFO - Iteration 36816 -> save model:../../model/distilbert/distilbert-0331-TS-nli-0.1-10/36816
+2022-03-31 20:23:06,019 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 20:23:09,951 - state_dict - INFO - [Epoch 3/5] Validatation Accuracy:0.7285429141716567
+2022-03-31 20:23:09,952 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 20:23:09,953 - state_dict - INFO - === 처리시간: 3.934 초 ===
+2022-03-31 20:23:09,954 - state_dict - INFO - -END-
+
+2022-03-31 20:31:57,190 - state_dict - INFO - [Epoch 4/5] Iteration 39884 -> Train Loss: 0.1045, student_loss: 0.9939, tearch_loss: 1.1001
+2022-03-31 20:40:46,149 - state_dict - INFO - [Epoch 4/5] Iteration 42952 -> Train Loss: 0.1045, student_loss: 0.9939, tearch_loss: 1.1001
+2022-03-31 20:49:44,215 - state_dict - INFO - [Epoch 4/5] Iteration 46020 -> Train Loss: 0.1044, student_loss: 0.9926, tearch_loss: 1.0996
+2022-03-31 20:58:32,879 - state_dict - INFO - [Epoch 4/5] Iteration 49088 -> Train Loss: 0.1045, student_loss: 0.9939, tearch_loss: 1.1003
+2022-03-31 20:58:34,441 - state_dict - INFO - Iteration 49088 -> save model:../../model/distilbert/distilbert-0331-TS-nli-0.1-10/49088
+2022-03-31 20:58:34,769 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 20:58:38,708 - state_dict - INFO - [Epoch 4/5] Validatation Accuracy:0.7335329341317365
+2022-03-31 20:58:38,710 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 20:58:38,710 - state_dict - INFO - === 처리시간: 3.942 초 ===
+2022-03-31 20:58:38,711 - state_dict - INFO - -END-
+
+2022-03-31 21:07:33,812 - state_dict - INFO - [Epoch 5/5] Iteration 52156 -> Train Loss: 0.1039, student_loss: 0.9827, tearch_loss: 1.1001
+2022-03-31 21:16:22,097 - state_dict - INFO - [Epoch 5/5] Iteration 55224 -> Train Loss: 0.1039, student_loss: 0.9830, tearch_loss: 1.0999
+2022-03-31 21:25:08,563 - state_dict - INFO - [Epoch 5/5] Iteration 58292 -> Train Loss: 0.1039, student_loss: 0.9829, tearch_loss: 1.1001
+2022-03-31 21:33:55,229 - state_dict - INFO - [Epoch 5/5] Iteration 61360 -> Train Loss: 0.1038, student_loss: 0.9825, tearch_loss: 1.0999
+2022-03-31 21:33:56,750 - state_dict - INFO - Iteration 61360 -> save model:../../model/distilbert/distilbert-0331-TS-nli-0.1-10/61360
+2022-03-31 21:33:57,036 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 21:34:01,016 - state_dict - INFO - [Epoch 5/5] Validatation Accuracy:0.7321357285429142
+2022-03-31 21:34:01,017 - state_dict - INFO - ---------------------------------------------------------
+2022-03-31 21:34:01,018 - state_dict - INFO - === 처리시간: 3.983 초 ===
+2022-03-31 21:34:01,019 - state_dict - INFO - -END-
+

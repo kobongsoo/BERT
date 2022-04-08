@@ -1,0 +1,17 @@
+2022-03-31 20:04:11,872 - distilbertnlitest - INFO - === model: ../../model/distilbert/distilbert-0327-TS-nli-0.1-10 ===
+2022-03-31 20:04:11,875 - distilbertnlitest - INFO - num_parameters: 172193283
+2022-03-31 20:04:11,877 - distilbertnlitest - INFO - ---------------------------------------------------------
+2022-03-31 20:04:20,691 - distilbertnlitest - INFO - eval-accuracy: 0.5506986027944112
+2022-03-31 20:04:20,693 - distilbertnlitest - INFO - ---------------------------------------------------------
+2022-03-31 20:04:20,694 - distilbertnlitest - INFO - === 처리시간: 8.817 초 ===
+2022-03-31 20:04:20,694 - distilbertnlitest - INFO - -END-
+
+2022-03-31 20:06:29,287 - distilbertnlitest - INFO - === model: ../../model/distilbert/distilbert-0331-TS-nli-0.1-10/24544 ===
+2022-03-31 20:06:29,289 - distilbertnlitest - INFO - eval_file : ../../korpora/kornli/xnli.test.ko.tsv
+2022-03-31 20:06:29,290 - distilbertnlitest - INFO - num_parameters: 172193283
+2022-03-31 20:06:29,292 - distilbertnlitest - INFO - ---------------------------------------------------------
+2022-03-31 20:06:38,014 - distilbertnlitest - INFO - eval-accuracy: 0.7163672654690619
+2022-03-31 20:06:38,017 - distilbertnlitest - INFO - ---------------------------------------------------------
+2022-03-31 20:06:38,019 - distilbertnlitest - INFO - === 처리시간: 8.727 초 ===
+2022-03-31 20:06:38,020 - distilbertnlitest - INFO - -END-
+
