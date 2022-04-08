@@ -13,8 +13,8 @@ seed_everything(111)
 
 #=================================================================================================================
 # classification 모델과 tokenizer 설정
-cassification_model_path = '../model/classification/bmc-fpt-wiki_20190620_mecab_false_0311-nouns-0327-nscm-0329'
-cassification_vocab_path = '../model/classification/bmc-fpt-wiki_20190620_mecab_false_0311-nouns-0327-nscm-0329/vocab'
+cassification_model_path = '../../model/classification/bmc-fpt-wiki_20190620_mecab_false_0311-nouns-0327-nscm-0329'
+cassification_vocab_path = '../../model/classification/bmc-fpt-wiki_20190620_mecab_false_0311-nouns-0327-nscm-0329/vocab'
 
 cassification_tokenizer = BertTokenizer.from_pretrained(cassification_vocab_path, do_lower_case=False, max_len=128)
 #cassification_model = torch.load(cassification_model_path)
@@ -68,7 +68,7 @@ def classification_model_eval(sentence):
 from sentence_transformers import SentenceTransformer, util
 import numpy as np
 
-sbert_model_path = '../model/sbert/sbert-ts2022-04-01-distiluse-7'
+sbert_model_path = '../../model/sbert/sbert-ts2022-04-01-distiluse-7'
 embedder = SentenceTransformer(sbert_model_path)
 
 
@@ -108,5 +108,28 @@ def sbert_model_eval(querys : str,
         'proctime' : processtime
     }
          
-   
-        
+#=================================================================================================================
+# Summarizer 라이브러리를 이용한 추출 요약 예제임
+
+from summarizer.sbert import SBertSummarizer
+
+# s-bert 이용함
+#model_path = '../../model/sbert/sbert-ts2022-04-01-distiluse-7'
+model = SBertSummarizer(sbert_model_path)
+
+def summarizer_model_eval(texts):
+    start = time.time()
+    result = model(texts, ratio=0.1)
+
+    full = ''.join(result)
+    processtime = f"처리시간: {time.time()-start:.3f}초"
+    # print(full)
+    # print('\n')
+    # print(texts)
+    # 출력 
+    return { 
+        'summary' : full,  # 요약 문장 
+        'proctime' : processtime  #처리시간
+    }
+    
+    
