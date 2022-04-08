@@ -1,0 +1,56 @@
+<head>
+    <meta charset="UTF-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+<body style="margin: 30;">
+    <div class="card border-dark mb-3" style="min-width: 30rem; max-width: 30rem;">
+      <div class="card-header">BERT 이진 분류 예제</div>
+      <div class="card-body text-dark">
+        <h5 class="card-title">영화 감상 분석(Sentiment Analysis)</h5>
+        <p class="card-text">주어진 영화 감상 문장의 긍정/부정을 판별합니다.</p>
+        <input type="text" class="form-control" aria-describedby="basic-addon3" id="input" onkeypress="if(event.keyCode==13) {api_call(); return false;}" name="input" placeholder="영화 감상평을 문장으로 입력하고, Enter key를 누르세요"/>
+        <p class="card-text">
+            <div class="alert alert-info" role="alert">
+                <h5 id="prediction" class="alert-heading"></h5>
+                <p id="sentence" class="mb-0"></p>
+				<p id="proctime" class="mb-1"></p>
+            </div>
+        </p>
+        <div class="progress">
+          <div id="positive" class="progress-bar bg-success" role="progressbar" style="width: 100%">긍정 1</div>
+          <div id="negative" class="progress-bar bg-danger" role="progressbar" style="width: 0%">부정 0</div>
+        </div>
+        <hr>
+        <p class="card-text"><small class="text-muted">이 예제는 BERT-base-multilingual-cased 모델을 이용하여, 한글 토큰을 추가학습 시킨후, 네이버 영화 리뷰 감성 분류 파일(nsmc)를 가지고 이진 분류 파인튜닝한 모델을 이용합니다.</small></p>
+      </div>
+    </div>
+</body>
+
+<script>
+function api_call() {
+    var input = $("#input").val();
+    console.log(input);
+    $.ajax({
+        url: "/api",
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(input),
+        success: function( data, textStatus, jQxhr ){
+            $('#sentence').html( data.sentence );
+            $('#prediction').html( data.prediction );
+            $('#positive').html( data.positive_data );
+            $('#negative').html( data.negative_data );
+            $('#positive').css('width', data.positive_width);
+            $('#negative').css('width', data.negative_width);
+			$('#proctime').html( data.process_time);
+            $("#input").val("");
+        },
+        error: function( jqXhr, textStatus, errorThrown ){
+            $('#api_output').html( "There was an error" );
+            console.log( errorThrown );
+        },
+        timeout: 3000
+    });
+}
+</script>
