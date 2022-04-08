@@ -1,0 +1,2 @@
+2022-02-22 14:32:29,472 - test - INFO - Loading features from cached file ../my_data/cached_BertTokenizer_126_감성대화말뭉치(최종데이터)_renew_labelenc_Validation.csv [took 0.644 s]
+2022-02-22 14:35:05,140 - test - INFO - Loading features from cached file ../my_data/cached_BertTokenizer_126_감성대화말뭉치(최종데이터)_renew_labelenc_Validation.csv [took 0.744 s]
