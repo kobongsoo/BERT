@@ -1,2 +1,0 @@
-2022-03-29 09:14:49,357 - bwpdataset - INFO - Loading features from cached file ../../korpora/klue-nli/cached_BertTokenizer_128_klue-nli-v1.1_train.json [took 1.092 s]
-2022-03-29 09:14:49,550 - bwpdataset - INFO - Loading features from cached file ../../korpora/klue-nli/cached_BertTokenizer_128_klue-nli-v1.1_dev.json [took 0.191 s]

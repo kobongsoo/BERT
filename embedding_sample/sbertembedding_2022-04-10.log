@@ -1,0 +1,80 @@
+2022-04-11 08:46:24,456 - sbertembedding - INFO - >>모델명: ../../model/sbert/sbert-ts2022-04-01-distiluse-7
+2022-04-11 08:46:24,492 - sbertembedding - INFO - 
+
+======================
+2022-04-11 08:46:24,493 - sbertembedding - INFO - Query:난 널 사랑해
+2022-04-11 08:46:24,494 - sbertembedding - INFO - i love you (Score: 0.9332)
+2022-04-11 08:46:24,495 - sbertembedding - INFO - i am very happy (Score: 0.3568)
+2022-04-11 08:46:24,496 - sbertembedding - INFO - The weather is nice (Score: 0.2621)
+2022-04-11 08:46:24,497 - sbertembedding - INFO - Thank you. We won’t make you regret it. (Score: 0.1821)
+2022-04-11 08:46:24,498 - sbertembedding - INFO - Then I will see you at 10 a.m. tomorrow. (Score: 0.1746)
+2022-04-11 08:46:24,512 - sbertembedding - INFO - 
+
+======================
+2022-04-11 08:46:24,513 - sbertembedding - INFO - Query:난 매우 행복해
+2022-04-11 08:46:24,515 - sbertembedding - INFO - i am very happy (Score: 0.9514)
+2022-04-11 08:46:24,516 - sbertembedding - INFO - i love you (Score: 0.3578)
+2022-04-11 08:46:24,517 - sbertembedding - INFO - The weather is nice (Score: 0.3404)
+2022-04-11 08:46:24,518 - sbertembedding - INFO - Thank you. We won’t make you regret it. (Score: 0.2185)
+2022-04-11 08:46:24,519 - sbertembedding - INFO - Then I will see you at 10 a.m. tomorrow. (Score: 0.1110)
+2022-04-11 08:46:24,531 - sbertembedding - INFO - 
+
+======================
+2022-04-11 08:46:24,532 - sbertembedding - INFO - Query:날씨가 좋다
+2022-04-11 08:46:24,533 - sbertembedding - INFO - The weather is nice (Score: 0.9317)
+2022-04-11 08:46:24,533 - sbertembedding - INFO - i am very happy (Score: 0.3280)
+2022-04-11 08:46:24,534 - sbertembedding - INFO - i love you (Score: 0.2573)
+2022-04-11 08:46:24,535 - sbertembedding - INFO - We expect the renovation to be finished by tomorrow evening. (Score: 0.1865)
+2022-04-11 08:46:24,536 - sbertembedding - INFO - You do not have to do that. It is okay (Score: 0.1320)
+2022-04-11 08:46:24,548 - sbertembedding - INFO - 
+
+======================
+2022-04-11 08:46:24,549 - sbertembedding - INFO - Query:안 그래도 되는데 뭐. 괜찮아.
+2022-04-11 08:46:24,550 - sbertembedding - INFO - You do not have to do that. It is okay (Score: 0.7175)
+2022-04-11 08:46:24,551 - sbertembedding - INFO - Thank you. We won’t make you regret it. (Score: 0.3420)
+2022-04-11 08:46:24,551 - sbertembedding - INFO - i am very happy (Score: 0.2421)
+2022-04-11 08:46:24,552 - sbertembedding - INFO - The weather is nice (Score: 0.2056)
+2022-04-11 08:46:24,553 - sbertembedding - INFO - The print cartridge is exhausted. Should I order more? (Score: 0.0876)
+2022-04-11 08:46:24,563 - sbertembedding - INFO - 
+
+======================
+2022-04-11 08:46:24,564 - sbertembedding - INFO - Query:내일 저녁까지 보수 공사가 끝날 것으로 예상합니다.
+2022-04-11 08:46:24,565 - sbertembedding - INFO - We expect the renovation to be finished by tomorrow evening. (Score: 0.9056)
+2022-04-11 08:46:24,566 - sbertembedding - INFO - Then I will see you at 10 a.m. tomorrow. (Score: 0.4484)
+2022-04-11 08:46:24,567 - sbertembedding - INFO - The weather is nice (Score: 0.1716)
+2022-04-11 08:46:24,568 - sbertembedding - INFO - The print cartridge is exhausted. Should I order more? (Score: 0.1358)
+2022-04-11 08:46:24,568 - sbertembedding - INFO - Thank you. We won’t make you regret it. (Score: 0.1114)
+2022-04-11 08:46:24,578 - sbertembedding - INFO - 
+
+======================
+2022-04-11 08:46:24,579 - sbertembedding - INFO - Query:감사합니다. 후회 없는 결정이 될 겁니다.
+2022-04-11 08:46:24,580 - sbertembedding - INFO - Thank you. We won’t make you regret it. (Score: 0.7891)
+2022-04-11 08:46:24,580 - sbertembedding - INFO - i am very happy (Score: 0.3313)
+2022-04-11 08:46:24,581 - sbertembedding - INFO - You do not have to do that. It is okay (Score: 0.2744)
+2022-04-11 08:46:24,582 - sbertembedding - INFO - i love you (Score: 0.1794)
+2022-04-11 08:46:24,582 - sbertembedding - INFO - We expect the renovation to be finished by tomorrow evening. (Score: 0.1254)
+2022-04-11 08:46:24,592 - sbertembedding - INFO - 
+
+======================
+2022-04-11 08:46:24,593 - sbertembedding - INFO - Query:그러면 오전 10시에 보도록 하죠. 내일 뵙겠습니다.
+2022-04-11 08:46:24,594 - sbertembedding - INFO - Then I will see you at 10 a.m. tomorrow. (Score: 0.8791)
+2022-04-11 08:46:24,594 - sbertembedding - INFO - We expect the renovation to be finished by tomorrow evening. (Score: 0.4889)
+2022-04-11 08:46:24,595 - sbertembedding - INFO - The weather is nice (Score: 0.1227)
+2022-04-11 08:46:24,596 - sbertembedding - INFO - Thank you. We won’t make you regret it. (Score: 0.1086)
+2022-04-11 08:46:24,596 - sbertembedding - INFO - The print cartridge is exhausted. Should I order more? (Score: 0.0885)
+2022-04-11 08:46:24,606 - sbertembedding - INFO - 
+
+======================
+2022-04-11 08:46:24,606 - sbertembedding - INFO - Query:프린트 카트리지가 다 떨어졌습니다. 더 주문할까요?
+2022-04-11 08:46:24,607 - sbertembedding - INFO - The print cartridge is exhausted. Should I order more? (Score: 0.8416)
+2022-04-11 08:46:24,608 - sbertembedding - INFO - We expect the renovation to be finished by tomorrow evening. (Score: 0.1342)
+2022-04-11 08:46:24,608 - sbertembedding - INFO - You do not have to do that. It is okay (Score: 0.0929)
+2022-04-11 08:46:24,609 - sbertembedding - INFO - Thank you. We won’t make you regret it. (Score: 0.0873)
+2022-04-11 08:46:24,611 - sbertembedding - INFO - Then I will see you at 10 a.m. tomorrow. (Score: 0.0137)
+2022-04-11 08:46:24,611 - sbertembedding - INFO - 
+
+
+2022-04-11 08:46:24,612 - sbertembedding - INFO - >>처리시간: 0.1563
+2022-04-11 08:46:24,613 - sbertembedding - INFO - 
+
+======================
