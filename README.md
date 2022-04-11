@@ -69,10 +69,10 @@
    즉 증류 손실함수 = alpha * 학생모델이 loss(1) + (1-alpah)*교사/학생모델간 torch.nn.KLDivLoss(2)(3) 함수
 
  - 이때 KLDivLoss 함수는 교사와 학생간 Dark Knowledge(어둠지식)도 학습되도록 교사loss/Temperture와
-   학생loss/Temperture 식으로, Temperture를 지정하는데, 보통 학습할때는 2~10으로 하고, 
-   평가시에는 반드시 1로 해야 한다.
+   학생loss/Temperture 식으로, Temperture를 지정하는데, 보통 학습할때는 2~10으로 하고, 평가시에는 반드시 1로 해야 한다.
    (*Temperture==1 이면, softmax와 동일, 1보다 크면 확률이 평활화 되어서, 어둠 지식 습득이 많이됨)
-   그리고 학생모델loss는 전체 loss에 0.1이 되도록 alpha값은 0.1이 좋다고 한다.
+   
+ - 또한 학생모델loss는 전체 loss에 0.1이 되도록 alpha값은 0.1이 좋다고 한다.
 
 4. 학습
  - 교사모델은 평가(eval)만 하고, 학생모델만 학습(train)한다.
