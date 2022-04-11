@@ -21,7 +21,7 @@
 ### 3) DistilBERT 제작
 - #### 반드시 교사, 학생 모델의 tokenizer vocab은 같아야 함
 - #### 학생 모델은 빈껍데기 (distil)BERT 생성 해서 이용해야 함
-  ##### ex: distilbert-model-create.ipynb
+  ##### ex) distilbert-model-create.ipynb
 - MLM + NLI 방식(MLM 하고 나서 NLI로 다시 Fine-Tuning) 혹은 NLI로만  Fine-Tuning 하여 Distilling  함
 - Loss 함수의 Tempature(기본=10)와 alpha(기본=0.1)값을 조절하여 학습하면서, 최적이 값을 찾아야 함
   ##### ex) bert-Task-specific-knowledge-distillation.ipynb,  bert-Task-specific-knowledge-distillation2.ipynb
