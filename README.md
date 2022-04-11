@@ -18,7 +18,8 @@
 [vocab 생성 과정]
 
 1. 도메인 말뭉치(예:kowiki.txt)에서 mecab을 이용하여 형태소 분석하여 단어들을 추출함.
-  - mecab으로 형태소 혹은 명사만 분할하면서, subword 앞에는 '##' prefix 추가함(**Bertwordpiece subword와 동일하게)
+  - mecab으로 형태소 혹은 명사만 분할하면서, 
+    subword 앞에는 '##' prefix 추가함(**Bertwordpiece subword와 동일하게)
 
 2. NLTK 빈도수 계산하는 FreqDist()를 이용하여, 단어들이 빈도수 계산 후,
    상위 빈도수(예:30000)를 가지는 단어들만 add_vocab.txt 로 만듬
@@ -27,8 +28,8 @@
 
 4. 추가한 vocab을 가지고, tokenizer 생성하고, special 토큰 추가 후, vocab.txt 파일에 저장
   - 원래 tokenizer.add_tokens() 으로 추가하면, added_tokens.json 파일에 추가되는데, 
-    이때 BertTokenizer.from_pretrained() 함수로 호출할때,호출이 안됨(*이유 모름:엄청 느려지는것 같음)
-    따라서 직접 vocab.txt에 추가하는 방법을 사용함
+    이때 BertTokenizer.from_pretrained() 함수로 호출할때,호출이 안됨
+    (*이유 모름:엄청 느려지는것 같음) 따라서 직접 vocab.txt에 추가하는 방법을 사용함
 ```
 
 - Special domain 을 가진 copora(말뭉치들)을 가지고 기존 BERT 모델에 MLM 추가학습 시킴
@@ -54,8 +55,8 @@
 [증류 과정(Knowledge-distillaton)]
 
 1. 교사모델 구조->학생 모델로 복사
- - 교사모델이 bert-base 이고, 학생 모델이 distilbert 라면, 교사 bert 모델이 12개 hiddenlayer에
-  wegiht와 bias 값들을 학생모델 distilbert 6개 hiddenlayer로 복사함.
+ - 교사모델이 bert-base 이고, 학생 모델이 distilbert 라면, 교사 bert 모델 12개 hiddenlayer
+  에 wegiht와 bias 값들을 학생모델 distilbert 6개 hiddenlayer로 복사함.
   (* 이때 교사모델이 어떤 hiddenlayer를 학샘모델로 복사할때는,
    [0, 2, 4, 7, 9, 11] 식으로  한칸씩 건너 띄면서, 레이어를 복사 하는데 좋다고 함)
 
@@ -64,13 +65,17 @@
   (*Huggingface transformers 모델이용하면 쉬움)
 
 3. loss 함수 정의
- - loss 함수는 학생모델이 loss(1), 교사와 학생모델간 cross-entropy loss(2), 교사와 학생모델간 cosine-loss(3) 
-   3가지 인데, 이때 (2)와 (3) loss는 torch.nn.KLDivLoss 함수로 보통 대체 된다.
-   즉 증류 손실함수 = alpha * 학생모델이 loss(1) + (1-alpah)*교사/학생모델간 torch.nn.KLDivLoss(2)(3) 함수
+ - loss 함수는 학생모델이 loss(1), 교사와 학생모델간 cross-entropy loss(2), 
+   교사와 학생모델간 cosine-loss(3) 3가지 인데, 이때 (2)와 (3) loss는 
+   torch.nn.KLDivLoss 함수로 보통 대체 된다.
+   즉 증류 손실함수=alpha * 학생모델이 loss(1) 
+                    + (1-alpah)*교사/학생모델간 torch.nn.KLDivLoss(2)(3) 함수
 
- - 이때 KLDivLoss 함수는 교사와 학생간 Dark Knowledge(어둠지식)도 학습되도록 교사loss/Temperture와
-   학생loss/Temperture 식으로, Temperture를 지정하는데, 보통 학습할때는 2~10으로 하고, 평가시에는 반드시 1로 해야 한다.
-   (*Temperture==1 이면, softmax와 동일, 1보다 크면 확률이 평활화 되어서, 어둠 지식 습득이 많이됨)
+ - 이때 KLDivLoss 함수는 교사와 학생간 Dark Knowledge(어둠지식)도 학습되도록,
+   교사loss/Temperture와 학생loss/Temperture 식으로, Temperture를 지정하는데, 
+   보통 학습할때는 2~10으로 하고, 평가시에는 반드시 1로 해야 한다.
+   (*Temperture==1 이면, softmax와 동일, 1보다 크면 확률이 평활화 되어서, 
+    어둠 지식 습득이 많이됨)
    
  - 또한 학생모델loss는 전체 loss에 0.1이 되도록 alpha값은 0.1이 좋다고 한다.
 
