@@ -95,6 +95,7 @@
   
 ### 5) S-BERT 지식 증류 학습
 - 교사모델은 distiluse-base-multilingual-cased-v2, 학생모델은 제작한 S-BERT 모델로 설정 하여 학습시킴.
+- ***distiluse-base-multilingual-cased-v2 모델은 distilmultibert와 vocab이 동일하다**
 - 이때 말뭉치는 **영어-한글 쌍으로 이루어진 말뭉치**를 이용함(TED2020-en-ko-train.tsv)
 
   ex) [sbert-distillation.ipynb](https://github.com/kobongsoo/BERT/blob/master/sbert/sbert-distillaton.ipynb)
