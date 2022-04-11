@@ -57,7 +57,7 @@
 1. 교사모델 구조->학생 모델로 복사
  - 교사모델이 bert-base 이고, 학생 모델이 distilbert 라면, 교사 bert 모델 12개 hiddenlayer
   에 wegiht와 bias 값들을 학생모델 distilbert 6개 hiddenlayer로 복사함.
-  (* 이때 교사모델이 어떤 hiddenlayer를 학샘모델로 복사할때는,
+  (* 이때 교사모델이 어떤 hiddenlayer를 학생모델로 복사할때는,
    [0, 2, 4, 7, 9, 11] 식으로  한칸씩 건너 띄면서, 레이어를 복사 하는데 좋다고 함)
 
 2. 교사모델, 학생모델 fine-tuning 사전준비
@@ -65,11 +65,11 @@
   (*Huggingface transformers 모델이용하면 쉬움)
 
 3. loss 함수 정의
- - loss 함수는 학생모델이 loss(1), 교사와 학생모델간 cross-entropy loss(2), 
-   교사와 학생모델간 cosine-loss(3) 3가지 인데, 이때 (2)와 (3) loss는 
+ - loss 함수는 학생모델이 loss(1), 교사.학생모델간 cross-entropy loss(2), 
+   교사.학생모델간 cosine-loss(3) 3가지 인데, 이때 (2)와 (3) loss는 
    torch.nn.KLDivLoss 함수로 보통 대체 된다.
-   즉 증류 손실함수=alpha * 학생모델이 loss(1) 
-                    + (1-alpah)*교사/학생모델간 torch.nn.KLDivLoss(2)(3) 함수
+   즉 증류 손실함수 = alpha * 학생모델이 loss(1) 
+                  + (1-alpah)*교사.학생모델간 torch.nn.KLDivLoss(2)(3) 함수
 
  - 이때 KLDivLoss 함수는 교사와 학생간 Dark Knowledge(어둠지식)도 학습되도록,
    교사loss/Temperture와 학생loss/Temperture 식으로, Temperture를 지정하는데, 
