@@ -30,33 +30,33 @@ ex) distilbert-model-create.ipynb
 ```
 - MLM + NLI 방식(MLM 하고 나서 NLI로 다시 Fine-Tuning) 혹은 NLI로만  Fine-Tuning 하여 Distilling  함
 - Loss 함수의 Tempature(기본=10)와 alpha(기본=0.1)값을 조절하여 학습하면서, 최적이 값을 찾아야 함
-  ```
-  ex) bert-Task-specific-knowledge-distillation.ipynb
-      bert-Task-specific-knowledge-distillation2.ipynb
-  ```
+```
+ex) bert-Task-specific-knowledge-distillation.ipynb
+    bert-Task-specific-knowledge-distillation2.ipynb
+```
 
 ### 4) Sentence Bert(S-BERT) 제작
 - DistilBERT를 가지고 STS 데이터 혹은 NLI 데이터를 이용하여 S-BERT을 만듬
 - NLI 데이터로 만든  S-BERT는 반드시 한번 더 STS로 학습시킴. **NLI만 학습한 S-BERT는 STS로 학습한 S-BERT에 비해 성능이 많이 떨어짐.**
-  ```
-  ex) sentence-bert-nli.ipynb
-      sentence-bert-sts.ipynb 
-      sentence-bert-nli-sts.ipynb
-  ```
-  [참고: SentenceTransformers](https://www.sbert.net/)
+```
+ex) sentence-bert-nli.ipynb
+    sentence-bert-sts.ipynb 
+    sentence-bert-nli-sts.ipynb
+```
+[참고: SentenceTransformers](https://www.sbert.net/)
   
 ### 5) S-BERT 지식 증류 학습
 - 교사모델은 distiluse-base-multilingual-cased-v2, 학생모델은 제작한 S-BERT 모델로 설정 하여 학습시킴.
 - 이때 말뭉치는 영어-한글 쌍으로 이루어진 말뭉치를 이용함(TED2020-en-ko-train.tsv)
-  ```
-  ex) sbert-distillation.ipynb
-  ```
+```
+ex) sbert-distillation.ipynb
+```
 
 ### 6) Semantic 검색 모델 구축
 - S-BERT + Elastic Serch  + Faiss 이용하여 검색  모델 구축
-  ```
-  ex) sbert-Faiss-embedding.ipynb
-      sbert-Faiss-embedding2.ipynb
-      elasticsearch_text_embedding.ipynb
-  ```    
-  [참고 : Faiss 라이브러리](https://github.com/facebookresearch/faiss)
+```
+ex) sbert-Faiss-embedding.ipynb
+    sbert-Faiss-embedding2.ipynb
+    elasticsearch_text_embedding.ipynb
+```    
+[참고 : Faiss 라이브러리](https://github.com/facebookresearch/faiss)
