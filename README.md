@@ -2,10 +2,7 @@
 
 ### BERT를 이용한 sementic 검색 모델 제작 과정 
 
-
-
-![image](https://user-images.githubusercontent.com/93692701/162662241-1cb73079-c582-494c-8c25-0563589acb5f.png)
-
+## ![image](https://user-images.githubusercontent.com/93692701/162662467-3c579d60-5dc3-4670-a649-71b1bc11edc3.png)
 
 
 
