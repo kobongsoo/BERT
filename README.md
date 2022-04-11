@@ -1,6 +1,6 @@
 ## BERT를 이용한 sementic 검색 모델 제작 과정 
 
-## ![image](https://user-images.githubusercontent.com/93692701/162662467-3c579d60-5dc3-4670-a649-71b1bc11edc3.png)
+### ![image](https://user-images.githubusercontent.com/93692701/162686553-7d1b46e2-fdf2-4cd7-b842-a5ade3f9cda6.png)
 
 
 
@@ -94,13 +94,15 @@
 [참고: SentenceTransformers](https://www.sbert.net/)
   
 ### 5) S-BERT 지식 증류 학습
-- 교사모델은 distiluse-base-multilingual-cased-v2, 학생모델은 제작한 S-BERT 모델로 설정 하여 학습시킴.
-- ***distiluse-base-multilingual-cased-v2 모델은 distilmultibert와 vocab이 동일하다**
+- 교사모델은 **distiluse-base-multilingual-cased-v1**, 학생모델은 제작한 S-BERT 모델로 설정 하여 학습시킴.
 - 이때 말뭉치는 **영어-한글 쌍으로 이루어진 말뭉치**를 이용함(TED2020-en-ko-train.tsv)
+- **distiluse-base-multilingual-cased-v1 모델은 distilmultibert와 vocab이 동일**하고, 교사: mUSE, 학생: distilbert-base-multilingual 로 학습시킨 s-bert 모델임
+- 참고로 distiluse-base-multilingual-cased-v2 도 있는데, 성능평가에는 v1이 v2 보다 [2% 정도 더 높은 성능](https://www.sbert.net/docs/pretrained_models.html)을 보였음
+
 
   ex) [sbert-distillation.ipynb](https://github.com/kobongsoo/BERT/blob/master/sbert/sbert-distillaton.ipynb)
 
-[참고 : distiluse-base-multilingual-cased-v2 다운로드](https://huggingface.co/sentence-transformers/distiluse-base-multilingual-cased-v2)
+[참고 : distiluse-base-multilingual-cased-v1 다운로드](https://huggingface.co/sentence-transformers/distiluse-base-multilingual-cased-v1)
 
 ### 6) Semantic 검색 모델 구축
 - S-BERT + Elastic Serch  + Faiss 이용하여 검색  모델 구축
