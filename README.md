@@ -94,10 +94,10 @@
 [참고: SentenceTransformers](https://www.sbert.net/)
   
 ### 5) S-BERT 지식 증류 학습
-- 교사모델은 **distiluse-base-multilingual-cased-v1**, 학생모델은 제작한 S-BERT 모델로 설정 하여 학습시킴.
+- 교사모델은 **distiluse-base-multilingual-cased-v2**, 학생모델은 제작한 S-BERT 모델로 설정 하여 학습시킴.
+- **교사모델과 학생모델의 word_embedding_dimension(예: Dim=768)은 반드시 같아야함. 다르면 훈련시,'The size of tensor a (768) must match the size of tensor b (384) at non-singleton dimension 1' 에러 발생함**
 - 이때 말뭉치는 **영어-한글 쌍으로 이루어진 말뭉치**를 이용함(TED2020-en-ko-train.tsv)
-- **distiluse-base-multilingual-cased-v1 모델은 distilmultibert와 vocab이 동일**하고, 교사: mUSE, 학생: distilbert-base-multilingual 로 학습시킨 s-bert 모델임
-- 참고로 distiluse-base-multilingual-cased-v2 도 있는데, 성능평가에는 v1이 v2 보다 [2% 정도 더 높은 성능](https://www.sbert.net/docs/pretrained_models.html)을 보였음
+- 참고로 S-BERT 교사모델들의, 성능평가는 [여기](https://www.sbert.net/docs/pretrained_models.html) 참조바람
 
 
   ex) [sbert-distillation.ipynb](https://github.com/kobongsoo/BERT/blob/master/sbert/sbert-distillaton.ipynb)
