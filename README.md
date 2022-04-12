@@ -1,4 +1,5 @@
-## BERT를 이용한 sementic 검색 모델 제작 과정 
+## BERT를 이용한 sementic 검색 모델 제작 과정 <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
+
 
 ### ![image](https://user-images.githubusercontent.com/93692701/162686553-7d1b46e2-fdf2-4cd7-b842-a5ade3f9cda6.png)
 
@@ -14,7 +15,7 @@
 
   ex) [make_mecab_vocab.ipynb](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/make_mecab_vocab.ipynb)
 
-```
+```sh
 [vocab 생성 과정]
 
 1. 도메인 말뭉치(예:kowiki.txt)에서 mecab을 이용하여 형태소 분석하여 단어들을 추출함.
