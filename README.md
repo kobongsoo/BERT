@@ -104,7 +104,7 @@
 
 - **교사모델과 학생모델의 word_embedding_dimension(예: Dim=768)은 반드시 같아야함. 다르면 훈련시,'The size of tensor a (768) must match the size of tensor b (384) at non-singleton dimension 1' 에러 발생함**
 - 이때 말뭉치는 **영어-한글 쌍으로 이루어진 말뭉치**를 이용함(TED2020-en-ko-train.tsv)
-- 참고로 S-BERT 교사모델들의, 성능평가는 [여기](https://www.sbert.net/docs/pretrained_models.html) 참조바람
+- 참고로 S-BERT Pretrain 모델들은 [여기](https://www.sbert.net/docs/pretrained_models.html)서 확인
 
   ex) [sbert-distillation.ipynb](https://github.com/kobongsoo/BERT/blob/master/sbert/sbert-distillaton.ipynb)
 
