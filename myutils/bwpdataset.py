@@ -18,7 +18,7 @@ from tqdm.notebook import tqdm
 from typing import Dict, List, Optional
 
 # [bong] mylogging 호출함
-logger = mlogging(loggername='bwpdataset',logfilename='bwdataset')
+logger = mlogging(loggername='bwpdataset',logfilename='../../log/bwdataset')
 
 @dataclass
 class ClassificationExample:
@@ -737,8 +737,8 @@ class MLMDataset(Dataset):
                     logger.info(f"<==[End] Saving features into cached file {cached_features_file} [took {time.time() - start:.3f} s]")
 
                 #print(self.mydict.keys())
-                #print(len(self.mydict['inputs_ids']))
-                #print(self.mydict['inputs_ids'])
+                #print(len(self.mydict['input_ids']))
+                #print(self.mydict['input_ids'])
         
             
     def __getitem__(self, idx):
@@ -904,7 +904,7 @@ class MLMDatasetbyDistilBert(Dataset):
                     labels_list.append(labels[0].tolist())
 
                 # dict 로 만듬.(*텐서롤 만들지는 않음=>dataloader에 들어가면 텐서로 만드므로.)     
-                self.mydict = {'inputs_ids':token_ids_list, 'attention_mask':attention_mask_list, 'labels':labels_list} 
+                self.mydict = {'input_ids':token_ids_list, 'attention_mask':attention_mask_list, 'labels':labels_list} 
 
                  # overwrite_cache=True 인경우에만 캐쉬파일 생성함
                 if overwrite_cache:
@@ -915,15 +915,15 @@ class MLMDatasetbyDistilBert(Dataset):
                     logger.info(f"<==[End] Saving features into cached file {cached_features_file} [took {time.time() - start:.3f} s]")
 
                 #print(self.mydict.keys())
-                #print(len(self.mydict['inputs_ids']))
-                #print(self.mydict['inputs_ids'])
+                #print(len(self.mydict['input_ids']))
+                #print(self.mydict['input_ids'])
         
             
     def __getitem__(self, idx):
         return {key: torch.tensor(val[idx]) for key, val in self.mydict.items()}
 
     def __len__(self):
-        return (len(self.mydict['inputs_ids']))
+        return (len(self.mydict['input_ids']))
     
     
 # MLMDataset distillation 용
@@ -1095,8 +1095,8 @@ class MLMDatasetDistillation(Dataset):
                     logger.info(f"<==[End] Saving features into cached file {cached_features_file} [took {time.time() - start:.3f} s]")
 
                 #print(self.mydict.keys())
-                #print(len(self.mydict['inputs_ids']))
-                #print(self.mydict['inputs_ids'])
+                #print(len(self.mydict['input_ids']))
+                #print(self.mydict['input_ids'])
         
             
     def __getitem__(self, idx):

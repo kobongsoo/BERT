@@ -15,7 +15,7 @@ from torch.utils.data.dataset import Dataset
 from .utils import mlogging
 
 # [bong] mylogging 호출함
-logger = mlogging(loggername='qnadataset',logfilename='qnadataset')
+logger = mlogging(loggername='qnadataset',logfilename='../../log/qnadataset')
 
 
 @dataclass
