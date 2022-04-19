@@ -20,6 +20,35 @@ from typing import Dict, List, Optional
 # [bong] mylogging 호출함
 logger = mlogging(loggername='bwpdataset',logfilename='../../log/bwdataset')
 
+# 모델 저장 
+def SaveBERTModel(model, tokenizer, OUTPATH, epochs, lr, batch_size):
+    
+    # 현재 local 시간 얻어옴(20220414-12-20)
+    tm = time.localtime(time.time())  
+    tt = f"batch:{batch_size}-ep:{epochs}-lr:{lr:.9f}-{tm.tm_mon}m{tm.tm_mday}d-{tm.tm_hour}:{tm.tm_min}"
+                
+    TMP_OUT_PATH = OUTPATH + tt
+    
+    ### 전체모델 저장
+    os.makedirs(TMP_OUT_PATH, exist_ok=True)
+    #torch.save(model, OUTPATH + 'pytorch_model.bin') 
+    # save_pretrained 로 저장하면 config.json, pytorch_model.bin 2개의 파일이 생성됨
+    model.save_pretrained(TMP_OUT_PATH)
+
+    # tokeinizer 파일 저장(vocab)
+    VOCAB_PATH = TMP_OUT_PATH
+    tokenizer.save_pretrained(VOCAB_PATH)
+    logger.info(f'==> save_model : {TMP_OUT_PATH}')
+    
+# MASKED Language Model 일때 정확도 계산
+def AccuracyForMLM(logits, labels, attention_mask):
+    pred = torch.argmax(logits, dim=2)
+    tmpcorrect = pred.eq(labels)
+    # 예측값 중 true인값 * attention_maks가 = 1(True)인것 중에서 True값이 합이 masked에서 알아맞춘 단어 계수임
+    correct = tmpcorrect*attention_mask 
+    return correct
+    
+    
 @dataclass
 class ClassificationExample:
     text_a: str
