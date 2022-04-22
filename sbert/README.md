@@ -30,8 +30,8 @@ pip install -U sentence-transformers
 
 
 ### 3. Augmented SBERT(증강?? S-BERT)
-- S-BERT 훈련을 위해서는 STS 데이터셋(두문장간 유사도 점수매긴 dataset) 이 많아야 한다. 하지만 이런 STS dataset을 일일이 만드는 것은 비용과 시간이 많이 든다.
-- 따라서 Augmented SBERT는 이런 STS dataset이 적은 경우, 효과적으로 훈련하는 방식에 대해 설명한다.
+- S-BERT 훈련을 위해서는 **STS 데이터셋(Semantic Textual Semilarity: 두 문장간 유사도 점수매긴 dataset) 이 많아야 한다**. 하지만 이런 **STS dataset을 일일이 만드는 것은 비용과 시간이 많이 든다**.
+- 따라서 Augmented SBERT는 이런 **STS dataset이 적은 경우, 효과적으로 훈련하는 방식**에 대해 설명한다.
 
 #### 3.1 문장쌍 STS dataset 이 적은 경우(label이 적은 경우)
 - 1단계: 적은 STS dataset(gold sts dataset) 에 대해 Cross-Encoder로 BERT 훈련 시킴
