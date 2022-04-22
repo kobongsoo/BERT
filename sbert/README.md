@@ -6,7 +6,7 @@
 pip install -U sentence-transformers
 ```
 ### 1. Sentence Bert(이하: S-BERT)
-- 기존  BERT 모델을 가지고, Bi-Encoder 혹은 Cross-Encoder 방식으로 훈련하여 제작된 모델로써,  semantic 응용 분야에 있어서, **기존 BERT보다 성능과 속도가 매우 향상된 BERT 모델임**.
+- 기존  BERT 모델을 가지고, Bi-Encoder 방식으로 훈련하여 제작된 모델로써,  semantic 응용 분야에 있어서, **기존 BERT보다 성능과 속도가 매우 향상된 BERT 모델임**.
 - 응용 분야 : semantic textual similar, semantic search,  text clustering, semantic classification, paraphrase mining 등
 
 ### 2. Bi-Encoder vs. Cross-Encoder
