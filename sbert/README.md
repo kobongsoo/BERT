@@ -36,15 +36,20 @@ pip install -U sentence-transformers
 - 따라서 [Augmented SBERT](https://towardsdatascience.com/advance-nlp-model-via-transferring-knowledge-from-cross-encoders-to-bi-encoders-3e0fc564f554)는 이런 **STS dataset이 없거나, 적은 경우, 효과적으로 훈련하여 성능을 높이는 방식**에 대해 설명한다.
 
 ### 1. 도메인 문장쌍 STS dataset 이 없는 경우
+#### ![image](https://user-images.githubusercontent.com/93692701/165041185-afc15c97-d85e-4ad4-ba67-4bc14a47f762.png)
+
 - 1단계: **기존 korsts, kluests 등 sts dataset을 가지고,  Cross-Encoder로 BERT 훈련 시킴**
 - 2.1단계: 기존 잘 훈련된 S-BERT(예: paraphrase-multilingual-mpnet-base-v2, distiluse-base-multilingual-cased-v2 등)를 이용해, **도메인 말뭉치 문장들에 대해 유사도 측정**해서, 한 문장에 대해 K수만큼 유사한 문장들을 조합하여 문장 쌍을 만듬
 - 2.2단계: 1E단계에서 훈련된 BERT 로 2.1단계에서 만든 문장쌍들에 대해 점수를 매김->이를 **silver sts dataset**이라고 함
-- 3단계: gold sts dataset + silver sts dataset 을 훈련 데이터로 하여 Bi-Encoder 훈련 시킴
+- 3단계: **기존 korst,kluests등 + silver sts dataset 을 훈련 데이터**로 하여 Bi-Encoder 훈련 시킴
 - 예제: [도메인 STS dataset이 없는 경우](https://github.com/kobongsoo/BERT/blob/master/sbert/Augmented/sbert-no-dataset.ipynb)
 
 ### 2. 도메인 문장쌍 STS dataset 이 적은 경우
+#### ![image](https://user-images.githubusercontent.com/93692701/165041141-1184b135-a532-4e7a-aac1-ddb3e591be08.png)
 - 1단계: **적은 도메인 STS dataset(gold sts dataset) 에 대해 Cross-Encoder로 BERT 훈련 시킴**
 - 2.1단계: 기존 잘 훈련된 S-BERT(예: paraphrase-multilingual-mpnet-base-v2, distiluse-base-multilingual-cased-v2 등)를 이용해, **gold sts 문장들에 대해 유사도 측정**해서, 한 문장에 대해 K수만큼 유사한 문장들을 조합하여 문장 쌍을 만듬
 - 2.2단계: 1E단계에서 훈련된 BERT 로 2.1단계에서 만든 문장쌍들에 대해 점수를 매김->이를 **silver sts dataset**이라고 함
-- 3단계: gold sts dataset + silver sts dataset 을 훈련 데이터로 하여 Bi-Encoder 훈련 시킴
+- 3단계: **gold sts dataset + silver sts dataset 을 훈련 데이터**로 하여 Bi-Encoder 훈련 시킴
 - 예제: [도메인 STS dataset이 적은 경우](https://github.com/kobongsoo/BERT/blob/master/sbert/Augmented/sbert-limited-dataset.ipynb)
+
+
