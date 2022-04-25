@@ -35,15 +35,16 @@ pip install -U sentence-transformers
 - S-BERT 훈련을 위해서는 **STS 데이터셋(Semantic Textual Semilarity: 두 문장간 유사도 점수매긴 dataset) 이 많아야 한다**. 하지만 이런 **STS dataset을 일일이 만드는 것은 비용과 시간이 많이 든다**.
 - 따라서 [Augmented SBERT](https://towardsdatascience.com/advance-nlp-model-via-transferring-knowledge-from-cross-encoders-to-bi-encoders-3e0fc564f554)는 이런 **STS dataset이 없거나, 적은 경우, 효과적으로 훈련하여 성능을 높이는 방식**에 대해 설명한다.
 
-### 1. 문장쌍 STS dataset 이 없는 경우
-- 1단계: 기존 korsts, kluests 등 sts dataset을 가지고,  Cross-Encoder로 BERT 훈련 시킴
-- 2.1단계: 기존 잘 훈련된 S-BERT(예: paraphrase-multilingual-mpnet-base-v2, distiluse-base-multilingual-cased-v2 등)를 이용해, 말뭉치 문장들에 대해 유사도 측정해서, 한 문장에 대해 K수만큼 유사한 문장들을 조합하여 문장 쌍을 만듬
-- 2.2단계: 1E단계에서 훈련된 BERT 로 2.1단계에서 만든 문장쌍들에 대해 점수를 매김->이를  silver sts dataset이라고 함
+### 1. 도메인 문장쌍 STS dataset 이 없는 경우
+- 1단계: **기존 korsts, kluests 등 sts dataset을 가지고,  Cross-Encoder로 BERT 훈련 시킴**
+- 2.1단계: 기존 잘 훈련된 S-BERT(예: paraphrase-multilingual-mpnet-base-v2, distiluse-base-multilingual-cased-v2 등)를 이용해, **도메인 말뭉치 문장들에 대해 유사도 측정**해서, 한 문장에 대해 K수만큼 유사한 문장들을 조합하여 문장 쌍을 만듬
+- 2.2단계: 1E단계에서 훈련된 BERT 로 2.1단계에서 만든 문장쌍들에 대해 점수를 매김->이를 **silver sts dataset**이라고 함
 - 3단계: gold sts dataset + silver sts dataset 을 훈련 데이터로 하여 Bi-Encoder 훈련 시킴
+- 예제: [도메인 STS dataset이 없는 경우](https://github.com/kobongsoo/BERT/blob/master/sbert/Augmented/sbert-no-dataset.ipynb)
 
-### 2. 문장쌍 STS dataset 이 적은 경우
-- 1단계: 적은 STS dataset(gold sts dataset) 에 대해 Cross-Encoder로 BERT 훈련 시킴
-- 2.1단계: 기존 잘 훈련된 S-BERT(예: paraphrase-multilingual-mpnet-base-v2, distiluse-base-multilingual-cased-v2 등)를 이용해, gold sts 문장들에 대해 유사도 측정해서, 한 문장에 대해 K수만큼 유사한 문장들을 조합하여 문장 쌍을 만듬
-- 2.2단계: 1E단계에서 훈련된 BERT 로 2.1단계에서 만든 문장쌍들에 대해 점수를 매김->이를  silver sts dataset이라고 함
+### 2. 도메인 문장쌍 STS dataset 이 적은 경우
+- 1단계: **적은 도메인 STS dataset(gold sts dataset) 에 대해 Cross-Encoder로 BERT 훈련 시킴**
+- 2.1단계: 기존 잘 훈련된 S-BERT(예: paraphrase-multilingual-mpnet-base-v2, distiluse-base-multilingual-cased-v2 등)를 이용해, **gold sts 문장들에 대해 유사도 측정**해서, 한 문장에 대해 K수만큼 유사한 문장들을 조합하여 문장 쌍을 만듬
+- 2.2단계: 1E단계에서 훈련된 BERT 로 2.1단계에서 만든 문장쌍들에 대해 점수를 매김->이를 **silver sts dataset**이라고 함
 - 3단계: gold sts dataset + silver sts dataset 을 훈련 데이터로 하여 Bi-Encoder 훈련 시킴
-
+- 예제: [도메인 STS dataset이 적은 경우](https://github.com/kobongsoo/BERT/blob/master/sbert/Augmented/sbert-limited-dataset.ipynb)
