@@ -34,6 +34,7 @@ pip install -U sentence-transformers
 ## 3. S-BERT 강화하기(Augmented SBERT)
 - S-BERT 훈련을 위해서는 **STS 데이터셋(Semantic Textual Semilarity: 두 문장간 유사도 점수매긴 dataset) 이 많아야 한다**. 하지만 이런 **STS dataset을 일일이 만드는 것은 비용과 시간이 많이 든다**.
 - 따라서 [Augmented SBERT](https://towardsdatascience.com/advance-nlp-model-via-transferring-knowledge-from-cross-encoders-to-bi-encoders-3e0fc564f554)는 이런 **STS dataset이 없거나, 적은 경우, 효과적으로 훈련하여 성능을 높이는 방식**에 대해 설명한다.
+- STS 데이터셋에 대해 평가 함수는 BI-Encoder는 [EmbeddingSimilarityEvaluator](https://www.sbert.net/docs/package_reference/evaluation.html?highlight=embeddingsimilarityevaluator#) 사용 하고, Cross-Encoder는 [CECorrelationEvaluator](https://www.sbert.net/docs/package_reference/cross_encoder.html#evaluation) 를 사용 한다.
 
 ### 1. 도메인 문장쌍 STS dataset 이 없는 경우
 #### ![image](https://user-images.githubusercontent.com/93692701/165041185-afc15c97-d85e-4ad4-ba67-4bc14a47f762.png)
