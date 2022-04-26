@@ -97,7 +97,7 @@
 [참고: SentenceTransformers](https://www.sbert.net/)
   
 ### 5) S-BERT 지식 증류 학습
-- 교사모델은 **paraphrase-multilingual-mpnet-base-v2 혹은 distiluse-base-multilingual-cased-v2 둘중 하나 선택**, 학생모델은 제작한 S-BERT 모델로 설정 하여 학습시킴.(자체 테스트시, 위 2개의 모델이 가장 성능이 좋았음)
+- 교사모델은 **paraphrase-multilingual-mpnet-base-v2 혹은 distiluse-base-multilingual-cased-v2 둘중 하나 선택**, 학생모델은 제작한 S-BERT 모델로 설정 하여 학습시킴.(자체 테스트시, 위 2개의 모델이 가장 성능이 좋았음(*아래표 참조))
 
   다운로드 : [paraphrase-multilingual-mpnet-base-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-mpnet-base-v2)
 ,[distiluse-base-multilingual-cased-v2](https://huggingface.co/sentence-transformers/distiluse-base-multilingual-cased-v2)
