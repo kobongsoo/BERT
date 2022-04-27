@@ -9,7 +9,7 @@ pip install transformers
 
 ### 1. 훈련 예제
 - 훈련을 시키기 위해서는 말뭉치와 추가할 vocab, 기존 훈련된 BERT 모델과 vocab 파일 필요함
-- 추가 vocab 만드는 방법은 https://github.com/kobongsoo/BERT/tree/master/tokenizer_sample 참조 바람
+- 추가 vocab 만드는 방법은 [여기](https://github.com/kobongsoo/BERT/tree/master/tokenizer_sample) 참조 바람
 - 기존 모델과 vocab 파일들은 HuggingFace 모델(bert-base-multilingual-cased)들 불러와서, **save_pretrained 이용하여, 파일로 저장**할 수 있음
 - 혹은 **cache_dir='저장할 폴더명'** 해서 파일로 저장할수도 있음(**단 이때는 저장 파일명이 랜덤한 파일로 생성되므로, 수동으로 이름변경해줘야함**)
 ```
@@ -46,6 +46,7 @@ model = BertForMaskedLM.from_pretrained('bert-base-multilingual-cased' ,cache_di
 ### 2. Fine-Tuning 예제
 - 사전훈련 시킨 모델들에 대해 Fine-Tuning 하는 예제임
 - 기존 사전 훈련 시킨 모델과 vocab, 그리고 훈련/평가 말뭉치(예:NSMC, kornli 등)가 필요함
+- 말뭉치들은 [여기](https://github.com/kobongsoo/BERT/tree/master/corpus_sample) 참조 바람
 
 |구분|소스명|설명|기타|
 |:-------:|:-----------------|:-------------------------------------------------------|:---------------------|
