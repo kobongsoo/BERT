@@ -42,3 +42,18 @@ model = BertForMaskedLM.from_pretrained('bert-base-multilingual-cased' ,cache_di
 |[bert-further-pretrain_trainer.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-further-pretrain_trainer.ipynb)|기존 훈련된 BERT에, **추가 MLM 과 NLP 훈련** 시키는 예제 | 훈련은 **HuggingFace Trainer를 이용**함, 추가 vocab 이 필요함|
 |[bert_pretrain.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert_pretrain.ipynb)|**처음부터 MLM 과 NLP 훈련** 시키는 예제 | 훈련은 **HuggingFace Trainer를 이용**함, **새로운 Vocab 필요**|
 |[sentencepiece-further-pretrain.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/sentencepiece-further-pretrain.ipynb)|**sentencepiecetokenizer로 MLM 훈련** 시키는 예제 | 훈련은 **HuggingFace Trainer를 이용**함, **새로운 Vocab 필요**|
+
+### 2. Fine-Tuning 예제
+- 사전훈련 시킨 모델들에 대해 Fine-Tuning 하는 예제임
+- 기존 사전 훈련 시킨 모델과 vocab, 그리고 훈련/평가 말뭉치(예:NSMC, kornli 등)가 필요함
+
+|구분|소스명|설명|기타|
+|:-------:|:-----------------|:-------------------------------------------------------|:---------------------|
+|훈련|[bert-finetuning-multiclassi-train.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-finetuning-multiclassi-train.ipynb)|분류 모델 Fine-Tuning 훈련 예제 | WandB 사용함, 훈련 코드는 pytorch로 구현됨|
+|평가|[bert-finetuning-multiclassi-test.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-finetuning-multiclassi-test.ipynb)|훈련된 분류 모델 테스트 예제 | 평가코드는 pytorch로 구현됨|
+|훈련|[bert-finetuning-nli-train.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-finetuning-nli-train.ipynb)|NLI 모델 Fine-Tuning 훈련 예제 | 훈련코드는 pytorch로 구현됨|
+|평가|[bert-finetuning-nli-test.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-finetuning-nli-test.ipynb)|훈련된 NLI 모델 테스트 예제 | 평가코드는 pytorch로 구현됨|
+|평가|[bert-MLM-test.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-MLM-test.ipynb)|기존 사전 훈련된 모델 MASK 테스트 예제 | 평가코드는 pytorch로 구현됨|
+
+### 3. 기타
+- [Perplexity(PPL) 예제](https://github.com/kobongsoo/BERT/blob/master/bert/bert-perplexity-eval.ipynb) 
