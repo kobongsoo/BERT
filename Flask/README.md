@@ -48,6 +48,6 @@ http://ip:5000/  혹은 http://127.0.0.1:5000/ 접속하면, 'Hello World!' 가 
 |[sb.html](https://github.com/kobongsoo/BERT/blob/master/Flask/sb.html)| webservice.py에서 호출 하는 쿼리와 분류문장 유사도 측정 UI 웹페이지 |http://ip:port/sb 접속시 보여지는 UI|
 |[summarizer.html](https://github.com/kobongsoo/BERT/blob/master/Flask/summarizer.html)| webservice.py에서 호출 하는 추출 요약문 생성 UI 웹페이지 |http://ip:port/summ 접속시 보여지는 UI|
 
-
+#### http://ip:port/sb 접속 화면 예시
 ![image](https://user-images.githubusercontent.com/93692701/165464853-b4cdd6d1-48fd-46c7-b462-32874934823c.png)
 
