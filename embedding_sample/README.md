@@ -52,7 +52,7 @@ print(idx)
 ```
 ### 4. 기타
 - [embedding_viewer.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/embedding_viewer.ipynb): 단어 embedding들을 3D 화면으로 보여주는 예제
-1. 단어들은 meta.tsv 파일로 저장, 임베딩값들은 vecs.tsv 파일로 저장(*이때 임베딩 각 값들은 탭으로 띄어야 함)
+1. 단어들은 meta.tsv 파일로 저장, 임베딩값들은 vecs.tsv 파일로 저장(**이때 임베딩 각 값들은 탭으로 띄어야 함**)
 2. 이후 https://projector.tensorflow.org 접속하여, [load] 버튼 클릭->[Choose file] 버튼 클릭하여, vecs.tsv, meta.tsv 파일 선택 하면 완료
 
 ![image](https://user-images.githubusercontent.com/93692701/165455476-477d39cc-a401-4495-b3f4-e95b60ca70b3.png)
