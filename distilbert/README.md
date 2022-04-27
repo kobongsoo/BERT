@@ -42,13 +42,13 @@ pip install transformers
 
 #### 3. loss 함수 정의
 - loss 함수는 학생모델이 loss(1), 교사와 학생모델간 cross-entropy loss(2), 교사와 학생모델간 cosine-loss(3)  3가지 인데, 이때 (2)와 (3) loss는 torch.nn.KLDivLoss 함수로 보통 대체 된다.
-- 즉 증류 손실함수 = alpha*학생모델이 loss + (1-alpah)*교사/학생모델간 torch.nn.KLDivLoss 함수
-- 이때 KLDivLoss 함수는 교사와 학생간 Dark Knowledge(어둠지식)도 학습되도록 교사loss/Temperture와 학생loss/Temperture 식으로, Temperture를 지정하는데, 보통 학습할때는 2~10으로 하고, 평가시에는 반드시 1로 해야 한다.
+- 즉 **증류 손실함수 = alpha x 학생모델이 loss + (1-alpah) x 교사/학생모델간 torch.nn.KLDivLoss 함수**
+- 이때 KLDivLoss 함수는 교사와 학생간 Dark Knowledge(어둠지식)도 학습되도록 교사loss/Temperture와 학생loss/Temperture 식으로, Temperture를 지정하는데, **보통 학습할때는 2~10으로 하고, 평가시에는 반드시 1**로 해야 한다.
 - Temperture==1 이면, softmax와 동일, 1보다 크면 확률이 평활화 되어서, 어둠 지식 습득이 많이됨
-- 학생모델loss는 전체 loss에 0.1이 되도록 alpha값은 0.1이 좋다고 함
+- 학생모델loss는 전체 loss에 0.1이 되도록 **alpha값은 0.1**이 좋다고 함
 
 #### 4. 훈련
-- 교사모델은 평가(eval)모드로, 학생모델은 학습(train)모드로 설정해서 훈련 함
+- 교사모델은 **평가(eval)모드**로, 학생모델은 학습(train)모드로 설정해서 훈련 함
 
 ### 3. Fine-Tuning 예제
 
@@ -59,3 +59,14 @@ pip install transformers
 |훈련|[distilbert-finetuning-QA-train.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/finetuning/distilbert-finetuning-QA-train.ipynb)|Q&A Fine-Tuning 훈련 예제| 훈련코드는 pytorch|
 |평가|[distilbert-finetuning-QA-test.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/finetuning/distilbert-finetuning-QA-test.ipynb)|Q&A Fine-Tuning 모델 평가 예제| |
 |테스트|[distilbert-QA-test.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/finetuning/distilbert-QA-test.ipynb)|Q&A 모델 테스트 예제| |
+
+### 4. 유사도 예제
+- 훈련된 DistilBert를 가지고 문장들의 임베딩 값을 출력하여, 코사인 유사도 비교하는 예제
+
+|소스명|설명|기타|
+|:-----------------|:-----------------------------------------------------------|:---------------------|
+|[distilbert-embedding.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distilbert-embedding.ipynb)|**last_hidden_state 평균값만으로 유사도 측정하는 예제**||
+|[distilbert-embedding2.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distilbert-embedding2.ipynb)|**last_hidden_state 평균값 혹은 hidden_state의 마지막 2번째 레이어 평균값으로 유사도 측정 하는 예제**|모델 불러올때 **output_hidden_states=True** 해줘야 함|
+
+### 5. 기타
+- [distibert-state_dict.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distibert-state_dict.ipynb):두 모델의 state_dict 유사도 측정 예제
