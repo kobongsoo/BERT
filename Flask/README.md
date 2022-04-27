@@ -36,6 +36,7 @@ python run.py
  ```
 http://ip:5000/  혹은 http://127.0.0.1:5000/ 접속하면, 'Hello World!' 가 찍힘
 ```
+
 ### 예제
 
 |소스명|설명|기타|
@@ -43,6 +44,10 @@ http://ip:5000/  혹은 http://127.0.0.1:5000/ 접속하면, 'Hello World!' 가 
 |[webservice.py](https://github.com/kobongsoo/BERT/blob/master/Flask/webservice.py)|Flask 와 BERT 모델 추론 함수(model.py), UI html 연동||
 |[run.py](https://github.com/kobongsoo/BERT/blob/master/Flask/run.py)| Flask 웹서비스 실행 |**host='0.0.0.0'** 하면, 웹에서 해당 ip로 접속가능|
 |[model.py](https://github.com/kobongsoo/BERT/blob/master/Flask/model.py)| BERT 모델 추론 하고,그 결과를 리턴 함 |BERT 모델 로딩/추론 처리함|
-|[classification.html](https://github.com/kobongsoo/BERT/blob/master/Flask/classification.html)| webservice.py에서 호출 하는 분류 UI 웹페이지 ||
-|[sb.html](https://github.com/kobongsoo/BERT/blob/master/Flask/sb.html)| webservice.py에서 호출 하는 쿼리와 분류문장 유사도 측정 UI 웹페이지 ||
-|[summarizer.html](https://github.com/kobongsoo/BERT/blob/master/Flask/summarizer.html)| webservice.py에서 호출 하는 추출 요약문 생성 UI 웹페이지 ||
+|[classification.html](https://github.com/kobongsoo/BERT/blob/master/Flask/classification.html)| webservice.py에서 호출 하는 분류 UI 웹페이지 |http://ip:port/sc 접속시 보여지는 UI|
+|[sb.html](https://github.com/kobongsoo/BERT/blob/master/Flask/sb.html)| webservice.py에서 호출 하는 쿼리와 분류문장 유사도 측정 UI 웹페이지 |http://ip:port/sb 접속시 보여지는 UI|
+|[summarizer.html](https://github.com/kobongsoo/BERT/blob/master/Flask/summarizer.html)| webservice.py에서 호출 하는 추출 요약문 생성 UI 웹페이지 |http://ip:port/summ 접속시 보여지는 UI|
+
+
+![image](https://user-images.githubusercontent.com/93692701/165464853-b4cdd6d1-48fd-46c7-b462-32874934823c.png)
+
