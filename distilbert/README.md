@@ -50,3 +50,12 @@ pip install transformers
 #### 4. 훈련
 - 교사모델은 평가(eval)모드로, 학생모델은 학습(train)모드로 설정해서 훈련 함
 
+### 3. Fine-Tuning 예제
+
+|구분|소스명|설명|기타|
+|:---|:-----------------|:-----------------------------------------------------------|:---------------------|
+|훈련|[distilbert-finetuning-nli-train.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/finetuning/distilbert-finetuning-nli-train.ipynb)|NLI Fine-Tuning 훈련 예제| 훈련코드는 pytorch|
+|평가|[distilbert-finetuning-nli-test.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/finetuning/distilbert-finetuning-nli-test.ipynb)|NLI Fine-Tuning 모델 평가 예제| |
+|훈련|[distilbert-finetuning-QA-train.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/finetuning/distilbert-finetuning-QA-train.ipynb)|Q&A Fine-Tuning 훈련 예제| 훈련코드는 pytorch|
+|평가|[distilbert-finetuning-QA-test.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/finetuning/distilbert-finetuning-QA-test.ipynb)|Q&A Fine-Tuning 모델 평가 예제| |
+|테스트|[distilbert-QA-test.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/finetuning/distilbert-QA-test.ipynb)|Q&A 모델 테스트 예제| |
