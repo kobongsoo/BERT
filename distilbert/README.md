@@ -18,12 +18,21 @@ pip install transformers
 
 |소스명|설명|기타|
 |:-----------------|:-----------------------------------------------------------|:---------------------|
-|[distilbert-further-pretrain-MaskedLM.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distilbert-further-pretrain-MaskedLM.ipynb)|기존 훈련된 ㅇDistilBERT 에, **추가 MLM만 훈련** 시키는 예제 | 훈련 코드는 pytorch로 구현되었음, 추가 vocab 이 필요함|
+|[distilbert-further-pretrain-MaskedLM.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distilbert-further-pretrain-MaskedLM.ipynb)|기존 훈련된 DistilBERT 에, **추가 MLM만 훈련** 시키는 예제 | 훈련 코드는 pytorch로 구현되었음, 추가 vocab 이 필요함|
 |[distilbert-model-create.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distilbert-model-create.ipynb)|**훈련 안된 빈 껍데기 모델 만드는 예제**|embedding_size, 단어 임베딩 편차등을 설정해야 함|
 |[sentence-distilbert-nli.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/sentence-distilbert-nli.ipynb)|**DistilBERT를 SentenceBERT로 만드는 예제**| NLI 학습시킴, sentence-transformers 패키지를 이용|
 
 ### 2. 지식증류 예제
+
+|소스명|설명|기타|
+|:-----------------|:-----------------------------------------------------------|:---------------------|
+|[bert-distillation1.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distillation/bert-distillation1.ipynb)|훈련은 하지않고, **교사모델 구조->학생 모델로 복사 적용만** 하는 예제| state_dict 이용|
+|[bert-Task-specific-knowledge-distillation.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distillation/bert-Task-specific-knowledge-distillation.ipynb)|**교사모델(BERT)과 학생모델(DistilBert) Fine-tuning 하여 증류**하는 예제|**교사/학생 모델이 tokenizer는 같아야함**, MLM 혹은 Classifcation 모델 사용|
+|[bert-Task-specific-knowledge_distillation2.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/sentence-distilbert-nli.ipynb)|**교사 모델(BertModel:12개 hiddenlayer) -> 학생모델(BertModel:6개 hiddenlayer) 로 distillation** 하는 예제| **교사/학생 모델이 tokenizer는 같아야함**, MLM 모델 사용|
+
 ### <지식 증류 과정>
+![image](https://user-images.githubusercontent.com/93692701/165438557-c55cbd05-7681-4a14-931a-579e25a55228.png)
+
 #### 1. 교사모델 구조->학생 모델로 복사
 - 교사모델이 bert-base 이고, 학생 모델이 distilbert 라면, 교사 bert 모델이 12개 hiddenlayer에 wegiht와 bias 값들을 학생모델 distilbert 6개 hiddenlayer로 복사함.
 (이때 교사모델이 어떤 hiddenlayer를 학생모델로 복사할때는 **[0, 2, 4, 7, 9, 11] 식으로 건너 띄어서 레이어를 복사 하는데 좋다고 함**)
@@ -40,3 +49,4 @@ pip install transformers
 
 #### 4. 훈련
 - 교사모델은 평가(eval)모드로, 학생모델은 학습(train)모드로 설정해서 훈련 함
+
