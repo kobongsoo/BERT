@@ -13,8 +13,8 @@ seed_everything(111)
 
 #=================================================================================================================
 # classification 모델과 tokenizer 설정
-cassification_model_path = '../../model/classification/bmc-fpt-wiki_20190620_mecab_false_0311-nouns-0327-nscm-0329'
-cassification_vocab_path = '../../model/classification/bmc-fpt-wiki_20190620_mecab_false_0311-nouns-0327-nscm-0329/vocab'
+cassification_model_path = '../../model/bert/bmc-fpt-wiki_20190620_mecab_false_0311-nouns-0416'
+cassification_vocab_path = '../../model/bert/bmc-fpt-wiki_20190620_mecab_false_0311-nouns-0416'
 
 cassification_tokenizer = BertTokenizer.from_pretrained(cassification_vocab_path, do_lower_case=False, max_len=128)
 #cassification_model = torch.load(cassification_model_path)
