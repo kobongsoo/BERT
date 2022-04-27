@@ -20,9 +20,40 @@
 |[sentence-bert-embedding-by-bert.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/sentence-bert-embedding-by-bert.ipynb)|BERT 모델을 Sentence Bert로 만들고(훈련은 안시킴) 유사도 측정하는 예제|**BERT 모델** 이용|
 |[sentence-bert-clustering.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/sentence-bert-clustering.ipynb)|sentence-bert를 가지고 클러스터링 하는 예제|**Sentence Bert 모델** 이용|
 
-### 3. FAISS 예제
+### 3. FAISS(Facebook AI Similarity Search) 예제
 
 |소스명|설명|기타|
 |:-----------------|:-----------------------------------------------------------|:---------------------|
 |[sbert-Faiss-embedding.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/sbert-Faiss-embedding.ipynb)|FAISS를 이용한 Sementic Search 예제 |**Sentence Bert 모델** 이용|
 |[sbert-Faiss-embedding2.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/sbert-Faiss-embedding2.ipynb)|FAISS를 이용한 Sementic Search 예제+데이터 추가 예제|**Sentence Bert 모델** 이용|
+
+### FAISS 란?
+-Faiss는 facebook에서 만든 vector 유사도를 측정하는 라이브러리로, 기존 numpy 나 scikit-learn 에서 제공하는 cosine similarity 보다 강력하며, GPU도 지원한다.
+- Documente는 [여기](https://faiss.ai/) , github 소스는 [여기](https://github.com/facebookresearch/faiss) 참조
+- 설치
+```
+!conda install -c conda-forge faiss-gpu
+```
+- instance index 생성
+```
+import faiss
+index = faiss.IndexFlatL2(embeddings.shape[1])
+```
+- id를 매핑
+```
+index = faiss.IndexIDMap(index)
+index.add_with_ids(embeddings, df.번호.values)
+```
+- 유사도 비교
+```
+distance, idx = index.search(np.array([embeddings[1]]), k=10)
+print(distance)
+print(idx)
+```
+### 4. 기타
+- [embedding_viewer.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/embedding_viewer.ipynb): 단어 embedding들을 3D 화면으로 보여주는 예제
+1. 단어들은 meta.tsv 파일로 저장, 임베딩값들은 vecs.tsv 파일로 저장(*이때 임베딩 각 값들은 탭으로 띄어야 함)
+2. 이후 https://projector.tensorflow.org 접속하여, [load] 버튼 클릭->[Choose file] 버튼 클릭하여, vecs.tsv, meta.tsv 파일 선택 하면 완료
+
+![image](https://user-images.githubusercontent.com/93692701/165455476-477d39cc-a401-4495-b3f4-e95b60ca70b3.png)
+
