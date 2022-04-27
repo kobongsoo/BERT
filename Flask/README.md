@@ -40,7 +40,7 @@ http://ip:5000/  혹은 http://127.0.0.1:5000/ 접속하면, 'Hello World!' 가 
 
 |소스명|설명|기타|
 |:-----------------|:-----------------------------------------------------------|:---------------------|
-|[webservice.py](https://github.com/kobongsoo/BERT/blob/master/Flask/webservice.py)|Flask 와 BERT 모델 추론 함수(model.py) 호출||
+|[webservice.py](https://github.com/kobongsoo/BERT/blob/master/Flask/webservice.py)|Flask 와 BERT 모델 추론 함수(model.py), UI html( 연동||
 |[run.py](https://github.com/kobongsoo/BERT/blob/master/Flask/run.py)| Flask 웹서비스 실행 |host='0.0.0.0' 하면, 웹에서 해당 ip로 접속가능|
 |[model.py](https://github.com/kobongsoo/BERT/blob/master/Flask/model.py)| BERT 모델 추론 하고,그 결과를 리턴 함 |BERT 모델 로딩/추론 처리함|
 |[classification.html](https://github.com/kobongsoo/BERT/blob/master/Flask/classification.html)| webservice.py에서 호출 하는 분류 UI 웹페이지 ||
