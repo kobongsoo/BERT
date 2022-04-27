@@ -19,3 +19,10 @@
 |[sentence-bert-embedding.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/sentence-bert-embedding.ipynb)|sentence-bert를 가지고 유사도 측정하는 예제|**Sentence Bert 모델** 이용|
 |[sentence-bert-embedding-by-bert.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/sentence-bert-embedding-by-bert.ipynb)|BERT 모델을 Sentence Bert로 만들고(훈련은 안시킴) 유사도 측정하는 예제|**BERT 모델** 이용|
 |[sentence-bert-clustering.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/sentence-bert-clustering.ipynb)|sentence-bert를 가지고 클러스터링 하는 예제|**Sentence Bert 모델** 이용|
+
+### 3. FAISS 예제
+
+|소스명|설명|기타|
+|:-----------------|:-----------------------------------------------------------|:---------------------|
+|[sbert-Faiss-embedding.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/sbert-Faiss-embedding.ipynb)|FAISS를 이용한 Sementic Search 예제 |**Sentence Bert 모델** 이용|
+|[sbert-Faiss-embedding2.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/sbert-Faiss-embedding2.ipynb)|FAISS를 이용한 Sementic Search 예제+데이터 추가 예제|**Sentence Bert 모델** 이용|
