@@ -25,8 +25,8 @@ Tokens (int) : [4284, 552, 4269, 30456, 29636, 2570, 371, 29631]
 ```
 소스 : [SPT Vocab 추가방법 예제](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/sp_new_insert.ipynb)
 
-#### 3. SPT vocab 를 BP) vocab 변경 방법
-- SPT Vocab 목록들을 불러와서에 word들은 prefix _제거 하고, subword에는 ## prefix를 붙임
+#### 3. SPT vocab 를 BPT vocab 으로 변경 방법
+- SPT Vocab 목록들을 불러와서에 **word들은 prefix _제거 하고, subword에는 ## prefix를 붙임**
 ```
 _오늘, _아침, 밥 -> 오늘, 아침, ##밥
 ```
