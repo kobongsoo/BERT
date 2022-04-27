@@ -95,7 +95,7 @@ with open(output_fpath, "w", encoding="utf-8") as f:
 - conda 환경 에서 mecab 설치하기
 #### 1) 시스템 root 권한으로 들어가서.
 ```
->> bash <(curl -s https://raw.githubusercontent.com/konlpy/konlpy/master/scripts/mecab.sh) 해줌
+>> bash <(curl -s https://raw.githubusercontent.com/konlpy/konlpy/master/scripts/mecab.sh) 
 ```
 #### 2) conda 가상 환경으로 들어가서.
 ```
