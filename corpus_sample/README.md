@@ -1,4 +1,4 @@
-## 말뭉치 예시
+## 말뭉치 예시 <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
 
 ### 1. [Kopora](https://ko-nlp.github.io/Korpora/)
 - 한국어 말뭉치 다운로드 사이트
