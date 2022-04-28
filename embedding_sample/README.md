@@ -1,4 +1,4 @@
-## 유사도 측정 예제
+## 유사도 측정 예제 <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
 - 문장들의 유사도는 모델의 출력 임베딩 값들을 가지고, 코사인 유사도를 가지고 측정한다.
 
 ### 1. BERT 예제
