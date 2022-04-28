@@ -1,4 +1,4 @@
-## DistilBert 예제
+## DistilBert 예제 <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
 
 - [Hugging Face](https://huggingface.co/)의 [Transformers 라이브러리](https://huggingface.co/docs/transformers/index)를 이용하였음
 - [설치방법](https://huggingface.co/docs/transformers/installation)
