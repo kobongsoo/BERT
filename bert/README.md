@@ -48,8 +48,8 @@ model = BertForMaskedLM.from_pretrained('bert-base-multilingual-cased' ,cache_di
 - 기존 사전 훈련 시킨 모델과 vocab, 그리고 훈련/평가 말뭉치(예:NSMC, kornli 등)가 필요함
 - 말뭉치들은 [여기](https://github.com/kobongsoo/BERT/tree/master/corpus_sample) 참조 바람
 
-|구분|소스명|설명|기타|
-|:-------:|:-----------------|:-------------------------------------------------------|:---------------------|
+|구 분 |소스명|설명|기타|
+|:---------|:-----------------|:-------------------------------------------------------|:---------------------|
 |훈련|[bert-finetuning-multiclassi-train.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-finetuning-multiclassi-train.ipynb)|분류 모델 Fine-Tuning 훈련 예제 | WandB 사용함, 훈련 코드는 pytorch로 구현됨|
 |평가|[bert-finetuning-multiclassi-test.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-finetuning-multiclassi-test.ipynb)|훈련된 분류 모델 테스트 예제 | 평가코드는 pytorch로 구현됨|
 |훈련|[bert-finetuning-nli-train.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-finetuning-nli-train.ipynb)|NLI 모델 Fine-Tuning 훈련 예제 | 훈련코드는 pytorch로 구현됨|
