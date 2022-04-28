@@ -8,7 +8,7 @@ pip install transformers
 - 주요 document는 [여기](https://huggingface.co/docs/transformers/model_doc/bert) 참조 바람
 
 ### 1. 훈련 예제
-- 훈련을 시키기 위해서는 말뭉치와 추가할 vocab, 기존 훈련된 BERT 모델과 vocab 파일 필요함
+- 훈련을 시키기 위해서는 **말뭉치**와 **기존 훈련된 BERT 모델과 vocab** 파일, 그리고 **기존 vocab에 더 추가되어 만들어진 추가 vocab**이 필요함
 - 추가 vocab 만드는 방법은 [여기](https://github.com/kobongsoo/BERT/tree/master/tokenizer_sample) 참조 바람
 - 기존 모델과 vocab 파일들은 HuggingFace 모델(bert-base-multilingual-cased)들 불러와서, **save_pretrained 이용하여, 파일로 저장**할 수 있음
 - 혹은 **cache_dir='저장할 폴더명'** 해서 파일로 저장할수도 있음(**단 이때는 저장 파일명이 랜덤한 파일로 생성되므로, 수동으로 이름변경해줘야함**)
