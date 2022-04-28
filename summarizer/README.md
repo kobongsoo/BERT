@@ -1,4 +1,4 @@
-### BERT 추출 요약(Extractive summary)
+### BERT 추출 요약(Extractive summary) <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
 
 #### 1.개요
 - 문서 요약에는 생성요약(abstractive summary)과 추출요약(extractive summary)이 있음.
