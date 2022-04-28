@@ -1,4 +1,4 @@
-### BERT 모델의 출력 차원(dimension) 줄이기 <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
+## BERT 모델의 출력 차원(dimension) 줄이기 <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
 
 #### 1. 필요성
 - Sementic Search 혹은 분류 모델 구축시 문장들간 유사도 측정을 위해  문장들의 임베딩(BERT는 기본 임베딩 768임)들을 비교하는 코사인 유사도를 사용한다.
@@ -53,3 +53,29 @@ class MyDistilBertModel(nn.Module):
 |:-------------------|:-----------------------------------------------|:--------------------|
 |[mydistilbertmodel.ipynb](https://github.com/kobongsoo/BERT/blob/master/mymodel/mydistilbertmodel.ipynb)|기존 distilbert 모델에 출력 dimension=768을 128 로 줄이는 예제|차원은 조정 가능|
 |[mydistilbertmodel_load.ipynb](https://github.com/kobongsoo/BERT/blob/master/mymodel/mydistilbertmodel_load.ipynb)|기존 distilbert 모델에 출력 dimension=768을 128 로 줄인 커스터마이징된 모델을 불러와서 cosin 유사도 측정하는 예제|반드시 **커스터마이징된 모델과 동일한 모델 클래스**가 구현되어 있어야 함|
+
+## Sentence BERT 모델의 출력 차원(dimension) 줄이기
+- Sentence BERT는 모델 출력이 차원을 줄이기 위해 Denser 레이어를 추가로 만들어서, Word 모델+pooling 모델+dense 모델을 연결한 모델을 만든다
+- denser 레이어에 관한 추가 내용은 [여기](https://www.sbert.net/docs/training/overview.html?highlight=dense) 참조
+
+```
+# 1. Word 임베딩 모델 
+word_embedding_model = models.Transformer(model_name, max_seq_length=128)
+
+# 2 폴링 모델 (cls 이용, 워드임베딩 평균이용, 워드임베딩 max 이용)
+# Apply mean pooling to get one fixed sized sentence vector
+pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension(),  #모델이 dimension(768)
+                               pooling_mode_mean_tokens=True,  # 워드 임베딩 평균을 이용
+                               pooling_mode_cls_token=False,   # cls 를 이용
+                               pooling_mode_max_tokens=False)  # 워드 임베딩 값중 max 값을 이용
+
+# 3. dense 모델 
+#=> 필요에 따라 출력 dimension을 768보다 작게 줄이고 싶을때 dense 모델을 추가해서 줄임.
+dense_model = models.Dense(in_features=pooling_model.get_sentence_embedding_dimension(), # 입력 dimension은 앞에 pooling모델 embedding dimension으로 지정
+                           out_features=out_dimension,     # 출력 dimension
+                           activation_function=nn.Tanh())  # activation function은 Tahn으로 정의
+
+# 4. Word 임베딩 + 폴링모델 + dense 모델
+model = SentenceTransformer(modules=[word_embedding_model, pooling_model, dense_model])
+
+```
