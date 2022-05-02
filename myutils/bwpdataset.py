@@ -39,14 +39,38 @@ def SaveBERTModel(model, tokenizer, OUTPATH, epochs, lr, batch_size):
     VOCAB_PATH = TMP_OUT_PATH
     tokenizer.save_pretrained(VOCAB_PATH)
     logger.info(f'==> save_model : {TMP_OUT_PATH}')
-    
+   
+#=================================================================
 # MASKED Language Model 일때 정확도 계산
+# => 모든 입력token에 대한 정확도 계산함
+# => return: 모든 입력 token에 대한 정확도 list(값이 Ture이면 정확, False면 부정확)
+#=================================================================
 def AccuracyForMLM(logits, labels, attention_mask):
     pred = torch.argmax(logits, dim=2)
     tmpcorrect = pred.eq(labels)
     # 예측값 중 true인값 * attention_maks가 = 1(True)인것 중에서 True값이 합이 masked에서 알아맞춘 단어 계수임
     correct = tmpcorrect*attention_mask 
     return correct
+ 
+#=================================================================    
+#  => 입력된 toekn들중 masked 토큰에 대한 정확도만 계산함
+# => return: 모든 입력 token에 대한 정확도 list(값이 Ture이면 정확, False면 부정확), masked 토큰 계수
+#=================================================================
+def AccuracyForMaskedToken(logits, #logits
+                          labels, #labels 
+                          inputs, #inputs(**mased 토큰이 포함된 input 이어야 함)
+                          masked_token_id): #masked 토큰 id(예:103)
+    
+    input_masked = inputs.eq(masked_token_id)
+    masked_len = input_masked.sum().item()  #mased_toke_id 계수를 얻어옴
+    
+    if masked_len > 0:
+        pred = torch.argmax(logits, dim=2)
+        masked_correct = pred.eq(labels)* input_masked
+    else:
+        raise ValueError(f"masked_len is null(0)")
+        
+    return masked_correct, masked_len  #masked 토큰 true인 값, masked 토큰 계수
     
     
 @dataclass
