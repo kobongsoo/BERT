@@ -16,7 +16,7 @@ Tokens (int) : [875, 3261, 5446, 6142, 3776, 3509, 1474, 17145, 18]
 ### 2. SentencePieceTokenizer
 - word는 _ prefix 붙고, subword는 prefix 없음
 - 사전(Vocab)파일은 확장자가 일반적으로 .spiece 임
-- 대표 모델 : KoBert(SKT)
+- 대표 모델 : KoBert(SKT), GPT-2, KoGPT-2
 ```
 '나는 오늘 아침밥을 먹었다.' => word: _나는, _오늘, _아침, _먹 / subword: 밥, 을, 었다, .
 
