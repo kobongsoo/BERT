@@ -62,7 +62,7 @@ Korpora.fetch("kcbert",root_dir='my_data/')
 - [말뭉치 합치기 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/merge_files.ipynb) : 여러 말뭉치들을 하나로 합치는 예제(단 말뭉치들의 열계수는 같아야함)
 - [.xlsx 파일을 .csv 파일로 변환 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/xlsx-to-csv.ipynb)
 - [.json 파일를 .csv 파일로 변환 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/json-to-csv.ipynb)
-
+- [korQuAD_v1.0 List to csv 변환 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/korQuADv1.0_json-to-list-to-csv.ipynb)
 
 ### Tips
 ##### 1. 파일 로딩/저장
