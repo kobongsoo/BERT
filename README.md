@@ -2,18 +2,18 @@
 <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fkobongsoo%2FBERT&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
 
-- #### [BERT를 이용한 sementic 검색 모델 제작 과정](https://github.com/kobongsoo/BERT/tree/master)
-- #### [BERT 예제](https://github.com/kobongsoo/BERT/tree/master/bert)
-- #### [BERT 모델의 출력 차원(dimension) 줄이기](https://github.com/kobongsoo/BERT/tree/master/mymodel)
-- #### [BertWordPieceTokenizer/ SentencePieceTokenizer](https://github.com/kobongsoo/BERT/tree/master/tokenizer_sample)
-- #### [유사도 측정 예제/FAISS](https://github.com/kobongsoo/BERT/tree/master/embedding_sample)
-- #### [BERT 추출 요약](https://github.com/kobongsoo/BERT/tree/master/summarizer)
-- #### [DistilBert 예제](https://github.com/kobongsoo/BERT/tree/master/distilbert)
-- #### [Senetence Bert](https://github.com/kobongsoo/BERT/tree/master/sbert)
-- #### [말뭉치(Corpus)](https://github.com/kobongsoo/BERT/tree/master/corpus_sample)
-- #### [FLASK](https://github.com/kobongsoo/BERT/tree/master/Flask)
-- #### [WandB](https://github.com/kobongsoo/WandB/tree/master)
-- #### [GPU 메모리보다 큰 모델 파인 튜닝하기](https://github.com/kobongsoo/GPUTech/tree/master)
+- ##### [BERT를 이용한 sementic 검색 모델 제작 과정](https://github.com/kobongsoo/BERT/tree/master)
+- ##### [BERT 예제](https://github.com/kobongsoo/BERT/tree/master/bert)
+- ##### [BERT 모델의 출력 차원(dimension) 줄이기](https://github.com/kobongsoo/BERT/tree/master/mymodel)
+- ##### [BertWordPieceTokenizer/ SentencePieceTokenizer](https://github.com/kobongsoo/BERT/tree/master/tokenizer_sample)
+- ##### [유사도 측정 예제/FAISS](https://github.com/kobongsoo/BERT/tree/master/embedding_sample)
+- ##### [BERT 추출 요약](https://github.com/kobongsoo/BERT/tree/master/summarizer)
+- ##### [DistilBert 예제](https://github.com/kobongsoo/BERT/tree/master/distilbert)
+- ##### [Senetence Bert](https://github.com/kobongsoo/BERT/tree/master/sbert)
+- ##### [말뭉치(Corpus)](https://github.com/kobongsoo/BERT/tree/master/corpus_sample)
+- ##### [FLASK](https://github.com/kobongsoo/BERT/tree/master/Flask)
+- ##### [WandB](https://github.com/kobongsoo/WandB/tree/master)
+- ##### [GPU 메모리보다 큰 모델 파인 튜닝하기](https://github.com/kobongsoo/GPUTech/tree/master)
 
 
 ### Tips
