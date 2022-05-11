@@ -14,3 +14,49 @@
 - #### [FLASK](https://github.com/kobongsoo/BERT/tree/master/Flask)
 - #### [WandB](https://github.com/kobongsoo/WandB/tree/master)
 - #### [GPU 메모리보다 큰 모델 파인 튜닝하기](https://github.com/kobongsoo/GPUTech/tree/master)
+
+
+### Tips
+##### 1. 말뭉치에 개행문자(/r/n) 제거
+```
+with open(corpus_path, 'r') as f: # 읽기로 파일 열기
+    lines = f.readlines()
+    
+    with open(corpus_path1, 'w') as f1:  # 쓰기로 파일 열기
+        for line in lines:               # 한줄씩 읽어와서, 개행문자 제거
+            line = line.replace("\r", "")
+            line = line.replace("\n", "")
+            f1.write(line)               # 제거된 한줄씩 저장
+ ```
+##### 2. 파일 로딩/저장
+```
+import numpy as np
+import pandas as pd
+
+file_path = "../../korpora/korQuAD/KorQuAD_v1.0_train.csv"
+
+#df = pd.read_excel(file_path)    #excel 파일 로딩
+#df = pd.read_csv(file_path, encoding="euc-kr")   #csv 파일 로딩
+#df = pd.read_csv(file_path, sep='\t')  # tsv 파일 로딩
+df=pd.read_json(file_path)   #json 파일 로딩
+```
+```
+# df -> csv 로 저장(header=None : head는 제외)
+outfile_fpath = "../../korpora/mycorpus/newspaper.csv"
+df.to_csv(outfile_fpath, index=False, header= None)
+```
+##### 3. df 를 list로 변환
+```
+# csv 파일 로딩해봄
+outfile_fpath = "../../korpora/korQuAD/KorQuAD_v1.0_train.csv"
+df1 = pd.read_csv(outfile_fpath)
+
+# df을 list로 변환
+context_list = np.array(df['context'].tolist())
+question_list = np.array(df['question'].tolist())
+answer_list = np.array(df['answer'].tolist())
+```
+```
+# list들을 zip 으로 묶고, df 생성함
+df = pd.DataFrame((zip(context_list, question_list, answer_list)), columns = ['context','question','answer'])
+```
