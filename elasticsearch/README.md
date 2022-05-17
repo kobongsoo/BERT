@@ -88,7 +88,7 @@ def index_batch(docs):
     bulk(es, requests)
 ```
 ### 5. 검색하기
-- ES 인덱스에 추가한 문자들을 코사인유사도로 검색 함.(**cosineSimilarity** 쿼리문 이용)
+- ES 인덱스에 추가한 문자들을 코사인유사도로 검색 함.(**cosineSimilarity** 스크립트 이용)
 ```
 def handle_query():
     
