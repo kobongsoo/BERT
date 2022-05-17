@@ -1,7 +1,13 @@
 ## ElasticSearch로 임베딩 벡터(Embedding Vector)를 이용한 문장 유사도 검색 구현하기
 - 엘라스틱서치와 **SentenceBert**를 이용하여, 문장들의 임베딩 벡터들을 구하고, 이 벡터들의 코사인유사도를 측정하여, 의미가 유사한 문장들을 검색한다. (엘라스틱서치 서버 구축 방법은 여기서 설명 하지 않음)
 - ElasticSearch 7.3.0 버전부터는 cosine similarity 검색을 지원한다.
-- ElasticSearch에 index 파일은 **/data/index.json** ,데이터 파일은 **/data/KorQuAD_v1.0_train_convert.json** 참조
+- ElasticSearch에 Index 파일은 **/data/index.json** ,데이터 파일은 **/data/KorQuAD_v1.0_train_convert.json** 참조
+- ElasticSearch에 Index, Type, Filed, Document 등은 아래 처럼 관계형 DataBase 연관된다.(아래그림 참조)
+
+![image](https://user-images.githubusercontent.com/93692701/168928961-8b426b51-d937-49a9-8eed-982f2be740bb.png)
+![image](https://user-images.githubusercontent.com/93692701/168928991-18c99f4f-d435-4871-9912-112f7b88cf9f.png)
+출처: https://www.slideshare.net/deview/2d1elasticsearch
+
 
 ### 1. SentenceBert 정의
 - sentenceTransformers 라이브러리 설치
@@ -141,3 +147,5 @@ def handle_query():
         print(hit["_source"]["paragraph"]) 
     
 ```
+
+## 
