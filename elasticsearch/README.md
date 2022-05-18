@@ -1,12 +1,17 @@
 ## ElasticSearch로 임베딩 벡터(Embedding Vector)를 이용한 문장 유사도 검색 구현하기
 - 엘라스틱서치와 **SentenceBert**를 이용하여, 문장들의 임베딩 벡터들을 구하고, 이 벡터들의 코사인유사도를 측정하여, 의미가 유사한 문장들을 검색한다. (엘라스틱서치 서버 구축 방법은 여기서 설명 하지 않음)
 - ElasticSearch 7.3.0 버전부터는 cosine similarity 검색을 지원한다.
-- ElasticSearch에 Index 파일은 **/data/index.json** ,데이터 파일은 **/data/KorQuAD_v1.0_train_convert.json** 참조
-- ElasticSearch에 Index, Type, Filed, Document 등은 아래 처럼 관계형 DataBase 연관된다.(아래그림 참조)
+- 예제와 관련된 ElasticSearch에 Index 파일은 **/data/index.json** ,데이터 파일은 **/data/KorQuAD_v1.0_train_convert.json** 참조
+- ElasticSearch에 Index(indices), Type, Filed, Document 등은 아래 처럼 관계형 DataBase 연관된다.(아래그림 참조)
 
 ![image](https://user-images.githubusercontent.com/93692701/168928961-8b426b51-d937-49a9-8eed-982f2be740bb.png)
 ![image](https://user-images.githubusercontent.com/93692701/168928991-18c99f4f-d435-4871-9912-112f7b88cf9f.png)
 출처: https://www.slideshare.net/deview/2d1elasticsearch
+
+|소스     |내용 | 기타 |
+|:--------|:---------------------------------|:---------|
+|[elasticsearch_vector_search_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_vector_search_test.ipynb)|ElasticSearch+S-BERT를 이용한 임베딩 테스트 예제||
+|[elasticsearch_search_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_search_test.ipynb)|ElasticSearch 접속/데이터 추가,삭제/인덱스 생성,삭제 등 관련 기능 테스트 예제||
 
 
 ### 1. SentenceBert 정의
@@ -148,4 +153,72 @@ def handle_query():
     
 ```
 
-## 
+## 기타
+
+### 1. ElasticSearch 지원 함수 예제
+- 생성/삭제/업데이트/쿼리 등의 ElastricSearch 함수들 정의(참고 : https://jvvp.tistory.com/1152)
+- 해당 함수 구현 내용은 [elasticsearch_search_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_search_test.ipynb) 참조
+
+#### ElasticSearch 접속
+```
+es = Elasticsearch("http://XXX.XXX.XXX.XXX:9200/")
+```
+#### 인스 생성/삭제
+```
+## 인덱스 생성
+def create_index(index, mapping=None):
+    if not es.indices.exists(index=index):
+        return es.indices.create(index=index ,body=mapping)
+
+## 인덱스 자체 삭제
+def delete_index(index):
+    if es.indices.exists(index=index):
+        return es.indices.delete(index=index)
+```
+#### 도큐먼트(데이터) 추가
+```
+def insert(index, doc_type, body):
+    return es.index(index=index, doc_type=doc_type, body=body)
+```
+
+#### 도큐먼트 조회
+```
+def search(index, data=None):
+    if data is None: #모든 데이터 조회
+        data = {"match_all":{}}
+    else:
+        data = {"match": data}
+        
+    body = {"query": data}
+    res = es.search(index=index, body=body)
+    return res
+```
+
+#### 도큐먼트 삭제
+```
+## 인덱스 내의 데이터 삭제 => query 이용
+def delete(index, data):
+    if data is None:  # data가 없으면 모두 삭제
+        data = {"match_all":{}}
+    else:
+        data = {"match": data}
+        
+    body = {"query": data}
+    return es.delete_by_query(index=index, body=body)
+
+## 인덱스 내의 데이터 삭제 => id 이용
+def delete_by_id(index, id):
+    return es.delete(index=index, id=id) 
+```
+
+#### 도큐먼트 업데이트
+```
+def update(index, id, doc, doc_type):
+    
+    body = {
+        'doc': doc
+    }
+    
+    res=es.update(index=index, id=id, body=body, doc_type=doc_type)
+    return res
+```
