@@ -67,7 +67,7 @@ with open(INDEX_FILE) as index_file:
         source = index_file.read().strip()     
         es.indices.create(index=INDEX_NAME, body=source)
 ```
-### 4. 인덱스에 데이터 추가
+### 4. 인덱스에 도큐먼트(데이터) 추가
 - KorQuAD_v1.0_train_convert.json 파일에 title과 paragraph(문장)을 불러와서, SentenceBert를 통해 embedding 벡터를 만듬.
 - 만든 embedding 벡터와 title, paragraph등을 추가하여 ES 인덱스에 데이터 추가함.
 
