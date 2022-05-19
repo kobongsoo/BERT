@@ -8,13 +8,13 @@
 
 |RDBMS(관계형DB)           | ElasticSearch               | 설명                          |
 |:-------------------------|:----------------------------|:------------------------------|
-|DataBase                  |Index(Indices)               |                               |
-|Table                     |Type                         |                               |  
-|Row                       |Document                     |                               |  
-|Column                    |Field                        |                               |  
-|Primary Key               |_id                          |                               |  
-|Schema                    |Mapping                      |                               |  
-|Phyical Partition         |Shard                        |                               |  
+|DataBase                  |Index(Indices)               |데이터를 모아놓은 집합          |
+|Table                     |Type                         |테이블                         |  
+|Row                       |Document                     |단일 데이터 단위                |  
+|Column                    |Field                        |필드명                          |  
+|Primary Key               |_id                          |키                              |  
+|Schema                    |Mapping                      | Indices의 Field 및 Field 타입을 미리 정의해 놓으면,해당 매핑에 맞추어 데이터가 입력됨                               |  
+|Phyical Partition         |Shard                        |Indices가 분리되어 분산 저장되는 단위|  
 |Logical Partition         |Route                        |                               |  
 |Relational                |Parent/Child, Nested         |                               |  
 
