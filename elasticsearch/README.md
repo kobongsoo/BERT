@@ -5,7 +5,19 @@
 - ElasticSearch에 Index(indices), Type, Filed, Document 등은 아래 처럼 관계형 DataBase 연관된다.(아래그림 참조)
 
 ![image](https://user-images.githubusercontent.com/93692701/168928961-8b426b51-d937-49a9-8eed-982f2be740bb.png)
-![image](https://user-images.githubusercontent.com/93692701/168928991-18c99f4f-d435-4871-9912-112f7b88cf9f.png)
+
+|RDBMS(관계형DB)           | ElasticSearch               | 설명                          |
+|:-------------------------|:----------------------------|:------------------------------|
+|DataBase                  |Index(Indices)               |                               |
+|Table                     |Type                         |                               |  
+|Row                       |Document                     |                               |  
+|Column                    |Field                        |                               |  
+|Primary Key               |_id                          |                               |  
+|Schema                    |Mapping                      |                               |  
+|Phyical Partition         |Shard                        |                               |  
+|Logical Partition         |Route                        |                               |  
+|Relational                |Parent/Child, Nested         |                               |  
+
 출처: https://www.slideshare.net/deview/2d1elasticsearch
 
 |소스     |내용 | 기타 |
