@@ -27,7 +27,7 @@
 - [WandB](https://github.com/kobongsoo/WandB/tree/master)
 - [GPU 메모리보다 큰 모델 파인 튜닝하기](https://github.com/kobongsoo/GPUTech/tree/master)
 
----
+***
 
 ### Tips
 ##### 1. 말뭉치에 개행문자(/r/n) 제거
