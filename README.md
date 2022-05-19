@@ -50,7 +50,7 @@
   ex) [distilbert-model-create.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distilbert-model-create.ipynb)
 
 - MLM + NLI 방식(MLM 하고 나서 NLI로 다시 Fine-Tuning) 혹은 NLI로만  Fine-Tuning 하여 Distilling  함
-- Loss 함수의 Tempature(기본=10)와 alpha(기본=0.1)값을 조절하여 학습하면서, 최적이 값을 찾아야 함
+- Loss 함수의 Tempature(기본=10)와 alpha(기본=0.1)값을 조절하여 학습하면서,최적이 값을 찾아야 함
 
   ex) [bert-Task-specific-knowledge-distillation.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distillation/bert-Task-specific-knowledge-distillation.ipynb)
   , [bert-Task-specific-knowledge-distillation2.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distillation/bert-Task-specific-knowledge_distillation2.ipynb)
@@ -97,7 +97,8 @@
 [참고: SentenceTransformers](https://www.sbert.net/)
   
 ### 5) S-BERT 지식 증류 학습
-- 교사모델은 **paraphrase-multilingual-mpnet-base-v2 혹은 distiluse-base-multilingual-cased-v2 둘중 하나 선택**, 학생모델은 제작한 S-BERT 모델로 설정 하여 학습시킴.(자체 테스트시, 위 2개의 모델이 가장 성능이 좋았음(*아래표 참조))
+- 교사모델은 **paraphrase-multilingual-mpnet-base-v2 혹은 distiluse-base-multilingual-cased-v2 둘중 하나 선택**, 학생모델은 제작한 S-BERT 모델로 설정 하여 학습시킴.<br>
+자체 테스트시, 위 2개의 모델이 가장 성능이 좋았음(*아래표 참조)
 
   다운로드 : [paraphrase-multilingual-mpnet-base-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-mpnet-base-v2)
 ,[distiluse-base-multilingual-cased-v2](https://huggingface.co/sentence-transformers/distiluse-base-multilingual-cased-v2)
