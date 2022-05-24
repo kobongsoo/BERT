@@ -1,8 +1,8 @@
 ### BERT 추출 요약(Extractive summary) <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
 
 #### 1.개요
-- 문서 요약에는 생성요약(abstractive summary)과 추출요약(extractive summary)이 있음.
-- 생성요약은 GPT(Transformers 디코더) 처럼 문장을 생성해서 요약하는 것임.
+- 문서 요약에는 생성(추상)요약(abstractive summary)과 추출요약(extractive summary)이 있음.
+- 생성(추상)요약은 GPT(Transformers 디코더),T5(인/디코더) 처럼 문장을 생성해서 요약하는 것임.
 - 추출요약은 BERT(Transformers 인코더)처럼 다수의 문장에서 중요 문장을 추출하여 요약하는 것임.
 
 #### 2.예제
