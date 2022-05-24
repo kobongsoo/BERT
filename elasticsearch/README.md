@@ -11,7 +11,7 @@
 |RDBMS(관계형DB)           | ElasticSearch               | 설명                          |
 |:-------------------------|:----------------------------|:------------------------------|
 |DataBase                  |Index(Indices)               |데이터를 모아놓은 집합          |
-|Table                     |Type                         |테이블                         |  
+|Table                     |Type                         |테이블 (7.3.0 부터는 _doc 으로만 해야 함)|  
 |Row                       |Document                     |단일 데이터 단위                |  
 |Column                    |Field                        |필드명                          |  
 |Primary Key               |_id                          |키                              |  
