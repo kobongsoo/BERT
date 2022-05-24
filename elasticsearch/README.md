@@ -236,3 +236,20 @@ def update(index, id, doc, doc_type):
     res=es.update(index=index, id=id, body=body, doc_type=doc_type)
     return res
 ```
+
+#### 분석(Analyze)
+- nori_tokenizer는 7.x 부터 지원하는 한국어 tokenizer(Mecab:은전한닢)
+```
+# tokenzier 분석예 
+body = {
+    "tokenizer":"nori_tokenizer",
+    "filter" : [
+        "lowercase",
+        "stop",
+        "snowball"
+    ],
+    "text" : ["매일 비가 오네요"]
+}
+es.indices.analyze(body=body)
+# es.indices.analyze(index=INDEX_NAME, body=body)
+```
