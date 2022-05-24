@@ -2,6 +2,7 @@
 <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fkobongsoo%2FBERT&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
 - BERT와 관련된 자료들입니다. 자세한 내용은 아래 각 항목에 링크를 누르시면 확인할 수 있습니다.
+- 테스트는 추가 학습한 [sentencebert 모델](https://huggingface.co/bongsoo/sentencebert_v1.0)을 통해 테스트 해볼수 있음 
 ### 1. BERT 
 - [BERT를 이용한 sementic 검색 모델 제작 과정](https://github.com/kobongsoo/BERT/tree/master)
 - [BERT 예제](https://github.com/kobongsoo/BERT/tree/master/bert)
