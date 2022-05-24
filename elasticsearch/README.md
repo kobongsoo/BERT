@@ -25,8 +25,8 @@
 |소스     |내용 | 기타 |
 |:--------|:---------------------------------|:---------|
 |[elasticsearch_vector_search_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_vector_search_test.ipynb)|ElasticSearch+S-BERT를 이용한 임베딩 테스트 예제||
-|[elasticsearch_search_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_search_test.ipynb)|ElasticSearch 접속/데이터 추가,삭제/인덱스 생성,삭제 등 관련 기능 테스트 예제||
-
+|[elasticsearch_search_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_search_test.ipynb)|ElasticSearch 접속/데이터 추가,삭제/인덱스 생성,삭제 등 관련 테스트 예제||
+|[elasticsearch_analyze_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_analyze_test.ipynb)|ElasticSearch 검색/분석 관련  테스트 예제||
 
 ### 1. SentenceBert 정의
 - sentenceTransformers 라이브러리 설치
@@ -171,7 +171,7 @@ def handle_query():
 
 ### 1. ElasticSearch 지원 함수 예제
 - 생성/삭제/업데이트/쿼리 등의 ElastricSearch 함수들 정의(참고 : https://jvvp.tistory.com/1152)
-- 해당 함수 구현 내용은 [elasticsearch_search_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_search_test.ipynb) 참조
+- 해당 함수 구현 내용은 [elasticsearch_search_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_search_test.ipynb), [elasticsearch_analyze_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_analyze_test.ipynb) 참조
 
 #### ElasticSearch 접속
 ```
