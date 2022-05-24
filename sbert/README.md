@@ -1,6 +1,7 @@
 # Senetence Bert <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
 - SentenceTransformers는 최첨단 문장, 텍스트 및 이미지 임베딩을 위한 Python 프레임워크로, 이를 이용하여 Sentence Bert 모델을 만들고 훈련할수 있음
 - 자세한 내용은 [sbert.net 사이트](https://www.sbert.net/) 참고 바람
+- 테스트는 추가 학습한 [sentencebert 모델](https://huggingface.co/bongsoo/sentencebert_v1.0)을 통해 테스트 해볼수 있음 
  ```
 # sentenceTransformers 라이브러리 설치
 pip install -U sentence-transformers
