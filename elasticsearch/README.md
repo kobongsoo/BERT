@@ -1,7 +1,8 @@
 ## ElasticSearch로 임베딩 벡터(Embedding Vector)를 이용한 문장 유사도 검색 구현하기
 - 엘라스틱서치와 **SentenceBert**를 이용하여, 문장들의 임베딩 벡터들을 구하고, 이 벡터들의 코사인유사도를 측정하여, 의미가 유사한 문장들을 검색한다. (엘라스틱서치에 대한 자세한 내용은 [여기](https://esbook.kimjmin.net/) 참조)
-- ElasticSearch 7.3.0 버전부터는 cosine similarity 검색을 지원한다.
+- **ElasticSearch 7.3.0 버전부터는 cosine similarity 검색을 지원**한다.
   <br> ElasticSearch는 기본 9200 포트, Kibana(시각화 도구)는 5601 포트를 각각 사용한다
+- **ElasticSearch 7.0** 부터는 **doc_type 개념이 사라지고, _doc 으로 접근**해야 함.
 - 예제와 관련된 ElasticSearch에 Index 파일은 **/data/index.json** ,데이터 파일은 **/data/KorQuAD_v1.0_train_convert.json** 참조
 - ElasticSearch에 Index(indices), Type, Filed, Document 등은 아래 처럼 관계형 DataBase 연관된다.(아래그림 참조)
 
