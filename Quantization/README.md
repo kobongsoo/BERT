@@ -1,4 +1,4 @@
-## AI 에서 양자화(Quantization) 
+## 양자화(Quantization) 기법 
 - 모델의 파라메터를 줄여, 추론 시간과 사용 메모리를 줄이는 모델 경량화 기법
 - 일반적으로, pytorch, tensorflow에서 data type float32 를 int8 로 변환 함으로써, 경량화 시킨다.
 - 동적 양자화, 정적 양자화, 양자화 Training 등이 있음.
