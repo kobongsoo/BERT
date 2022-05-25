@@ -3,6 +3,12 @@
 - 일반적으로, pytorch, tensorflow에서 data type float32 를 int8 로 변환 함으로써, 경량화 시킨다.
 - 동적 양자화, 정적 양자화, 양자화 Training 등이 있음.
 
+### 참고자료 : 
+- [딥러닝 양자화 정리](https://velog.io/@jooh95/%EB%94%A5%EB%9F%AC%EB%8B%9D-Quantization%EC%96%91%EC%9E%90%ED%99%94-%EC%A0%95%EB%A6%AC)
+- [파이토치-BERT 모델 동적 양자화하기](https://tutorials.pytorch.kr/intermediate/dynamic_quantization_bert_tutorial.html)
+- [허깅페이지-ONNX런타임을 위한 최적의 추론](https://huggingface.co/docs/optimum/onnxruntime/modeling_ort)
+
+
 ### 1. 동적 양자화(Dynamic Quantization)
 - 기존 모델을 가지고, 특정 레이어에 data type을 줄인다.
 - torch.quantization.quantize_dynamic를 가지고 동적 양자화 하는 예시
