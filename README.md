@@ -27,6 +27,7 @@
 - [FLASK](https://github.com/kobongsoo/BERT/tree/master/Flask)
 - [WandB](https://github.com/kobongsoo/WandB/tree/master)
 - [GPU 메모리보다 큰 모델 파인 튜닝하기](https://github.com/kobongsoo/GPUTech/tree/master)
+- [양자화(Quantization) 기법](https://github.com/kobongsoo/BERT/tree/master/Quantization)
 
 ***
 
@@ -73,4 +74,26 @@ answer_list = np.array(df['answer'].tolist())
 ```
 # list들을 zip 으로 묶고, df 생성함
 df = pd.DataFrame((zip(context_list, question_list, answer_list)), columns = ['context','question','answer'])
+```
+
+#### 4. torch.save 모델 저장
+```
+# 모델 저장
+# => torch.save 로 저장하는 방법 
+from transformers import WEIGHTS_NAME, CONFIG_NAME
+
+output_dir = "./quantized/"
+os.makedirs(output_dir, exist_ok=True)
+
+output_model_file = os.path.join(output_dir, WEIGHTS_NAME)
+output_config_file = os.path.join(output_dir, CONFIG_NAME)
+print(output_model_file)
+print(output_config_file)
+
+# 모델 저장
+torch.save(quantized_model.state_dict(), output_model_file)  # 모델 파일 pytorch_model.bin
+quantized_model.config.to_json_file(output_config_file)      # 모델 config.json 저장=>huggingface 모델 로딩시 필요 
+
+# tokenizer 저장 =>toeknizer_config.json, added_toekns.json, special_tokens_map.json, vocab.txt 
+tokenizer.save_pretrained(output_dir)   
 ```
