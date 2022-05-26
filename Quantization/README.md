@@ -8,7 +8,8 @@
 ### 참고자료 : 
 - [딥러닝 양자화 정리](https://velog.io/@jooh95/%EB%94%A5%EB%9F%AC%EB%8B%9D-Quantization%EC%96%91%EC%9E%90%ED%99%94-%EC%A0%95%EB%A6%AC)
 - [파이토치-BERT 모델 동적 양자화하기](https://tutorials.pytorch.kr/intermediate/dynamic_quantization_bert_tutorial.html)
-- [허깅페이지-ONNX런타임을 위한 최적의 추론](https://huggingface.co/docs/optimum/onnxruntime/modeling_ort)
+- [허깅페이스-ONNX런타임을 위한 최적의 추론](https://huggingface.co/docs/optimum/onnxruntime/modeling_ort)
+- [허깅페이스-Optimum github](https://github.com/huggingface/optimum)
 
 ***
 ### 1. 동적 양자화(Dynamic Quantization)
