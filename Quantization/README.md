@@ -12,6 +12,9 @@
 
 ***
 ### 1. 동적 양자화(Dynamic Quantization)
+-  Pytorch 및 ONNX 런타임등을 이용해 동적 양자화 시킨 결과 기존 모델과 비교하여 **용량, 추론시간 등은 30% 정도 향상**이 있으며, 
+   <br>**정확도는 1~3% 정도 감소**함.
+  
 ### 1-1. Pytorch 사용
 - 기존 모델을 가지고, 특정 레이어에 data type을 줄인다.
 - torch.quantization.quantize_dynamic를 가지고 동적 양자화 하는 예시
@@ -53,3 +56,38 @@ with torch.no_grad():
 - **ONNX(Open Neural Network Exchange)는,Tensorflow, PyTorch 와 같은, 서로 다른 DNN 프레임워크 환경에서 만들어진 모델들이 호환 될 수 있도록 하는 플렛폼**
 - ONNX 모델로 만들면, 어떤 DNN 프레임워크 환경 환경에서든지 사용 가능 함.
 - 동적 양자화시 ONNX Runtime을 이용하여 기존모델->ONNX 모델로 변환->ONNX 모델 동적 양자화 할수 있음.
+- ONNX 와 ONNX 런타임 설치 해야함.
+```
+!pip install datasets
+!pip install optimum
+!pip install optimum[onnxruntime]
+!pip install optimum[onnxruntime-gpu]  #gpu 사용인 경우
+```
+- 기존 distilbert 모델을 ONNX 모델로 동적 양자화 하는 코드.  
+```
+from optimum.onnxruntime import ORTConfig, ORTQuantizer
+from optimum.onnxruntime.configuration import AutoQuantizationConfig
+
+# 기존 bert 모델 경로 
+model_checkpoint = "./distilbert-0331-TS-nli-0.1-10"
+
+# 동적 양자화인 경우 is_static = False로 해야 함.
+qconfig = AutoQuantizationConfig.arm64(is_static=False, per_channel=False)
+
+# 분류 모델인 경우에는 feature="sequence-classification"
+quantizer = ORTQuantizer.from_pretrained(model_checkpoint, feature="sequence-classification")
+
+# ONNX 모델로 만들고 양자화 함
+quantizer.export(
+    onnx_model_path="model.onnx",   # ONNX 모델 출력 경로
+    # onnx 양자화 모델이 생성되는 경로(이름은 model.onnx로 해야함=>그래야 huggingface 함수 이용시 경로만 지정해도 자동으로 불어옴)
+    onnx_quantized_model_output_path="./distilbert-TS/model.onnx",  
+    quantization_config=qconfig,
+)
+```
+- 아래표와 예시는 HuggingFace 와 ONNX 런타임을 가지고, Distilbert-NLI 추론 모델을 동적 양자화 시킨 후 성능 비교한 내용임.
+
+|구분|용량|추론시간|NLI Acc|
+|:---|:---|:------|:-------|
+|distilbert-NLI|672M|1,321초|73.1%|
+|양자화처리    |548M|959초  |72.4%|
