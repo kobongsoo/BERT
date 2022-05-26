@@ -132,7 +132,7 @@ quantizer.export(
     quantization_config=qconfig,
 )
 ```
-#### 기타 
+#### Tips 
 - ONNX 양자화 할때, **모델 종류에 따라 ORTQuantizer.from_pretrained 에 feature 인자를 정의**해야 한다. 
   <br> 이후 feature에 맞게 **Huggingface ORTModelForxxxx 함수를 호출하여 모델**을 불러올수 있음
 - 참고 : [ORT 함수들](https://huggingface.co/docs/optimum/onnxruntime/modeling_ort#optimum-inference-with-onnx-runtime)
