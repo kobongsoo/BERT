@@ -63,47 +63,76 @@ with torch.no_grad():
 !pip install optimum[onnxruntime]
 !pip install optimum[onnxruntime-gpu]  #gpu 사용인 경우
 ```
-- 동적 양자화 과정은 아래 과정을 거친다.
+- ONNX 런타임을 이용한 동적 양자화 과정은 **ONNX 모델로 변환->Optimizer(최적화)적용->동적 양자화 과정**을 거치는데, **최적화 적용은 안할수도 있다**
+
 #### 1. ONNX 모델로 변환
 - 기존 BERT Transformers 모델을 ONNX 모델로 변환. 이때 **Task에 맞는 ORTModelForxxxx 함수로 기존 BERT 모델 로딩**함.(아래표 참조)
 - 이후 tokenizer와 모델을 save_pretrained 로 저장함(model.onxx 생성됨)
 ```
+from optimum.onnxruntime import ORTModelForSequenceClassification
+from transformers import AutoTokenizer
 
+model_checkpoint = "./distilbert-1"
+
+# Load model from hub and export it through the ONNX format 
+model = ORTModelForSequenceClassification.from_pretrained(
+    model_checkpoint, 
+    num_labels=3,
+    from_transformers=True
+)
+
+tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+
+# Save the exported model
+onnx_path = './onnxfolder'
+model.save_pretrained(onnx_path)
+tokenizer.save_pretrained(onnx_path)
 ```
 #### 2. Optimizer 적용
 - 앞에 생성된 model.onxx 를 이용하여 최적화(추론 가속화) 시킴.
 - 이때 onnx_model_path에는 앞에 생성된 model.onnx 경로를 입력. onnx_optimized_model_output_path에는 출력 파일 경로 model-optimized.onnx 로 지정.
 - optimization_level=99 는 모든 값 최적화 하겠다는 의미
 ```
+from optimum.onnxruntime import ORTOptimizer
+from optimum.onnxruntime.configuration import OptimizationConfig
+
+# optimization 최적화 실행
+# optimization_config=99 enables all available graph optimisations(99이면 모든 것을 최적화 시킴)
+optimization_config = OptimizationConfig(optimization_level=99)
+
+optimizer = ORTOptimizer.from_pretrained(model_checkpoint, feature="sequence-classification")
+
+optimizer.export(
+    onnx_model_path='./onnxfolder/model.onnx',   # 앞에서 만든 ONNX 모델 경로
+    onnx_optimized_model_output_path='./onnxfolder/model-optimized.onnx',  # 새롭게 만들 optimized 모델 경로
+    optimization_config=optimization_config,
+)
 ```
 
 #### 3. 동적 양자화 
 - 앞서 생성된 model-optimized.onnx 를 가지고, 동적 양자화 시킴.
 - 이때 onnx_model_path에는 앞에 생성된 model-optimized.onnx 경로를 입력. onnx_quantized_model_output_path에는 출력 파일 경로 model-quantized.onnx 로 지정.
+- 최종적으로 model-quantized.onnx 파일이 생성되면, model.onnx 로 이름 변경 시킴(기존 model.onnx는 삭제함)
+  <br>이유는 해당 model.onnx 를 Huggingface ORTModelForXXX 함수로 불러오려면, model.onnx로 지정되어 있어야 함.
 ```
 from optimum.onnxruntime import ORTConfig, ORTQuantizer
 from optimum.onnxruntime.configuration import AutoQuantizationConfig
 
-# 기존 bert 모델 경로 
-model_checkpoint = "./distilbert-0331-TS-nli-0.1-10"
 
 # 동적 양자화인 경우 is_static = False로 해야 함.
 qconfig = AutoQuantizationConfig.arm64(is_static=False, per_channel=False)
 
-# 분류 모델인 경우에는 feature="sequence-classification", last_hidden_state(문장임베딩) 출력 모델인 경우에는 "default"
-# 
-# feature 는 아래 종류가 있다.
-# "default", "causal-lm", "seq2seq-lm", "sequence-classification", "token-classification", "multiple-choice","question-answering",
+# 분류 모델인 경우에는 feature="sequence-classification"
 quantizer = ORTQuantizer.from_pretrained(model_checkpoint, feature="sequence-classification")
 
 # ONNX 모델로 만들고 양자화 함
 quantizer.export(
-    onnx_model_path="model.onnx",   # ONNX 모델 출력 경로
-    # onnx 양자화 모델이 생성되는 경로(이름은 model.onnx로 해야함=>그래야 huggingface 함수 이용시 경로만 지정해도 자동으로 불어옴)
-    onnx_quantized_model_output_path="./distilbert-TS/model.onnx",  
+    onnx_model_path='./onnxfolder/model-optimized.onnx',   # optimized 모델 경로
+    onnx_quantized_model_output_path="./onnxfolder/model-quantized.onnx",  
     quantization_config=qconfig,
 )
 ```
+#### 기타 
 - ONNX 양자화 할때, **모델 종류에 따라 ORTQuantizer.from_pretrained 에 feature 인자를 정의**해야 한다. 
   <br> 이후 feature에 맞게 **Huggingface ORTModelForxxxx 함수를 호출하여 모델**을 불러올수 있음
 - 참고 : [ORT 함수들](https://huggingface.co/docs/optimum/onnxruntime/modeling_ort#optimum-inference-with-onnx-runtime)
@@ -138,11 +167,14 @@ onnx.checker.check_model(model)
 print(onnx.helper.printable_graph(model.graph))
 ```
 
+### 테스트 
 - 아래표와 예시는 HuggingFace 와 ONNX 런타임을 가지고, Distilbert-NLI 추론 모델을 동적 양자화 시킨 후 성능 비교한 내용임.
-
+- 최적화+양화자 처리 했을때 양자화만 처리한 모델과 비교하여 용량은 조금 크지만 추론시간 및 정확도는 더 높음
+ 
 |구분|용량|추론시간|NLI Acc|
 |:---|:---|:------|:-------|
 |distilbert-NLI|672M|1,321초|73.1%|
-|양자화처리    |548M|959초  |72.4%|
+|양자화만 처리    |548M|959초  |72.4%|
+|최적화+양화자 처리    |579M|916초  |72.8%|
 
 예제 : [ONNX-DistilBert-NLI예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization.ipynb), [ONNX-S-BERT-임베딩예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization_2.ipynb)
