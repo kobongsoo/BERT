@@ -6,6 +6,11 @@
 # sentenceTransformers 라이브러리 설치
 pip install -U sentence-transformers
 ```
+- sentence모델 불러올때, 기본은 GPU를 사용함. 따라서 만약 CPU를 사용하고 싶다면, 아래처럼 **device='cpu'** 해줘야 함.
+```
+from sentence_transformers import SentenceTransformer, util
+embedder = SentenceTransformer(model_path, device='cpu')
+```
 ## 1. Sentence Bert(이하: S-BERT)
 - 기존  BERT 모델을 가지고, Bi-Encoder 방식으로 훈련하여 제작된 모델로써,  semantic 응용 분야에 있어서, **기존 BERT보다 성능과 속도가 매우 향상된 BERT 모델임**.
 - 응용 분야 : semantic textual similar, semantic search,  text clustering, semantic classification, paraphrase mining 등
