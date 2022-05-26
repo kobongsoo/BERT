@@ -91,3 +91,5 @@ quantizer.export(
 |:---|:---|:------|:-------|
 |distilbert-NLI|672M|1,321초|73.1%|
 |양자화처리    |548M|959초  |72.4%|
+
+예제 : [ONNX-Dynamic-Quantization](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization.ipynb)
