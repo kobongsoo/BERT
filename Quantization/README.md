@@ -12,7 +12,7 @@
 
 ***
 ### 1. 동적 양자화(Dynamic Quantization)
-### 1-1. torch.quantization.quantize_dynamic 사용
+### 1-1. Pytorch 사용
 - 기존 모델을 가지고, 특정 레이어에 data type을 줄인다.
 - torch.quantization.quantize_dynamic를 가지고 동적 양자화 하는 예시
 
