@@ -56,15 +56,30 @@ with torch.no_grad():
 ### 1-2. ONNX 런타임 사용
 - **ONNX(Open Neural Network Exchange)는,Tensorflow, PyTorch 와 같은, 서로 다른 DNN 프레임워크 환경에서 만들어진 모델들이 호환 될 수 있도록 하는 플렛폼**
 - ONNX 모델로 만들면, 어떤 DNN 프레임워크 환경 환경에서든지 사용 가능 함.
-- 동적 양자화시 ONNX Runtime을 이용하여 기존모델->ONNX 모델로 변환->ONNX 모델 동적 양자화 할수 있음.
-- ONNX 와 ONNX 런타임 설치 해야함.
+- 동적 양자화를 위해서는 먼저 ONNX 와 ONNX 런타임 설치 해야함. 
 ```
 !pip install datasets
 !pip install optimum
 !pip install optimum[onnxruntime]
 !pip install optimum[onnxruntime-gpu]  #gpu 사용인 경우
 ```
-- 기존 distilbert 모델을 ONNX 모델로 동적 양자화 하는 코드.  
+- 동적 양자화 과정은 아래 과정을 거친다.
+#### 1. ONNX 모델로 변환
+- 기존 BERT Transformers 모델을 ONNX 모델로 변환. 이때 **Task에 맞는 ORTModelForxxxx 함수로 기존 BERT 모델 로딩**함.(아래표 참조)
+- 이후 tokenizer와 모델을 save_pretrained 로 저장함(model.onxx 생성됨)
+```
+
+```
+#### 2. Optimizer 적용
+- 앞에 생성된 model.onxx 를 이용하여 최적화(추론 가속화) 시킴.
+- 이때 onnx_model_path에는 앞에 생성된 model.onnx 경로를 입력. onnx_optimized_model_output_path에는 출력 파일 경로 model-optimized.onnx 로 지정.
+- optimization_level=99 는 모든 값 최적화 하겠다는 의미
+```
+```
+
+#### 3. 동적 양자화 
+- 앞서 생성된 model-optimized.onnx 를 가지고, 동적 양자화 시킴.
+- 이때 onnx_model_path에는 앞에 생성된 model-optimized.onnx 경로를 입력. onnx_quantized_model_output_path에는 출력 파일 경로 model-quantized.onnx 로 지정.
 ```
 from optimum.onnxruntime import ORTConfig, ORTQuantizer
 from optimum.onnxruntime.configuration import AutoQuantizationConfig
