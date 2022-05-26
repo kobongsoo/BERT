@@ -26,10 +26,23 @@ model = BertForSequenceClassification.from_pretrained(model_path, num_labels=3)
 quantized_model = torch.quantization.quantize_dynamic(
     model, {torch.nn.Linear}, dtype=torch.qint8
 )
+
+# quantized_model 추론
+with torch.no_grad():
+        # 모델 실행
+        outputs = quantized_model(input_ids=input_ids, 
+                       attention_mask=attention_mask,
+                       token_type_ids=None,
+                       labels=labels)
 ```
 - torch 를 이용한 동적 양자화 기법은 추론시 cpu만 지원함.(따라서 **GPU 서버에서는 사용불가**, 다른 CPU 서버에서는 적용해볼만함)
-- 양자화 된 모델을 저장후 huggingface 모델에서 불러와서 추론해보면 정확도가 기본으로 떨어짐.
+- 양자화 된 모델을 저장후 huggingface 모델에서 불러와서 추론해보면 정확도가 엄청 떨어짐(사용불가).
 - 단 원본 모델을 양자화 모델로 변환후 저장하지 않고 추론시에는 정확도가 약간 떨어짐.
-- 확실히 용량은 819MB->574MB 정도로 약 70% 정도 줌. 
+- 아래표는 bert-multilingle-cased(bert 다국어버전)를 양자화 시킨후 저장하지 않고 추론한 테스트임
+
+|구분|용량|추론시간|NLI Acc|
+|:---|:---|:------|:-------|
+|bert|819M|158초|71%|
+|양자화처리|574M|123초|68.5%|
 
 예제 : [Dynamic-Quantization](https://github.com/kobongsoo/BERT/blob/master/Quantization/Dynamic-Quantization.ipynb)
