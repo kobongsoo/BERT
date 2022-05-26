@@ -10,8 +10,9 @@
 - [파이토치-BERT 모델 동적 양자화하기](https://tutorials.pytorch.kr/intermediate/dynamic_quantization_bert_tutorial.html)
 - [허깅페이지-ONNX런타임을 위한 최적의 추론](https://huggingface.co/docs/optimum/onnxruntime/modeling_ort)
 
-
+***
 ### 1. 동적 양자화(Dynamic Quantization)
+### 1-1. torch.quantization.quantize_dynamic 사용
 - 기존 모델을 가지고, 특정 레이어에 data type을 줄인다.
 - torch.quantization.quantize_dynamic를 가지고 동적 양자화 하는 예시
 
@@ -46,3 +47,9 @@ with torch.no_grad():
 |양자화처리|574M|123초|68.5%|
 
 예제 : [Dynamic-Quantization](https://github.com/kobongsoo/BERT/blob/master/Quantization/Dynamic-Quantization.ipynb)
+
+***
+### 1-2. ONNX 런타임 사용
+- **ONNX(Open Neural Network Exchange)는,Tensorflow, PyTorch 와 같은, 서로 다른 DNN 프레임워크 환경에서 만들어진 모델들이 호환 될 수 있도록 하는 플렛폼**
+- ONNX 모델로 만들면, 어떤 DNN 프레임워크 환경 환경에서든지 사용 가능 함.
+- 동적 양자화시 ONNX Runtime을 이용하여 기존모델->ONNX 모델로 변환->ONNX 모델 동적 양자화 할수 있음.
