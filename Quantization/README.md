@@ -178,6 +178,6 @@ print(onnx.helper.printable_graph(model.graph))
 |최적화+양화자 처리    |579M|916초  |72.8%|
 
 예제 
-<br> [ONNX-DistilBert-NLI예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization.ipynb)
-<br> [ONNX-S-BERT-임베딩예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization_2.ipynb)
+<br> [ONNX-DistilBert-NLI 양자화 예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization.ipynb)
+<br> [ONNX-S-BERT-임베딩 앙자화 예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization_2.ipynb)
 <br> [ONNX-DistilBert-NLI 최적화+양자화 예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_optimized.ipynb)
