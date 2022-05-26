@@ -74,7 +74,10 @@ model_checkpoint = "./distilbert-0331-TS-nli-0.1-10"
 # 동적 양자화인 경우 is_static = False로 해야 함.
 qconfig = AutoQuantizationConfig.arm64(is_static=False, per_channel=False)
 
-# 분류 모델인 경우에는 feature="sequence-classification"
+# 분류 모델인 경우에는 feature="sequence-classification", last_hidden_state(문장임베딩) 출력 모델인 경우에는 "default"
+# 
+# feature 는 아래 종류가 있다.
+# "default", "causal-lm", "seq2seq-lm", "sequence-classification", "token-classification", "multiple-choice","question-answering",
 quantizer = ORTQuantizer.from_pretrained(model_checkpoint, feature="sequence-classification")
 
 # ONNX 모델로 만들고 양자화 함
@@ -85,6 +88,28 @@ quantizer.export(
     quantization_config=qconfig,
 )
 ```
+- ONNX 양자화 할때, **모델 종류에 따라 ORTQuantizer.from_pretrained 에 feature 인자를 정의**해야 한다. 
+  <br> 이후 feature에 맞게 **Huggingface ORTModelForxxxx 함수를 호출하여 모델**을 불러올수 있음
+- 참고 : [ORT 함수들](https://huggingface.co/docs/optimum/onnxruntime/modeling_ort#optimum-inference-with-onnx-runtime)
+
+|용도|feature|Huggingface 함수|기타|
+|:-------|:------|:---------------|:-------------|
+|문장임베딩|"default"|ORTModelForSequenceClassification|출력: last_hidden_state 리턴됨|
+|분류(NLI포함)|"sequence-classification"|ORTModelForFeatureExtraction|출력: logits 리턴함|
+|Q&A|"question-answering"|ORTModelForQuestionAnswering||
+|NER|"token-classification"|ORTModelForTokenClassification||
+|CLM모델(GPT계열)|"causal-lm"|ORTModelForCausalLM||
+
+- 만약 ONNX 모델이 있다면, 아래처럼 해당 모델이 구조를 로딩해서 어떤 모델종류인지 알수 있음.
+```
+# onnx 모델 구조 로딩 해봄.
+# => 맨 뒤에 return %last_hidden_state 리턴되면 => ORTModelForFeatureExtraction 모델임
+import onnx
+model = onnx.load("./distilbert-nli/model.onnx")
+onnx.checker.check_model(model)
+print(onnx.helper.printable_graph(model.graph))
+```
+
 - 아래표와 예시는 HuggingFace 와 ONNX 런타임을 가지고, Distilbert-NLI 추론 모델을 동적 양자화 시킨 후 성능 비교한 내용임.
 
 |구분|용량|추론시간|NLI Acc|
