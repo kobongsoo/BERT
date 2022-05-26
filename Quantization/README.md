@@ -101,6 +101,18 @@ quantizer.export(
 |NER|"token-classification"|ORTModelForTokenClassification||
 |CLM모델(GPT계열)|"causal-lm"|ORTModelForCausalLM||
 
+- 분류 NLI ONNX 모델 불러오는 예시
+```
+from transformers import AutoTokenizer
+from optimum.onnxruntime import ORTModelForFeatureExtraction, ORTModelForSequenceClassification
+
+vocab_path = "./distilbert-0331-TS-nli-0.1-10"
+model_path = "./distilbert-0331-TS-nli-0.1-10"
+
+tokenizer = AutoTokenizer.from_pretrained(vocab_path)
+model = ORTModelForSequenceClassification.from_pretrained(model_path, num_labels=3)
+```
+
 - 만약 ONNX 모델이 있다면, 아래처럼 해당 모델이 구조를 로딩해서 어떤 모델종류인지 알수 있음.
 ```
 # onnx 모델 구조 로딩 해봄.
