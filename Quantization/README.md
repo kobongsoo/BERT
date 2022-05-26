@@ -117,4 +117,4 @@ print(onnx.helper.printable_graph(model.graph))
 |distilbert-NLI|672M|1,321초|73.1%|
 |양자화처리    |548M|959초  |72.4%|
 
-예제 : [ONNX-DistilBert-NLI예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization.ipynb), [ONNX-S-BERT-임베딩예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization2.ipynb)
+예제 : [ONNX-DistilBert-NLI예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization.ipynb), [ONNX-S-BERT-임베딩예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization_2.ipynb)
