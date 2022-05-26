@@ -10,6 +10,7 @@
 - [파이토치-BERT 모델 동적 양자화하기](https://tutorials.pytorch.kr/intermediate/dynamic_quantization_bert_tutorial.html)
 - [허깅페이스-ONNX런타임을 위한 최적의 추론](https://huggingface.co/docs/optimum/onnxruntime/modeling_ort)
 - [허깅페이스-Optimum github](https://github.com/huggingface/optimum)
+- [Optimum 및 Transformers 파이프라인으로 추론](https://huggingface.co/blog/optimum-inference)
 
 ***
 ### 1. 동적 양자화(Dynamic Quantization)
