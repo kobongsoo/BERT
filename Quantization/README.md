@@ -49,7 +49,7 @@ with torch.no_grad():
 |bert|819M|158초|71%|
 |양자화처리|574M|123초|68.5%|
 
-예제 : [Dynamic-Quantization](https://github.com/kobongsoo/BERT/blob/master/Quantization/Dynamic-Quantization.ipynb)
+예제 : [Pytorch 양자화 예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/Dynamic-Quantization.ipynb)
 
 ***
 ### 1-2. ONNX 런타임 사용
@@ -117,4 +117,4 @@ print(onnx.helper.printable_graph(model.graph))
 |distilbert-NLI|672M|1,321초|73.1%|
 |양자화처리    |548M|959초  |72.4%|
 
-예제 : [ONNX-Dynamic-Quantization](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization.ipynb)
+예제 : [ONNX-DistilBert-NLI예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization.ipynb), [ONNX-S-BERT-임베딩예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization2.ipynb)
