@@ -25,6 +25,7 @@
 |소스     |내용 | 기타 |
 |:--------|:---------------------------------|:---------|
 |[elasticsearch_vector_search_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_vector_search_test.ipynb)|ElasticSearch+S-BERT를 이용한 임베딩 테스트 예제||
+|[elasticsearch_vector_search_test2](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_vector_search_test2.ipynb)|ElasticSearch+ONNX-S-BERT를 이용한 임베딩 테스트 예제||
 |[elasticsearch_search_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_search_test.ipynb)|ElasticSearch 접속/데이터 추가,삭제/인덱스 생성,삭제 등 관련 테스트 예제||
 |[elasticsearch_analyze_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_analyze_test.ipynb)|ElasticSearch 검색/분석 관련  테스트 예제||
 
