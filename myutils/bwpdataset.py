@@ -6,7 +6,6 @@ import logging
 import pickle
 import copy
 import json
-import gluonnlp as nlp 
 
 from filelock import FileLock
 from dataclasses import dataclass
