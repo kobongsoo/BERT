@@ -1,4 +1,7 @@
-## Tips
+## ETC <img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/>
+ 
+***
+### Tips
 #### 1. 말뭉치에 개행문자(/r/n) 제거
 ```
 with open(corpus_path, 'r') as f: # 읽기로 파일 열기
