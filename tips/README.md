@@ -147,7 +147,7 @@ token_ids = tokenizer(text_list, max_length=8, padding="max_length", return_tens
 출처 : https://wikidocs.net/31379
 
 ***
-### 
+### 기타
 #### 1. 말뭉치에 개행문자(/r/n) 제거
 ```
 with open(corpus_path, 'r') as f: # 읽기로 파일 열기
