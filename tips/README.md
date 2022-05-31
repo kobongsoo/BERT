@@ -6,6 +6,9 @@
 - 기존 NLP(자연어 처리) 분야에 사용되던 **인코더-디코더 구조**를 따르면서도, **RNN 레이어를 사용하지 않고**, 엄청 우수한 번역 성능을 보여준 모델임.
 - 기존 RNN, LSTM 모델은 인코더에서 정보를 압축하여 디코더에 보낼때, 정보 손실이 있는데, 이를 Transfomer는 Attention 이라는 메커니즘으로 정보 손실을 줄였음.
 
+![image](https://user-images.githubusercontent.com/93692701/171075193-ba6ffe3c-124e-4752-9b54-78b4b14fa8f3.png)
+![image](https://user-images.githubusercontent.com/93692701/171075615-14ab5a66-1c7a-4379-b025-2514217902e4.png)
+
 #### 2) 장점
 - 병렬 프로세싱 처리에 최적화 되도록 설계되어, GPU 환경에서 대량의 데이터셋을 가지고 훈련 가능 함.
 - 대량이 데이터 셋은 기존처럼 라벨링된 데이터 셋이 아니라서, 라벨링 하는데 전문인력과 시간이 필요 없음.
@@ -13,9 +16,7 @@
 
 #### 3) 단점
 - 요즘 파생된 모델들은, 점점더 모델 SIZE가 커지고 있어서, 웬만한 H/W 로는 훈련 및 추론 불가.
-![image](https://user-images.githubusercontent.com/93692701/171075193-ba6ffe3c-124e-4752-9b54-78b4b14fa8f3.png)
-
-![image](https://user-images.githubusercontent.com/93692701/171075615-14ab5a66-1c7a-4379-b025-2514217902e4.png)
+![image](https://user-images.githubusercontent.com/93692701/171076762-d4cbf62b-705c-4ef5-86c2-68a30e042562.png)
 
 
 #### 4) 구조
