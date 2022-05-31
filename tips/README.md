@@ -13,6 +13,10 @@
 
 #### 3) 단점
 - 요즘 파생된 모델들은, 점점더 모델 SIZE가 커지고 있어서, 웬만한 H/W 로는 훈련 및 추론 불가.
+![image](https://user-images.githubusercontent.com/93692701/171075193-ba6ffe3c-124e-4752-9b54-78b4b14fa8f3.png)
+
+![image](https://user-images.githubusercontent.com/93692701/171075615-14ab5a66-1c7a-4379-b025-2514217902e4.png)
+
 
 #### 4) 구조
 
