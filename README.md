@@ -28,4 +28,4 @@
 - [WandB](https://github.com/kobongsoo/WandB/tree/master)
 - [GPU 메모리보다 큰 모델 파인 튜닝하기](https://github.com/kobongsoo/GPUTech/tree/master)
 - [양자화(Quantization) 기법](https://github.com/kobongsoo/BERT/tree/master/Quantization)
-
+- [Tips](https://github.com/kobongsoo/BERT/tree/master/tips)
