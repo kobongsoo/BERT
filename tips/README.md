@@ -1,6 +1,114 @@
 ## ETC <img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/>
- 
-### 1. Transformer
+### HuggingFace BertTokenizer 방식들
+- Huggingface BertTokenizer 를 사용하는 방식들에 대해 설명한다.
+```
+from transformers import BertTokenizer
+tokenizer = BertTokenizer.from_pretrained('bert-multilingual-cased')
+```
+예제 : [BertTokenizer 방식](https://github.com/kobongsoo/BERT/blob/master/tips/huggingface_tokenizer_methods.ipynb)
+
+```
+text = "hello world!"
+```
+
+#### 1. encode
+- list/tensor type: input_ids만 출력
+```
+token_ids = tokenizer.encode(text, max_length=128, padding="max_length", return_tensors="pt")
+```
+```
+print(token_ids)
+
+tensor([[  101, 61694, 10133, 11356,   106,   102,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0]])
+```
+
+#### 2. encode_plus
+-  dict type: input_ids, token_type_id, attention_mask 출력 
+```
+token_ids = tokenizer.encode_plus(text, max_length=128, padding="max_length", return_tensors="pt")
+```
+```
+print(token_ids)
+
+{'input_ids': tensor([[  101, 61694, 10133, 11356,   106,   102,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+             0,     0,     0,     0,     0,     0,     0,     0]]), 'token_type_ids': tensor([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0]]), 'attention_mask': tensor([[1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0]])}
+```
+#### 3. toknizer
+- encode_plus 와 동일
+```
+token_ids = tokenizer(text, max_length=128, padding="max_length", return_tensors="pt")
+```
+#### 4. convert_tokens_to_ids 
+-  [CLS]=101, [SEP]=102 빼고 tokeni_id만 출력
+```
+tokens = tokenizer.tokenize(text)
+token_ids = tokenizer.convert_tokens_to_ids(tokens)
+
+```
+```
+print(tokens)
+print(token_ids)
+
+['hell', '##o', 'world', '!']
+[61694, 10133, 11356, 106]
+```
+
+#### 5. batch_encode_plus 사용 
+- input_ids, token_type_id, attention_mask 배치로 묶어 출력
+```
+text_list = ["hello world!", "hellow mars!", "hellow sum!"]
+token_ids = tokenizer.batch_encode_plus(text_list, max_length=8, padding="max_length", return_tensors="pt")
+```
+```
+print(token_ids)
+
+{'input_ids': tensor([[  101, 61694, 10133, 11356,   106,   102,     0,     0],
+        [  101, 61694, 16602, 11438,   106,   102,     0,     0],
+        [  101, 61694, 16602, 28439,   106,   102,     0,     0]]), 'token_type_ids': tensor([[0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0]]), 'attention_mask': tensor([[1, 1, 1, 1, 1, 1, 0, 0],
+        [1, 1, 1, 1, 1, 1, 0, 0],
+        [1, 1, 1, 1, 1, 1, 0, 0]])}
+```
+- 아래도 방식도 동일함
+```
+token_ids = tokenizer(text_list, max_length=8, padding="max_length", return_tensors="pt")
+```
+***
+### Transformer
 #### 1) 개요
 - 2017년 구글이 발표한 논문 "**Attention is all you need**" 에서 제시한 모델
 - 기존 NLP(자연어 처리) 분야에 사용되던 **인코더-디코더 구조**를 따르면서도, **RNN 레이어를 사용하지 않고**, 엄청 우수한 번역 성능을 보여준 모델임.
