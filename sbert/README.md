@@ -27,7 +27,7 @@ embedder = SentenceTransformer(model_path, device='cpu')
 
 ### 2. Cross-Encoder
 - Cross-Encoder는 **2개의 문장을 같이 1개의 문장으로 조합해서 BERT에 전달하고, 입력 문장 쌍의 유사성을 나타내는 0과 1 사이의 값을 출력함**.(NLI 모델과 같음)
-- Cross-Encoder는 문장 임베딩을 생성하지 않고, 1개의 문장만 Cross-Encoder에 전달할 수 없음
+- Cross-Encoder는 문장 임베딩을 생성하지 않고, 1개의 문장만 Cross-Encoder에 전달할 수 있음
 - 장점 : **Bi-Encoder 방식 보다 정확도가 높음**
 - 단점 : 문장이 많으면 **처리 속도가 엄청 느림**(예로 10,000개 문장을 클러스터링 하려면 10,000개 문장쌍인 약 5천만개 문장을 계산해야 함(약 60시간 걸림))
 - 예제 : [STS 훈련 예](https://github.com/kobongsoo/BERT/blob/master/sbert/cross-encoder/sbert-corossencoder-train-sts.ipynb), [NLI 훈련 예](https://github.com/kobongsoo/BERT/blob/master/sbert/cross-encoder/sbert-corossencoder-train-sts.ipynb), [평가 예](https://github.com/kobongsoo/BERT/blob/master/sbert/cross-encoder/sbert-crossencoder-test.ipynb)
