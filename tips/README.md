@@ -1,4 +1,4 @@
-## ETC <img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/>
+## Tips <img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/>
 ### HuggingFace BertTokenizer 방식들
 - Huggingface BertTokenizer 를 사용하는 방식들에 대해 설명한다.
 ```
@@ -147,7 +147,7 @@ token_ids = tokenizer(text_list, max_length=8, padding="max_length", return_tens
 출처 : https://wikidocs.net/31379
 
 ***
-### Tips
+### 
 #### 1. 말뭉치에 개행문자(/r/n) 제거
 ```
 with open(corpus_path, 'r') as f: # 읽기로 파일 열기
