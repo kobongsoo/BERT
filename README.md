@@ -3,6 +3,12 @@
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fkobongsoo%2FBERT&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
 - BERT와 관련된 자료들입니다. 자세한 내용은 아래 각 항목에 링크를 누르시면 확인할 수 있습니다.
 - 한국어 추가 학습한 [sentencebert 모델](https://huggingface.co/bongsoo/sentencebert_v1.0)을 통해 문장 유사도를 테스트 해볼수 있음 
+
+BERT로 부터 파생된 다양한 모델들(2019)
+![image](https://user-images.githubusercontent.com/93692701/171560810-a7e7a8bc-a101-459e-9c59-d29dc31e5b2f.png)
+
+출처 : https://github.com/thunlp/PLMpapers
+
 ### 1. BERT 
 - [BERT를 이용한 sementic 검색 모델 제작 과정](https://github.com/kobongsoo/BERT/tree/master)
 - [BERT 예제](https://github.com/kobongsoo/BERT/tree/master/bert)
