@@ -148,7 +148,7 @@ token_ids = tokenizer(text_list, max_length=8, padding="max_length", return_tens
 
 ***
 ### 기타
-#### 1. 말뭉치에 개행문자(/r/n) 제거
+#### 말뭉치에 개행문자(/r/n) 제거
 ```
 with open(corpus_path, 'r') as f: # 읽기로 파일 열기
     lines = f.readlines()
@@ -159,7 +159,7 @@ with open(corpus_path, 'r') as f: # 읽기로 파일 열기
             line = line.replace("\n", "")
             f1.write(line)               # 제거된 한줄씩 저장
  ```
-#### 2. 파일 로딩/저장
+#### 파일 로딩/저장
 ```
 import numpy as np
 import pandas as pd
@@ -176,7 +176,24 @@ df=pd.read_json(file_path)   #json 파일 로딩
 outfile_fpath = "../../korpora/mycorpus/newspaper.csv"
 df.to_csv(outfile_fpath, index=False, header= None)
 ```
-#### 3. df 를 list로 변환
+
+#### 파일들 병합 하기 
+```
+filenames = [
+    '../nlp_corpus/noxlsx2_dump/0000.txt',
+    '../nlp_corpus/noxlsx2_dump/0001.txt',
+    '../nlp_corpus/noxlsx2_dump/0002.txt'
+          ]
+
+out_file = '../data11/korpora/nlp_corpus_merge.txt'
+
+with open(out_file, 'w') as outfile:
+    for filename in filenames:
+        with open(filename) as file:
+            for line in file:
+                outfile.write(line)
+```                
+#### df 를 list로 변환
 ```
 # csv 파일 로딩해봄
 outfile_fpath = "../../korpora/korQuAD/KorQuAD_v1.0_train.csv"
@@ -192,7 +209,7 @@ answer_list = np.array(df['answer'].tolist())
 df = pd.DataFrame((zip(context_list, question_list, answer_list)), columns = ['context','question','answer'])
 ```
 
-### 4. torch.save 모델 저장
+### torch.save 모델 저장
 ```
 # 모델 저장
 # => torch.save 로 저장하는 방법 
