@@ -9,26 +9,29 @@ BERT로 부터 파생된 다양한 모델들(2019)
 
 출처 : https://github.com/thunlp/PLMpapers
 
-### 1. BERT 
+### BERT 
 - [BERT를 이용한 sementic 검색 모델 제작 과정](https://github.com/kobongsoo/BERT/tree/master)
 - [BERT 예제](https://github.com/kobongsoo/BERT/tree/master/bert)
 - [BERT 모델의 출력 차원(dimension) 줄이기](https://github.com/kobongsoo/BERT/tree/master/mymodel)
 - [BERT 추출 요약](https://github.com/kobongsoo/BERT/tree/master/summarizer)
 
-### 2. DistilBERT
+### DistilBERT
 - [DistilBERT 예제](https://github.com/kobongsoo/BERT/tree/master/distilbert)
 
-### 3. SentenceBERT
+### SentenceBERT
 - [SenetenceBERT 예제](https://github.com/kobongsoo/BERT/tree/master/sbert)
 
-### 4. Tokenizer
+### Albert
+- [Albert 예제](https://github.com/kobongsoo/BERT/tree/master/albert)
+
+### Tokenizer
 - [BertWordPieceTokenizer/ SentencePieceTokenizer](https://github.com/kobongsoo/BERT/tree/master/tokenizer_sample)
 
-### 5. 유사도 측정
+### 유사도 측정
 - [유사도 측정 예제/FAISS](https://github.com/kobongsoo/BERT/tree/master/embedding_sample)
 - [ElasticSearch로 임베딩 벡터(Embedding Vector)를 이용한 문장 유사도 검색 구현하기](https://github.com/kobongsoo/BERT/tree/master/elasticsearch)
 
-### 6. 기타
+### 기타
 - [말뭉치(Corpus)](https://github.com/kobongsoo/BERT/tree/master/corpus_sample)
 - [FLASK](https://github.com/kobongsoo/BERT/tree/master/Flask)
 - [WandB](https://github.com/kobongsoo/WandB/tree/master)
