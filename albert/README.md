@@ -1,0 +1,58 @@
+# Albert
+
+## 1. 기존 모델 문제점
+- Training speed (훈련속도) 저하, memory limitation ( GPU 메모리 한계)
+<br>BERT base 인 경우 16개 V100(32G) GPU 사용시 ,5일 이상 소요.
+<br>BERT large 인 경우 64개 V100(32G) GPU 사용시 ,8일 이상 소요.
+<br> 참고 : https://timdettmers.com/2018/10/17/tpus-vs-gpus-for-transformers-bert/
+
+## 2. ALBERT: A LITE BERT FOR SELF-SUPERVISED LEARNING OF LANGUAGE REPRESENTATIONS 
+- 모델이 크기는 줄이고 성능은 높이기 위해 3가지 훈련 방식 사용함.
+- 훈련시에는 **MLM(Masked Language Model) + SOP(Sentence Order Prediction)** 말뭉치로 훈련함.
+<br> Batch size = 4096, 125,000 Steps 학습, 모델의 크기에 따라 TPUv3를 64~1024 chips 활용
+<br> Wiki, Book Corpus - 16GB 학습 데이터, Layer 간 모든 Parameter 공유
+- **SentencePiece** Tokenizer 사용
+
+### ALBERT vs BERT
+
+|모델|파라미터|레이어수|Hidden Layer 차원|임베딩 차원|
+|:---|-------:|-------:|---------------:|----------:|
+|BERT-base|110M|12|768|768|
+|BERT-large|334M|24|1024|1024|
+|Albert-base|12M|12|768|128|
+|Albert-large|18M|24|1024|128|
+|Albert-xlarge|60M|24|2048|128|
+|Albert-xxlarge|235M|12|4096|128|
+
+### 1. Factorized embedding layer parameterization (임베딩 벡터 파라메터 줄이기)
+- 기존 임베딩 사이즈과 Hidden layer 사이즈는 동일(BERT인 경우 768) 하게 하지 않고, **임베딩 사이즈를 128**로 줄임
+- 즉 기존 임베딩 V * H 를 V *E + E * H 로 맞추어 임베딩 사이즈를 줄임
+  
+![image](https://user-images.githubusercontent.com/93692701/172548603-884c8ca8-cf14-40a1-94c9-d805ba67a148.png)
+
+### 2. Cross-layer parameter sharing (인코더 레이어 공유)
+- 첫 번째 인코더 레이어의 변수만 학습한 다음, **첫 번째 인코더 레이어의 변수를 다른 모든 인코더 레이어와 공유**하는 방식(Universal Transformer에서도 레이어 공유 방식 사용함)
+- 논문 실험결과 Self Attention Layer 만 공유 했을때는 성능이 떨어지지 않음. FFN(Feed Forward Network) 공유시에는 다소 떨어짐.
+![image](https://user-images.githubusercontent.com/93692701/172551010-a204eaf8-dfd0-47fc-8134-be8c97efd353.png)
+
+- 아래 그림처럼 Layer가 Recursive Transformer 형태로 동작한다고 할수 있음.
+
+![image](https://user-images.githubusercontent.com/93692701/172562693-ea9bf420-1fe3-49b7-a3e6-bd067beed543.png)
+
+### 3. Sentnect Order Prediction(SOP)(문장 순서 훈련)
+- 연속적인 두문장(positive)과 두문장의 순서를 앞뒤로 바꾼 문장(negative)으로 문장이 순서가 옳은지 예측 하는 학습 방식.
+- 이진 분류로 sentence_order_label 이용함.
+<br>햄버거를 만들었다. 맛있었다. => positive(0)
+<br>맛있었다. 햄버거를 만들었다  => negative(1)
+
+![image](https://user-images.githubusercontent.com/93692701/172563354-600e9c4b-376d-4415-94ee-96d5c7714cf7.png)
+
+## 예제
+
+|소스명|설명|기타|
+|:-----------------|:-----------------------------------------------------------|:---------------------|
+|[insert_vocab](https://github.com/kobongsoo/BERT/blob/master/albert/insert_vocab.ipynb)|albert-base-v2 토큰(sentenctpiece)에 신규 vocab을 추가하는 예||
+|[albert-further-pretrain-mlm](https://github.com/kobongsoo/BERT/blob/master/albert/albert-further-pretrain-mlm.ipynb)|albert-base-v2에 MLM Further Pretrain 예||
+|[albert-further-pretrain-sop-mlm](https://github.com/kobongsoo/BERT/blob/master/albert/albert-further-pretrain-sop-mlm.ipynb)|albert-base-v2에 MLM+SOP Further Pretrain 예||
+
+
