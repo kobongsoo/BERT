@@ -16,9 +16,6 @@ from .utils import mlogging
 from tqdm.notebook import tqdm
 from typing import Dict, List, Optional
 
-# [bong] mylogging 호출함
-logger = mlogging(loggername='bwpdataset',logfilename='../../log/bwdataset')
-
 # 모델 저장 
 def SaveBERTModel(model, tokenizer, OUTPATH, epochs, lr, batch_size):
     
@@ -37,7 +34,7 @@ def SaveBERTModel(model, tokenizer, OUTPATH, epochs, lr, batch_size):
     # tokeinizer 파일 저장(vocab)
     VOCAB_PATH = TMP_OUT_PATH
     tokenizer.save_pretrained(VOCAB_PATH)
-    logger.info(f'==> save_model : {TMP_OUT_PATH}')
+    print(f'==> save_model : {TMP_OUT_PATH}')
    
 #=================================================================
 # MASKED Language Model 일때 정확도 계산
@@ -106,7 +103,7 @@ class KlueNLICorpus:
         return examples
 
     def get_examples(self, data_fpath):
-        logger.info(f"loading data... LOOKING AT {data_fpath}")
+        print(f"loading data... LOOKING AT {data_fpath}")
         examples = self._create_examples(data_fpath)
         return examples
 
@@ -137,7 +134,7 @@ class KorNLICorpus:
         return examples
 
     def get_examples(self, data_fpath):
-        logger.info(f"loading data... LOOKING AT {data_fpath}")
+        print(f"loading data... LOOKING AT {data_fpath}")
         examples = self._create_examples(data_fpath)
         return examples
 
@@ -166,14 +163,14 @@ class ClassificationCSVCorpus():
             raise KeyError("label_list is empty")
             
     def get_examples(self, data_fpath):
-        logger.info(f"loading data... LOOKING AT {data_fpath}")
+        print(f"loading data... LOOKING AT {data_fpath}")
         
         # csv 파일이면  
         if self.iscsvfile == 1:
-            logger.info(f"csv file open")
+            print(f"csv file open")
             lines = list(csv.reader(open(data_fpath, "r", encoding="utf-8"), quotechar='"'))
         else: # tsv 파일이면
-            logger.info(f"tsv file open")
+            print(f"tsv file open")
             lines = list(csv.reader(open(data_fpath, "r", encoding="utf-8"), delimiter="\t", quotechar='"'))
             
         examples = []
@@ -207,7 +204,7 @@ def _convert_examples_to_classification_features(
     label_map = {label: i for i, label in enumerate(label_list)}
     labels = [label_map[example.label] for example in examples]
 
-    logger.info("tokenize sentences, it could take a lot of time...")
+    print("tokenize sentences, it could take a lot of time...")
     start = time.time()
         
     # tokenizer 실행    
@@ -218,7 +215,7 @@ def _convert_examples_to_classification_features(
         truncation=True,
     )
     
-    logger.info("tokenize sentences [took %.3f s]", time.time() - start)
+    print("tokenize sentences [took %.3f s]", time.time() - start)
 
     features = []
     for i in tqdm(range(len(examples))):
@@ -227,15 +224,15 @@ def _convert_examples_to_classification_features(
         features.append(feature)
 
     for i, example in enumerate(examples[:2]):
-        logger.info("*** Example ***")
+        print("*** Example ***")
         if example.text_b is None:
-            logger.info("sentence: %s" % (example.text_a))
+            print("sentence: %s" % (example.text_a))
         else:
             sentence = example.text_a + " + " + example.text_b
-            logger.info("sentence A, B: %s" % (sentence))
-        logger.info("tokens: %s" % (" ".join(tokenizer.convert_ids_to_tokens(features[i].input_ids))))
-        logger.info("label: %s" % (example.label))
-        logger.info("features: %s" % features[i])
+            print("sentence A, B: %s" % (sentence))
+        print("tokens: %s" % (" ".join(tokenizer.convert_ids_to_tokens(features[i].input_ids))))
+        print("label: %s" % (example.label))
+        print("features: %s" % features[i])
 
     return features    
 
@@ -287,13 +284,13 @@ class ClassificationDataset(Dataset):
             if os.path.exists(cached_features_file) and not overwrite_cache:
                 start = time.time()
                 self.features = torch.load(cached_features_file)
-                logger.info(f"Loading features from cached file {cached_features_file} [took %.3f s]", time.time() - start)
+                print(f"Loading features from cached file {cached_features_file} [took %.3f s]", time.time() - start)
             else:
                 corpus_path = os.path.join(
                     directory,
                     filename,
                 )
-                logger.info(f"Creating features from dataset file at {corpus_path}")
+                print(f"Creating features from dataset file at {corpus_path}")
                 examples = self.corpus.get_examples(corpus_path)
                 self.features = convert_examples_to_features_fn(
                     examples,
@@ -305,11 +302,11 @@ class ClassificationDataset(Dataset):
                 # overwrite_cache가 true일때만 생성
                 #if overwrite_cache:
                 start = time.time()
-                logger.info(
+                print(
                     "Saving features into cached file, it could take a lot of time..."
                 )
                 torch.save(self.features, cached_features_file)
-                logger.info(
+                print(
                      "Saving features into cached file %s [took %.3f s]", cached_features_file, time.time() - start
                 )
 
@@ -466,13 +463,13 @@ class MyTextDataset(Dataset):
             ####################################################################
             if os.path.exists(cached_features_file) and not overwrite_cache:
                 
-                logger.info(f"==>[Start] cached file read: {cached_features_file}")
+                print(f"==>[Start] cached file read: {cached_features_file}")
    
                 start = time.time()
                 with open(cached_features_file, "rb") as handle:
                     self.examples = pickle.load(handle)
                 
-                logger.info(
+                print(
                     f"<==[End] Loading features from cached file {cached_features_file} [took %.3f s]", time.time() - start
                 )
             ####################################################################    
@@ -480,31 +477,31 @@ class MyTextDataset(Dataset):
             # overwrite_cache = False 인데, 캐쉬파일이 없는 경우
             ####################################################################
             else:
-                logger.info(f"Creating features from dataset file at {directory}")
+                print(f"Creating features from dataset file at {directory}")
 
                 self.examples = []
                 
-                logger.info(f"==>[Start] file read: {file_path}")
+                print(f"==>[Start] file read: {file_path}")
                 
                 with open(file_path, encoding="utf-8") as f:
                     text = f.read()
 
-                logger.info(f"<==[End] file read: {file_path}")
+                print(f"<==[End] file read: {file_path}")
                 
-                logger.info(f"==>[Start] tokenizer convert_tokens_to_ids..wait max 30minute...")
+                print(f"==>[Start] tokenizer convert_tokens_to_ids..wait max 30minute...")
                         
                 tokenized_text = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(text))
 
-                logger.info(f"<==[End] tokenizer convert_tokens_to_ids")
+                print(f"<==[End] tokenizer convert_tokens_to_ids")
                     
-                logger.info(f"==>[Start] tokenizer")
+                print(f"==>[Start] tokenizer")
                     
                 for i in tqdm(range(0, len(tokenized_text) - block_size + 1, block_size)):  # Truncate in block of block_size
                     self.examples.append(
                         tokenizer.build_inputs_with_special_tokens(tokenized_text[i : i + block_size])
                     )
                     
-                logger.info(f"==>[End] tokenizer")    
+                print(f"==>[End] tokenizer")    
                 
                 # tokenizer 된 내용을 print 해봄
                 num = min(len(self.examples), show_num)
@@ -516,11 +513,11 @@ class MyTextDataset(Dataset):
                 
                 # overwrite_cache=True 인경우에만 캐쉬파일 생성함
                 if overwrite_cache:
-                    logger.info(f"==>[Start] cached file create: {cached_features_file}")
+                    print(f"==>[Start] cached file create: {cached_features_file}")
                     start = time.time()
                     with open(cached_features_file, "wb") as handle:
                         pickle.dump(self.examples, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                    logger.info(
+                    print(
                         f"<==[End] Saving features into cached file {cached_features_file} [took {time.time() - start:.3f} s]"
                     )
 
@@ -562,16 +559,16 @@ class MyLineByLineTextDataset(Dataset):
         # Here, we do not cache the features, operating under the assumption
         # that we will soon use fast multithreaded tokenizers from the
         # `tokenizers` repo everywhere =)
-        logger.info(f"Creating features from dataset file at {file_path}")
+        print(f"Creating features from dataset file at {file_path}")
 
-        logger.info(f"==>[Start] file read lines: {file_path}")
+        print(f"==>[Start] file read lines: {file_path}")
         
         with open(file_path, encoding="utf-8") as f:
             lines = [line for line in tqdm(f.read().splitlines()) if (len(line) > 0 and not line.isspace())]
 
-        logger.info(f"<==[End] file read lines: {file_path}")
+        print(f"<==[End] file read lines: {file_path}")
                 
-        logger.info(f"==>[Start] tokenizer")
+        print(f"==>[Start] tokenizer")
         
         batch_encoding = tokenizer(lines, add_special_tokens=True, truncation=True, max_length=block_size)
         self.examples = batch_encoding["input_ids"]
@@ -588,7 +585,7 @@ class MyLineByLineTextDataset(Dataset):
             self.examples = [torch.tensor(e, dtype=torch.long) for e in self.examples]
             print_dataset(self.examples, tokenizer, num)
             
-        logger.info(f"<==[End] tokenizer")
+        print(f"<==[End] tokenizer")
         
         # tokenizer 된 내용을 print 해봄
        
@@ -620,6 +617,7 @@ class MyLineByLineTextDataset(Dataset):
 ## - mlm_probability : 해당 문장에 있는 토큰들 중 몇 %로 [MASK] 토큰으로 변환할 것인가 (15% : 15% 확률로 [MASK]로 토큰 변환 시킴)
 ## - cache_dir : 캐쉬파일 저장경로
 ## - overwrite_cache : True면 cache 파일 씀, False이면 캐쉬파일 있으면 캐쉬파일 이용함
+## - Maskvocab_list :  masked 할 단어목록 예시) # [MASK] 꼭 해야할 단어 목록들 예: ['▁문서중앙화','▁보안파일서버','▁엠파워','▁영국', '▁월드컵', '▁나라', '▁test'] 
 #######################################################################################    
 class MLMDataset(Dataset):
     
@@ -634,7 +632,8 @@ class MLMDataset(Dataset):
                  max_sequence_len: int=128,  # max_sequence_len
                  mlm_probability: float=0.15,  # [MASK] 변환할 토큰 % 수
                  cache_dir: Optional[str] = None,  # 캐쉬파일 저장 경로
-                 overwrite_cache=False  # True면 cache 파일 씀, False이면 캐쉬파일 있으면 캐쉬파일 이용함
+                 overwrite_cache=False,  # True면 cache 파일 씀, False이면 캐쉬파일 있으면 캐쉬파일 이용함
+                 Maskvocab_list: List[str] = None,   # [MASK] 꼭 해야할 단어 목록들 예: ["문서중앙화", "보안파일서버", "엠파워", "그룹웨어", "보안문서"] 
                 ):
         
         self.mydict = {}  
@@ -660,9 +659,26 @@ class MLMDataset(Dataset):
             self.UNKtokenid = UNKtokenid
             self.PADtokenid = PADtokenid
             self.Masktokenid = Masktokenid
-            
+                
         self.max_sequence_len = max_sequence_len
         self.mlm_probability = mlm_probability   
+        
+        ########################################################################
+        # mask 해야할 vocab list가 들어오는 경우, tokenizer 해서 ,idx로 변환해줌.
+         ########################################################################
+        if Maskvocab_list is not None:
+            maskvocablist = []
+            for vocab in Maskvocab_list:
+                token = tokenizer.convert_tokens_to_ids(vocab)
+                
+                # token이 특수토큰이 아닌경우에만 maskvocablist에 추가함.
+                if (token is not self.CLStokeinid) and (token is not self.SEPtokenid) and (token is not self.UNKtokenid) and (token is not self.PADtokenid) and (token is not self.Masktokenid):
+                    maskvocablist.append(token)
+        
+            self.maskvocablist = maskvocablist
+            print(f'*maskvocablist_len: {len(self.maskvocablist)}')
+            print(f'*maskvocablist: {self.maskvocablist}')
+         ########################################################################
         
         print(f'*corpus:{corpus_path}')
         print(f'*max_sequence_len:{max_sequence_len}')
@@ -687,13 +703,13 @@ class MLMDataset(Dataset):
             ####################################################################
             if os.path.exists(cached_features_file) and not overwrite_cache:
                 
-                logger.info(f"==>[Start] cached file read: {cached_features_file}")
+                print(f"==>[Start] cached file read: {cached_features_file}")
    
                 start = time.time()
                 with open(cached_features_file, "rb") as handle:
                     self.mydict = pickle.load(handle)
                 
-                logger.info(
+                print(
                     f"<==[End] Loading features from cached file {cached_features_file} [took %.3f s]", time.time() - start
                 )
             ####################################################################    
@@ -754,23 +770,47 @@ class MLMDataset(Dataset):
                     labels = copy.deepcopy(token_ids) # *[bong] label를 token_ids 값을 deepcopy하여, 생성   
 
                     #===========================================
-                    # token_ids 에 대해 MLM 생성      
+                    # makevocablist(masked 처리할 vocab)가 존재하는 경우 
+                    # => 해당 문장에 mask할 vocab이 있는지 파악
+                    # => 1개라도 있으면 해당 vocab을 [MASK] 처리
+                    # => 없으면 15% 랜덤한 vocab을 [MASK] 처리
                     #===========================================
-                    #token_ids에 15% 확률로 [MASK] 붙임  
-                    rand = torch.rand(token_ids.shape)
-                    # [CLS],[SEP],[UNK],[PAD] 은 각각 특수 토큰이므로, 특수 토큰에는 [MASK]를 하지 않음
-                    mask_arr = (rand < self.mlm_probability)*(token_ids != self.CLStokeinid)*(token_ids != self.SEPtokenid)* \
-                                (token_ids != self.UNKtokenid)*(token_ids != self.PADtokenid)
-                    #print(mask_arr)
+                    maskvocabnum = 0
+                    if self.maskvocablist is not None:
+                        mask_arr = torch.zeros(token_ids.shape, dtype=torch.bool)
+                        for maskvocabid in self.maskvocablist:
+                            mask_arr += (token_ids == maskvocabid)
 
-                    # MASK 붙일 위치를 배열로 변환
-                    selection = torch.flatten((mask_arr[0]).nonzero()).tolist()
-                    #print('MASK Position: {}'.format(selection))
+                        selection = torch.flatten((mask_arr[0]).nonzero()).tolist()
+                        maskvocabnum=len(selection)
+                    #===========================================    
+                    # 문장에 mask 처리할 vocab이 1개라도 있는 경우 해당 vocab을 [MASK] 토큰(4) 으로 변경
+                    if maskvocabnum > 0:
+                        # [MASK] 토큰(4) 으로 변경
+                        #print(f'befor:{token_ids}')
+                        token_ids[0,selection] = Masktokenid
+                        #print(f'after:{token_ids}')
+                    #===========================================
+                    # 문장에 mask 처리할 vocab이  없는 경우에는 random 하게 vocab을 [MASK] 토큰(4) 으로 변경
+                    else:    
+                        #===========================================
+                        # token_ids 에 대해 MLM 생성      
+                        #===========================================
+                        #token_ids에 15% 확률로 [MASK] 붙임  
+                        rand = torch.rand(token_ids.shape)
+                        # [CLS],[SEP],[UNK],[PAD] 은 각각 특수 토큰이므로, 특수 토큰에는 [MASK]를 하지 않음
+                        mask_arr = (rand < self.mlm_probability)*(token_ids != self.CLStokeinid)*(token_ids != self.SEPtokenid)* \
+                                    (token_ids != self.UNKtokenid)*(token_ids != self.PADtokenid)
+                        #print(mask_arr)
 
-                    # [MASK] 토큰(4) 으로 변경
-                    #print(f'befor:{token_ids}')
-                    token_ids[0,selection] = Masktokenid
-                    #print(f'after:{token_ids}')
+                        # MASK 붙일 위치를 배열로 변환
+                        selection = torch.flatten((mask_arr[0]).nonzero()).tolist()
+                        #print('MASK Position: {}'.format(selection))
+
+                        # [MASK] 토큰(4) 으로 변경
+                        #print(f'befor:{token_ids}')
+                        token_ids[0,selection] = Masktokenid
+                        #print(f'after:{token_ids}')
 
                     token_ids_list.append(token_ids[0].tolist())
                     token_type_ids_list.append(token_type_ids[0].tolist())
@@ -782,11 +822,11 @@ class MLMDataset(Dataset):
 
                  # overwrite_cache=True 인경우에만 캐쉬파일 생성함
                 if overwrite_cache:
-                    logger.info(f"==>[Start] cached file create: {cached_features_file}")
+                    print(f"==>[Start] cached file create: {cached_features_file}")
                     start = time.time()
                     with open(cached_features_file, "wb") as handle:
                         pickle.dump(self.mydict, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                    logger.info(f"<==[End] Saving features into cached file {cached_features_file} [took {time.time() - start:.3f} s]")
+                    print(f"<==[End] Saving features into cached file {cached_features_file} [took {time.time() - start:.3f} s]")
 
                 #print(self.mydict.keys())
                 #print(len(self.mydict['input_ids']))
@@ -815,7 +855,8 @@ class MLMDatasetbyDistilBert(Dataset):
                  max_sequence_len: int=128,  # max_sequence_len
                  mlm_probability: float=0.15,  # [MASK] 변환할 토큰 % 수
                  cache_dir: Optional[str] = None,  # 캐쉬파일 저장 경로
-                 overwrite_cache=False  # True면 cache 파일 씀, False이면 캐쉬파일 있으면 캐쉬파일 이용함
+                 overwrite_cache=False,  # True면 cache 파일 씀, False이면 캐쉬파일 있으면 캐쉬파일 이용함
+                 Maskvocab_list: List[str] = None,   # [MASK] 꼭 해야할 단어 목록들 예: ['▁문서중앙화','▁보안파일서버','▁엠파워','▁영국', '▁월드컵', '▁나라', '▁test'] 
                 ):
         
         self.mydict = {}  
@@ -845,6 +886,23 @@ class MLMDatasetbyDistilBert(Dataset):
         self.max_sequence_len = max_sequence_len
         self.mlm_probability = mlm_probability   
         
+        ########################################################################
+        # mask 해야할 vocab list가 들어오는 경우, tokenizer 해서 ,idx로 변환해줌.
+        ########################################################################
+        if Maskvocab_list is not None:
+            maskvocablist = []
+            for vocab in Maskvocab_list:
+                token = tokenizer.convert_tokens_to_ids(vocab)
+                
+                # token이 특수토큰이 아닌경우에만 maskvocablist에 추가함.
+                if (token is not self.CLStokeinid) and (token is not self.SEPtokenid) and (token is not self.UNKtokenid) and (token is not self.PADtokenid) and (token is not self.Masktokenid):
+                    maskvocablist.append(token)
+        
+            self.maskvocablist = maskvocablist
+            print(f'*maskvocablist_len: {len(self.maskvocablist)}')
+            print(f'*maskvocablist: {self.maskvocablist}')
+         ########################################################################
+        
         print(f'*corpus:{corpus_path}')
         print(f'*max_sequence_len:{max_sequence_len}')
         print(f'*mlm_probability:{mlm_probability}')
@@ -868,13 +926,13 @@ class MLMDatasetbyDistilBert(Dataset):
             ####################################################################
             if os.path.exists(cached_features_file) and not overwrite_cache:
                 
-                logger.info(f"==>[Start] cached file read: {cached_features_file}")
+                print(f"==>[Start] cached file read: {cached_features_file}")
    
                 start = time.time()
                 with open(cached_features_file, "rb") as handle:
                     self.mydict = pickle.load(handle)
                 
-                logger.info(
+                print(
                     f"<==[End] Loading features from cached file {cached_features_file} [took %.3f s]", time.time() - start
                 )
             ####################################################################    
@@ -933,23 +991,47 @@ class MLMDatasetbyDistilBert(Dataset):
                     labels = copy.deepcopy(token_ids) # *[bong] label를 token_ids 값을 deepcopy하여, 생성   
 
                     #===========================================
-                    # token_ids 에 대해 MLM 생성      
+                    # makevocablist(masked 처리할 vocab)가 존재하는 경우 
+                    # => 해당 문장에 mask할 vocab이 있는지 파악
+                    # => 1개라도 있으면 해당 vocab을 [MASK] 처리
+                    # => 없으면 15% 랜덤한 vocab을 [MASK] 처리
                     #===========================================
-                    #token_ids에 15% 확률로 [MASK] 붙임  
-                    rand = torch.rand(token_ids.shape)
-                    # [CLS],[SEP],[UNK],[PAD] 은 각각 특수 토큰이므로, 특수 토큰에는 [MASK]를 하지 않음
-                    mask_arr = (rand < self.mlm_probability)*(token_ids != self.CLStokeinid)*(token_ids != self.SEPtokenid)* \
-                                (token_ids != self.UNKtokenid)*(token_ids != self.PADtokenid)
-                    #print(mask_arr)
+                    maskvocabnum = 0
+                    if self.maskvocablist is not None:
+                        mask_arr = torch.zeros(token_ids.shape, dtype=torch.bool)
+                        for maskvocabid in self.maskvocablist:
+                            mask_arr += (token_ids == maskvocabid)
 
-                    # MASK 붙일 위치를 배열로 변환
-                    selection = torch.flatten((mask_arr[0]).nonzero()).tolist()
-                    #print('MASK Position: {}'.format(selection))
+                        selection = torch.flatten((mask_arr[0]).nonzero()).tolist()
+                        maskvocabnum=len(selection)
+                    #===========================================    
+                    # 문장에 mask 처리할 vocab이 1개라도 있는 경우 해당 vocab을 [MASK] 토큰(4) 으로 변경
+                    if maskvocabnum > 0:
+                        # [MASK] 토큰(4) 으로 변경
+                        #print(f'befor:{token_ids}')
+                        token_ids[0,selection] = Masktokenid
+                        #print(f'after:{token_ids}')
+                    #===========================================
+                    # 문장에 mask 처리할 vocab이  없는 경우에는 random 하게 vocab을 [MASK] 토큰(4) 으로 변경
+                    else:
+                        #===========================================
+                        # token_ids 에 대해 MLM 생성      
+                        #===========================================
+                        #token_ids에 15% 확률로 [MASK] 붙임  
+                        rand = torch.rand(token_ids.shape)
+                        # [CLS],[SEP],[UNK],[PAD] 은 각각 특수 토큰이므로, 특수 토큰에는 [MASK]를 하지 않음
+                        mask_arr = (rand < self.mlm_probability)*(token_ids != self.CLStokeinid)*(token_ids != self.SEPtokenid)* \
+                                    (token_ids != self.UNKtokenid)*(token_ids != self.PADtokenid)
+                        #print(mask_arr)
 
-                    # [MASK] 토큰(4) 으로 변경
-                    #print(f'befor:{token_ids}')
-                    token_ids[0,selection] = Masktokenid
-                    #print(f'after:{token_ids}')
+                        # MASK 붙일 위치를 배열로 변환
+                        selection = torch.flatten((mask_arr[0]).nonzero()).tolist()
+                        #print('MASK Position: {}'.format(selection))
+
+                        # [MASK] 토큰(4) 으로 변경
+                        #print(f'befor:{token_ids}')
+                        token_ids[0,selection] = Masktokenid
+                        #print(f'after:{token_ids}')
 
                     token_ids_list.append(token_ids[0].tolist())
                     attention_mask_list.append(attention_mask[0].tolist())
@@ -960,11 +1042,11 @@ class MLMDatasetbyDistilBert(Dataset):
 
                  # overwrite_cache=True 인경우에만 캐쉬파일 생성함
                 if overwrite_cache:
-                    logger.info(f"==>[Start] cached file create: {cached_features_file}")
+                    print(f"==>[Start] cached file create: {cached_features_file}")
                     start = time.time()
                     with open(cached_features_file, "wb") as handle:
                         pickle.dump(self.mydict, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                    logger.info(f"<==[End] Saving features into cached file {cached_features_file} [took {time.time() - start:.3f} s]")
+                    print(f"<==[End] Saving features into cached file {cached_features_file} [took {time.time() - start:.3f} s]")
 
                 #print(self.mydict.keys())
                 #print(len(self.mydict['input_ids']))
@@ -1045,13 +1127,13 @@ class MLMDatasetDistillation(Dataset):
             ####################################################################
             if os.path.exists(cached_features_file) and not overwrite_cache:
                 
-                logger.info(f"==>[Start] cached file read: {cached_features_file}")
+                print(f"==>[Start] cached file read: {cached_features_file}")
    
                 start = time.time()
                 with open(cached_features_file, "rb") as handle:
                     self.mydict = pickle.load(handle)
                 
-                logger.info(
+                print(
                     f"<==[End] Loading features from cached file {cached_features_file} [took %.3f s]", time.time() - start
                 )
             ####################################################################    
@@ -1140,11 +1222,11 @@ class MLMDatasetDistillation(Dataset):
 
                  # overwrite_cache=True 인경우에만 캐쉬파일 생성함
                 if overwrite_cache:
-                    logger.info(f"==>[Start] cached file create: {cached_features_file}")
+                    print(f"==>[Start] cached file create: {cached_features_file}")
                     start = time.time()
                     with open(cached_features_file, "wb") as handle:
                         pickle.dump(self.mydict, handle, protocol=pickle.HIGHEST_PROTOCOL)
-                    logger.info(f"<==[End] Saving features into cached file {cached_features_file} [took {time.time() - start:.3f} s]")
+                    print(f"<==[End] Saving features into cached file {cached_features_file} [took {time.time() - start:.3f} s]")
 
                 #print(self.mydict.keys())
                 #print(len(self.mydict['input_ids']))

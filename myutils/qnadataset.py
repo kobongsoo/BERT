@@ -14,9 +14,6 @@ from torch.utils.data.dataset import Dataset
 
 from .utils import mlogging
 
-# [bong] mylogging 호출함
-logger = mlogging(loggername='qnadataset',logfilename='../../log/qnadataset')
-
 
 @dataclass
 class QAExample:
@@ -149,7 +146,7 @@ def _squad_convert_example_to_features(example, max_seq_length, doc_stride, max_
     # actual_text가 cleaned_answer_text를 포함할 경우 0
     # 그렇지 않을 경우 -1 (actual_text이 "베토벤 교향곡 9번" 등일 경우 이 케이스)
     if actual_text.find(cleaned_answer_text) == -1:
-        logger.warning("Could not find answer: '%s' vs. '%s'", actual_text, cleaned_answer_text)
+        print("Could not find answer: '%s' vs. '%s'", actual_text, cleaned_answer_text)
         return []
 
     # doc_tokens : context_text의 각 어절
@@ -332,10 +329,10 @@ def _squad_convert_examples_to_features(
 
     # 5개만 출력 해 봄.
     for i, example in enumerate(examples[:10]):
-        logger.info("*** Example ***")
-        logger.info("question & context: %s" % (" ".join(tokenizer.convert_ids_to_tokens(features[i].input_ids))))
-        logger.info("answer: %s" % (" ".join(tokenizer.convert_ids_to_tokens(features[i].input_ids[features[i].start_positions:features[i].end_positions + 1]))))
-        logger.info("features: %s" % features[i])
+        print("*** Example ***")
+        print("question & context: %s" % (" ".join(tokenizer.convert_ids_to_tokens(features[i].input_ids))))
+        print("answer: %s" % (" ".join(tokenizer.convert_ids_to_tokens(features[i].input_ids[features[i].start_positions:features[i].end_positions + 1]))))
+        print("features: %s" % features[i])
 
     return features
 
@@ -388,13 +385,13 @@ class QADataset(Dataset):
             if os.path.exists(cached_features_file) and not overwrite_cache:
                 start = time.time()
                 self.features = torch.load(cached_features_file)
-                logger.info(
+                print(
                     f"Loading features from cached file {cached_features_file} [took %.3f s]", time.time() - start
                 )
             else:
                 corpus_fpath = os.path.join(directory, filename)
 
-                logger.info(f"Creating features from dataset file at {corpus_fpath}")
+                print(f"Creating features from dataset file at {corpus_fpath}")
                
                 # corpus.get_examples 함수 호출하여, KorQuADCorpus 파일 불러옴
                 examples = self.corpus.get_examples(corpus_fpath)
@@ -410,12 +407,12 @@ class QADataset(Dataset):
                 
                 #if overwrite_cache:
                 start = time.time()
-                logger.info("Saving features into cached file, it could take a lot of time...")
+                print("Saving features into cached file, it could take a lot of time...")
                 
                 # 캐쉬 파일 저장
                 torch.save(self.features, cached_features_file)
                 
-                logger.info("Saving features into cached file %s [took %.3f s]", cached_features_file, time.time() - start)
+                print("Saving features into cached file %s [took %.3f s]", cached_features_file, time.time() - start)
 
     def __len__(self):
         return len(self.features)
