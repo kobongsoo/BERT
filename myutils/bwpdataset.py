@@ -666,6 +666,8 @@ class MLMDataset(Dataset):
         ########################################################################
         # mask 해야할 vocab list가 들어오는 경우, tokenizer 해서 ,idx로 변환해줌.
          ########################################################################
+        self.maskvocablist = None
+        
         if Maskvocab_list is not None:
             maskvocablist = []
             for vocab in Maskvocab_list:
@@ -889,6 +891,7 @@ class MLMDatasetbyDistilBert(Dataset):
         ########################################################################
         # mask 해야할 vocab list가 들어오는 경우, tokenizer 해서 ,idx로 변환해줌.
         ########################################################################
+        self.maskvocablist = None
         if Maskvocab_list is not None:
             maskvocablist = []
             for vocab in Maskvocab_list:
