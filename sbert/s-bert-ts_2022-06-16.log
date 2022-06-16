@@ -1,0 +1,39 @@
+2022-06-16 14:51:31,842 - s-bert-ts - INFO - ----------------------------------------------------------------------
+2022-06-16 14:51:31,844 - s-bert-ts - INFO - *Warmup-steps:5530, checkpoint_save_steps:11060, ephocs:3, train_data_len:589814, train_batch_size: 32
+2022-06-16 14:51:31,845 - s-bert-ts - INFO - *teacher_model: ../../data11/model/sbert/teacher/paraphrase-multilingual-mpnet-base-v2
+2022-06-16 14:51:31,846 - s-bert-ts - INFO - *student_model_name: ../../data11/model/albert/albert-ts-2022-06-16
+2022-06-16 14:51:31,847 - s-bert-ts - INFO - ----------------------------------------------------------------------
+2022-06-16 14:51:31,849 - s-bert-ts - INFO - *train_file: ../../data11/korpora/pair/TED2020-en-ko/TED2020-en-ko-train.tsv
+2022-06-16 14:51:31,850 - s-bert-ts - INFO - *test_file: ../../data11/korpora/pair/TED2020-en-ko/TED2020-en-ko-dev.tsv
+2022-06-16 14:51:31,851 - s-bert-ts - INFO - ----------------------------------------------------------------------
+2022-06-16 14:51:31,852 - s-bert-ts - INFO - *out_path: ../../data11/model/albert/albert-ts-2022-06-16-1
+2022-06-16 14:51:31,853 - s-bert-ts - INFO - *check_path: ../../data11/model/albert/checkpoint-2022-06-16
+2022-06-16 14:51:31,854 - s-bert-ts - INFO - ----------------------------------------------------------------------
+2022-06-16 16:01:06,253 - s-bert-ts - INFO - === 처리시간: 4174.398 초 ===
+2022-06-16 16:01:06,255 - s-bert-ts - INFO - 
+
+2022-06-16 16:09:10,184 - s-bert-ts - INFO - ----------------------------------------------------------------------
+2022-06-16 16:09:10,187 - s-bert-ts - INFO - *Warmup-steps:5530, checkpoint_save_steps:11060, ephocs:3, train_data_len:589814, train_batch_size: 32
+2022-06-16 16:09:10,188 - s-bert-ts - INFO - *teacher_model: ../../data11/model/sbert/teacher/paraphrase-multilingual-mpnet-base-v2
+2022-06-16 16:09:10,189 - s-bert-ts - INFO - *student_model_name: ../../data11/model/albert/albert-ts-2022-06-16
+2022-06-16 16:09:10,191 - s-bert-ts - INFO - ----------------------------------------------------------------------
+2022-06-16 16:09:10,192 - s-bert-ts - INFO - *train_file: ../../data11/korpora/pair/TED2020-en-ko/TED2020-en-ko-train.tsv
+2022-06-16 16:09:10,193 - s-bert-ts - INFO - *test_file: ../../data11/korpora/pair/TED2020-en-ko/TED2020-en-ko-dev.tsv
+2022-06-16 16:09:10,193 - s-bert-ts - INFO - ----------------------------------------------------------------------
+2022-06-16 16:09:10,194 - s-bert-ts - INFO - *out_path: ../../data11/model/albert/albert-ts-2022-06-16-1
+2022-06-16 16:09:10,197 - s-bert-ts - INFO - *check_path: ../../data11/model/albert/checkpoint-2022-06-16
+2022-06-16 16:09:10,197 - s-bert-ts - INFO - ----------------------------------------------------------------------
+2022-06-16 17:17:36,170 - s-bert-ts - INFO - === 처리시간: 4105.972 초 ===
+2022-06-16 17:17:36,172 - s-bert-ts - INFO - 
+
+2022-06-16 17:24:00,713 - s-bert-ts - INFO - ----------------------------------------------------------------------
+2022-06-16 17:24:00,716 - s-bert-ts - INFO - *Warmup-steps:73727, checkpoint_save_steps:147454, ephocs:40, train_data_len:589814, train_batch_size: 32
+2022-06-16 17:24:00,717 - s-bert-ts - INFO - *teacher_model: ../../data11/model/sbert/teacher/paraphrase-multilingual-mpnet-base-v2
+2022-06-16 17:24:00,718 - s-bert-ts - INFO - *student_model_name: ../../data11/model/albert/albert-ts-2022-06-16
+2022-06-16 17:24:00,720 - s-bert-ts - INFO - ----------------------------------------------------------------------
+2022-06-16 17:24:00,721 - s-bert-ts - INFO - *train_file: ../../data11/korpora/pair/TED2020-en-ko/TED2020-en-ko-train.tsv
+2022-06-16 17:24:00,722 - s-bert-ts - INFO - *test_file: ../../data11/korpora/pair/TED2020-en-ko/TED2020-en-ko-dev.tsv
+2022-06-16 17:24:00,723 - s-bert-ts - INFO - ----------------------------------------------------------------------
+2022-06-16 17:24:00,724 - s-bert-ts - INFO - *out_path: ../../data11/model/albert/albert-ts-2022-06-16-1
+2022-06-16 17:24:00,725 - s-bert-ts - INFO - *check_path: ../../data11/model/albert/checkpoint-2022-06-16
+2022-06-16 17:24:00,726 - s-bert-ts - INFO - ----------------------------------------------------------------------
