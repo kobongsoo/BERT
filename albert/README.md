@@ -54,6 +54,7 @@
 |[insert_vocab](https://github.com/kobongsoo/BERT/blob/master/albert/insert_vocab.ipynb)|albert-base-v2 토큰(sentenctpiece)에 신규 vocab을 추가하는 예||
 |[albert-further-pretrain-mlm](https://github.com/kobongsoo/BERT/blob/master/albert/albert-further-pretrain-mlm.ipynb)|albert-base-v2에 MLM Further Pretrain 예||
 |[albert-further-pretrain-sop-mlm](https://github.com/kobongsoo/BERT/blob/master/albert/albert-further-pretrain-sop-mlm.ipynb)|albert-base-v2에 MLM+SOP Further Pretrain 예||
+|[albert-sts-to-sbert](https://github.com/kobongsoo/BERT/blob/master/albert/albert-sts-to-sbert.ipynb)|Albert를 sentenceBERT로 제작하는 예||
 
 ## Albert 구조
 ```
@@ -97,5 +98,15 @@ AlbertModel(
   (pooler_activation): Tanh()
 )
 ```
+## AlbertTokenizer
+- Albert 의 special token들중 pad_token과 unk_token은 BERT와 다르므로, 만약 BERT와 동일한 token으로 지정하려면 아래처럼 하면 됨.
 
+```
+# 원래 기본 ALBERT에 PAD 토큰 = <pad>, UNK 토큰 = <unk> 인데, 
+# BERT와 동일하게 만들었다면 [PAD], [UNK] 지정해 주면 됨.
+
+tokenizer = AlbertTokenizer.from_pretrained(vocab_path, unk_token='[UNK]', pad_token='[PAD]')
+```
+ 
+ 
 
