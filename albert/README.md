@@ -39,7 +39,7 @@
 
 ![image](https://user-images.githubusercontent.com/93692701/172562693-ea9bf420-1fe3-49b7-a3e6-bd067beed543.png)
 
-### 3. Sentnect Order Prediction(SOP)(문장 순서 훈련)
+### 3. Sentence Order Prediction(SOP)(문장 순서 훈련)
 - 연속적인 두문장(positive)과 두문장의 순서를 앞뒤로 바꾼 문장(negative)으로 문장이 순서가 옳은지 예측 하는 학습 방식.
 - 이진 분류로 sentence_order_label 이용함.
 <br>햄버거를 만들었다. 맛있었다. => positive(0)
