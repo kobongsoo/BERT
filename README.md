@@ -98,12 +98,16 @@
 [참고: SentenceTransformers](https://www.sbert.net/)
   
 ### 5) S-BERT 지식 증류 학습
+![image](https://user-images.githubusercontent.com/93692701/175485631-ab223288-b99d-4179-8497-73b860f3847b.png)
+<br> 참고 : https://sbert.net/examples/training/multilingual/README.html
+
+
 - 교사모델은 **paraphrase-multilingual-mpnet-base-v2 혹은 distiluse-base-multilingual-cased-v2 둘중 하나 선택**, 학생모델은 제작한 S-BERT 모델로 설정 하여 학습시킴.<br>
 자체 테스트시, 위 2개의 모델이 가장 성능이 좋았음(*아래표 참조)
 
-  다운로드 : [paraphrase-multilingual-mpnet-base-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-mpnet-base-v2)
+ 다운로드 : [paraphrase-multilingual-mpnet-base-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-mpnet-base-v2)
 ,[distiluse-base-multilingual-cased-v2](https://huggingface.co/sentence-transformers/distiluse-base-multilingual-cased-v2)
-
+ 
 - **교사모델과 학생모델의 word_embedding_dimension(예: Dim=768)은 반드시 같아야함. 다르면 훈련시,'The size of tensor a (768) must match the size of tensor b (384) at non-singleton dimension 1' 에러 발생함**
 - 이때 말뭉치는 **영어-한글 쌍으로 이루어진 말뭉치**를 이용함(TED2020-en-ko-train.tsv)
 - 아래 표는 [S-BERT Pretrain 모델들](https://www.sbert.net/docs/pretrained_models.html)에 대해 영어-한글 쌍 말뭉치(TED2020-en-ko-train.tsv) 로 학습 후, korsts, klue-sts 로 평가해본 결과임
