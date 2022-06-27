@@ -138,8 +138,8 @@ tokenizer = AlbertTokenizer.from_pretrained(vocab_path, unk_token='[UNK]', pad_t
 |s-albert-3|위 s-albert-2를  TED2020-en-ko-train.tsv 영어-한국어 TS Distilation 훈련 시킨 모델|0.1837|0.4188|
 
 ### 결론
-- 한국어만 있는 vocab에서는 영어-한국어 TS Distilation 훈련은 오히려 성능 저하만 불러옴
+- 한국어만 있는 vocab에서는 [영어-한국어 TS Distilation 훈련](https://github.com/kobongsoo/BERT/blob/master/sbert/sbert-distillaton.ipynb)은 오히려 성능 저하만 불러옴
 - 한국어 sts 를 훈련시켜도 데이터가 적어서인지 별 효과 없음.
-<br> MLM 훈련시킨 kowiki-2019로 Silver STS 말뭉치 만들어서 훈련시켜봐야 겠음.
+<br> MLM 훈련시킨 kowiki-2019로 [증강: Silver STS 말뭉치 제작](https://github.com/kobongsoo/BERT/blob/master/sbert/Augmented/sbert-no-dataset.ipynb)해서 훈련시켜봐야 겠음.
 
 
