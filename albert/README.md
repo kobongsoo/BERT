@@ -55,6 +55,7 @@
 |[albert-further-pretrain-mlm](https://github.com/kobongsoo/BERT/blob/master/albert/albert-further-pretrain-mlm.ipynb)|albert-base-v2에 MLM Further Pretrain 예||
 |[albert-further-pretrain-sop-mlm](https://github.com/kobongsoo/BERT/blob/master/albert/albert-further-pretrain-sop-mlm.ipynb)|albert-base-v2에 MLM+SOP Further Pretrain 예||
 |[albert-sts-to-sbert](https://github.com/kobongsoo/BERT/blob/master/albert/albert-sts-to-sbert.ipynb)|Albert를 sentenceBERT로 제작하는 예||
+|[albert-model-create](https://github.com/kobongsoo/BERT/blob/master/albert/albert-model-create.ipynb)|빈껍데기albert 제작 예||
 
 ## Albert 구조
 ```
