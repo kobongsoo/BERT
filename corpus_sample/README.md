@@ -1,6 +1,24 @@
 ## 말뭉치 예시 <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
-### [kowiki 최신](https://dumps.wikimedia.org/kowiki/)
-- wiki 한국어 최신 버전 파일을 다운로드 가능함.
+
+### 한국어 kowiki 전처리 방법
+- [kowiki 최신](https://dumps.wikimedia.org/kowiki/) 버전을 다운로드 한다.
+- wikiextractor 를 설치한다.
+```
+pip install wikiexractor
+```
+- wikiextractor 실행시, **윈도우 os에서는 아래와 같은 에러**가 발생할수 있다 (**fork context in multiprocessing is only supported in UNIX**)
+<br>그러므로, 되도록이면 리눅스(유닉스)환경에서 설치 및 실행 하는게 좋음.
+```
+ File "c:\programdata\anaconda3\lib\multiprocessing\context.py", line 193, in get_context
+    raise ValueError('cannot find context for %r' % method) from None
+ValueError: cannot find context for 'fork'
+```
+- kowiki파일경로로 이동해서 wikiextractor 실행
+```
+wikiextractor kowiki파일명 -o 출력폴더
+```
+
+참고 : [한국어 위키백과 (kowiki) 말뭉치 다운로드 / 전처리](https://blog.naver.com/PostView.naver?blogId=duqrlwjddns1&logNo=222484574485)
 
 ### [Kopora](https://ko-nlp.github.io/Korpora/)
 - 한국어 말뭉치 다운로드 사이트
