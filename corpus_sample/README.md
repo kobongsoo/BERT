@@ -1,6 +1,8 @@
 ## 말뭉치 예시 <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
+### [kowiki 최신](https://dumps.wikimedia.org/kowiki/)
+- wiki 한국어 최신 버전 파일을 다운로드 가능함.
 
-### 1. [Kopora](https://ko-nlp.github.io/Korpora/)
+### [Kopora](https://ko-nlp.github.io/Korpora/)
 - 한국어 말뭉치 다운로드 사이트
 - git 소스는 [여기](https://github.com/ko-nlp/Korpora) 참조
 - **모두의 말뭉치와 AI HUB 말뭉치는 이제 다운로드 받을수 없고**, 이들은 아래 각각 사이트에서 다운로드 받아야 함
@@ -33,17 +35,17 @@ Korpora.fetch("kcbert",root_dir='my_data/')
 ```
 소스 : [kopora](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/Korpora.ipynb)
 
-### 2.[AI HUB](https://aihub.or.kr/)
+### [AI HUB](https://aihub.or.kr/)
 - 개방형 한국어 말뭉치 제공 사이트
 - **회원가입 필요**
 - **신청 후 바로 다운로드 받을수 있음**
 
-### 3. [모두의 말뭉치](https://corpus.korean.go.kr/)
+### [모두의 말뭉치](https://corpus.korean.go.kr/)
 - 문화에육관광부 국립국어원에서 제공하는 말뭉치 사이트
 - **회원 가입 필요**
 - **신청후 반려될수도 있음**
 
-### 4. [영어-한국어 문장쌍 말뭉치](https://github.com/UKPLab/sentence-transformers/tree/master/examples/training/multilingual)
+###  [영어-한국어 문장쌍 말뭉치](https://github.com/UKPLab/sentence-transformers/tree/master/examples/training/multilingual)
 - SentenceBERT 훈련시 필요한 영어-한국어 문장쌍 말뭉치 다운로드 사이트
 - 영어-한국어 문장쌍 뿐만 아니라 , 다양한 언어들간 문장쌍 말뭉치를 다운로드 할수 있음
 - 말뭉치 다운로드 사이트는 [여기](https://public.ukp.informatik.tu-darmstadt.de/reimers/sentence-transformers/datasets/) 참조
@@ -51,8 +53,9 @@ Korpora.fetch("kcbert",root_dir='my_data/')
 - [TED2020](https://sbert.net/datasets/ted2020.tsv.gz) : 약 100개의 영어와 다른 언어들간 문장쌍으로 된 말뭉치([다운로드 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/get_parallel_data_ted2020.ipynb))
 - [tatoeba](https://downloads.tatoeba.org/exports/) : 언어들을 지정해서 문장쌍 말뭉치 다운로드 할 수 있음([다운로드 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/get_parallel_data_tatoeba.ipynb))
 - [tatoeba를 파일로 다운로드 받기](http://www.manythings.org/anki/)
-
-### 5. 기타 말뭉치
+- [kowiki 파일 ](https://dumps.wikimedia.org/kowiki/)
+- 
+### 기타 말뭉치
 | 말뭉치 |설명 | 다운로드|
 |:-----------|:--------------------------------------------|:----------|
 |KorQuAD 2.0|질문답변 20,000+ 쌍을 포함하여 총 100,000+ 쌍으로 구성된 한국어 데이터셋 | https://korquad.github.io/|
