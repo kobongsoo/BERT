@@ -112,8 +112,10 @@ tokenizer = AlbertTokenizer.from_pretrained(vocab_path, unk_token='[UNK]', pad_t
 - 한국어 Albert 모델 만들기
 
 ### 1. Tokenizer 생성
-- 한국어 말뭉치(kowiki-2019)를 이용하여, sentencepiece vocab 생성.
-- vocab 크기 : 32,000개
+- 한국어 말뭉치(kowiki-2019-mecab)를 이용하여, sentencepiece vocab 생성.
+- vocab 크기 : **32,000개** 가 적당
+- kowiki 말뭉치를 mecab 형태로소 한번 돌린 **kowiki-2019-mecab.txt 로 tokenizer 생성**함.
+- 실제 **훈련할때는 kowiki-2019.txt로 훈련**하는게 효과적임.
 <br> 참고 : [scratch tokenizer 생성](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/sp_scratch.ipynb1)
 
 ### 2. 빈 albert 모델 생성
@@ -122,7 +124,7 @@ tokenizer = AlbertTokenizer.from_pretrained(vocab_path, unk_token='[UNK]', pad_t
 
 ### 3. 훈련
 - sop 훈련용 말뭉치를 만들기 힘들어서, MLM 훈련만 시킴.
-- 반드시 해당 말뭉치는 *1)tokenizer 생성한 말뭉치 이용
+- 반드시 해당 말뭉치는 tokenizer 만들때 사용한 원본 **kowiki-2019.txt** 로 훈련시킴
 <br> 참고: [MLM Further Pretrain](https://github.com/kobongsoo/BERT/blob/master/albert/albert-further-pretrain-mlm.ipynb)
 
 ### 4. sbert 생성
