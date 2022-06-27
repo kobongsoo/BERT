@@ -17,6 +17,8 @@ ValueError: cannot find context for 'fork'
 ```
 wikiextractor kowiki파일명 -o 출력폴더
 ```
+![image](https://user-images.githubusercontent.com/93692701/175891162-cff245ea-c73c-4350-8b57-f49854940d42.png)
+
 
 참고 : [한국어 위키백과 (kowiki) 말뭉치 다운로드 / 전처리](https://blog.naver.com/PostView.naver?blogId=duqrlwjddns1&logNo=222484574485)
 
