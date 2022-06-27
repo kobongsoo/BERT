@@ -108,6 +108,38 @@ AlbertModel(
 
 tokenizer = AlbertTokenizer.from_pretrained(vocab_path, unk_token='[UNK]', pad_token='[PAD]')
 ```
- 
- 
+## Albert from Scratch
+- 한국어 Albert 모델 만들기
+
+### 1. Tokenizer 생성
+- 한국어 말뭉치(kowiki-2019)를 이용하여, sentencepiece vocab 생성.
+- vocab 크기 : 32,000개
+<br> 참고 : [scratch tokenizer 생성](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/sp_scratch.ipynb1)
+
+### 2. 빈 albert 모델 생성
+-  hidden_size = 768, num_attention_heads=12, intermediate_size=768*4=3072 
+<br> 참고 : [빈껍데기albert 제작](https://github.com/kobongsoo/BERT/blob/master/albert/albert-model-create.ipynb)
+
+### 3. 훈련
+- sop 훈련용 말뭉치를 만들기 힘들어서, MLM 훈련만 시킴.
+- 반드시 해당 말뭉치는 *1)tokenizer 생성한 말뭉치 이용
+<br> 참고: [MLM Further Pretrain](https://github.com/kobongsoo/BERT/blob/master/albert/albert-further-pretrain-mlm.ipynb)
+
+### 4. sbert 생성
+- sentence-albert 만들기
+<br> 참고: [s-albert 만들기](https://github.com/kobongsoo/BERT/blob/master/albert/albert-sts-to-sbert.ipynb)
+
+### 5. STS 테스트
+
+|모델|설명|klue-sts-v1.1|kor-sts(tune_test.tsv)|
+|:---|:-------|-------:|---------------:|
+|s-albert-1|위 방식대로 kowiki-2019로 MLM 훈련시키고 sbert 만든 모델|0.4792|0.6115|
+|s-albert-2|위 s-albert-1을 korsts로 100번 훈련시킨 모델|0.4520|0.6116|
+|s-albert-3|위 s-albert-2를  TED2020-en-ko-train.tsv 영어-한국어 TS Distilation 훈련 시킨 모델|0.1837|0.4188|
+
+### 결론
+- 한국어만 있는 vocab에서는 영어-한국어 TS Distilation 훈련은 오히려 성능 저하만 불러옴
+- 한국어 sts 를 훈련시켜도 데이터가 적어서인지 별 효과 없음.
+<br> MLM 훈련시킨 kowiki-2019로 Silver STS 말뭉치 만들어서 훈련시켜봐야 겠음.
+
 
