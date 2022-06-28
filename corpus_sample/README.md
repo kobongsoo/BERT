@@ -1,6 +1,7 @@
 ## 말뭉치 예시 <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
 
 ### 한국어 kowiki 전처리 방법
+- 소스는 [여기](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/make_corpus_kowiki.ipynb) 참조
 - [kowiki 최신](https://dumps.wikimedia.org/kowiki/) 버전을 다운로드 한다.
 - wikiextractor 를 설치한다.
 ```
@@ -13,14 +14,97 @@ pip install wikiexractor
     raise ValueError('cannot find context for %r' % method) from None
 ValueError: cannot find context for 'fork'
 ```
-- kowiki파일경로로 이동해서 wikiextractor 실행
+- kowiki파일경로로 이동해서 wikiextractor 실행하여 text 추출
 ```
 wikiextractor kowiki파일명 -o 출력폴더
 ```
 ![image](https://user-images.githubusercontent.com/93692701/175891162-cff245ea-c73c-4350-8b57-f49854940d42.png)
 
+<br>참고 : [한국어 위키백과 (kowiki) 말뭉치 다운로드 / 전처리](https://blog.naver.com/PostView.naver?blogId=duqrlwjddns1&logNo=222484574485)
 
-참고 : [한국어 위키백과 (kowiki) 말뭉치 다운로드 / 전처리](https://blog.naver.com/PostView.naver?blogId=duqrlwjddns1&logNo=222484574485)
+- 파일 합치기 
+<br> 추출이 완료되면 출력폴더 하위 AA, AB, AC, ...폴더에  wiki_00, wiki_01, .. 쪼개진 파일을 하나의 파일로 합친다.
+```
+in_folder_path = kowiki_extra_folder       # 합칠 파일들이 있는 root 폴더
+out_corpos_file = 'kowiki-20220620-corpus.txt' # 합치고나서 생성될 파일명
+
+
+import os
+from tqdm.notebook import tqdm
+
+def load_file(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def parse_text(path):
+    texts = []
+    for idx, (current, dirs, files) in enumerate(os.walk(path)):
+        if idx == 0:
+            continue
+        print(current, dirs, files)
+        for file in tqdm(files, desc="[Parsing]"):
+            text = load_file(os.path.join(current, file))
+            texts.append(text)
+
+    return texts
+
+
+def save_file(path, src):
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(src)
+        
+# wikiextractor로 xml 파싱되어 저장된 파일들을 하나로 합침
+texts = parse_text(in_folder_path)
+save_file(out_corpos_file, "\n".join(texts))
+```
+참고 : https://blog.naver.com/PostView.naver?blogId=duqrlwjddns1&logNo=222484574485
+
+- doc 테그 제거
+<br> 합쳐진 kowiki 파일에는 아래와 같은 doc 테그가 있으므로, 내용만 빼고 제거한다.
+```
+<doc id="문서 번호" url="실제 위키피디아 문서 주소" title="문서 제목">
+내용
+</doc>
+```
+
+```
+import re
+from tqdm.notebook import tqdm
+
+in_new_corpus_file = out_corpos_file # 입력파일
+out_new_corpus_file = 'kowiki-20220620-corpus-1.txt'  # 출력 파일
+
+# 문장길이가 짧은 문장은 삭제 
+remove_short_sentence=False
+remove_short_sentence_len = 20
+
+with open(in_new_corpus_file, 'r', encoding='utf8') as f:
+    data = f.read()
+
+# 태그 삭제
+splits = data.split('\n')
+start = re.compile('<doc')
+end = re.compile('<\/doc>')
+docs = []
+
+for split in tqdm(splits):
+    # <doc> 시작과 끝 테그가 아니면 
+    if not (start.match(split) or end.match(split)):
+         # 짦은 문장 삭제 적용된 경우면(remove_short_sentence=Ture)
+        # => 해당 길이보다 큰 경우에만 남김
+        if remove_short_sentence and split:
+            if len(split) > remove_short_sentence_len:
+                docs.append(split)
+        else:
+            docs.append(split)
+
+result = '\n'.join(docs)
+
+with open(out_new_corpus_file, 'w', encoding='UTF8') as f:
+    f.write(result)
+```
+참고 : https://wdprogrammer.tistory.com/42
 
 ### [Kopora](https://ko-nlp.github.io/Korpora/)
 - 한국어 말뭉치 다운로드 사이트
@@ -74,7 +158,7 @@ Korpora.fetch("kcbert",root_dir='my_data/')
 - [tatoeba](https://downloads.tatoeba.org/exports/) : 언어들을 지정해서 문장쌍 말뭉치 다운로드 할 수 있음([다운로드 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/get_parallel_data_tatoeba.ipynb))
 - [tatoeba를 파일로 다운로드 받기](http://www.manythings.org/anki/)
 - [kowiki 파일 ](https://dumps.wikimedia.org/kowiki/)
-- 
+
 ### 기타 말뭉치
 | 말뭉치 |설명 | 다운로드|
 |:-----------|:--------------------------------------------|:----------|
@@ -86,3 +170,4 @@ Korpora.fetch("kcbert",root_dir='my_data/')
 - [.xlsx 파일을 .csv 파일로 변환 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/xlsx-to-csv.ipynb)
 - [.json 파일를 .csv 파일로 변환 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/json-to-csv.ipynb)
 - [korQuAD_v1.0 List to csv 변환 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/korQuADv1.0_json-to-list-to-csv.ipynb)
+- [kowiki 말뭉치 만들기 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/make_corpus_kowiki.ipynb)
