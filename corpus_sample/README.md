@@ -1,7 +1,7 @@
 ## 말뭉치 예시 <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
 
 ### 한국어 kowiki 전처리 방법
-- 소스는 [여기](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/make_corpus_kowiki.ipynb) 참조
+<br> kowiki 전처리 예제는 [여기](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/make_corpus_kowiki.ipynb) 참조, 한줄/두줄 문장 말뭉치로 만드는 예제는 [여기](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/make_corpus_kowiki_line.ipynb) 참조
 - [kowiki 최신](https://dumps.wikimedia.org/kowiki/) 버전을 다운로드 한다.
 - wikiextractor 를 설치한다.
 ```
@@ -170,4 +170,5 @@ Korpora.fetch("kcbert",root_dir='my_data/')
 - [.xlsx 파일을 .csv 파일로 변환 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/xlsx-to-csv.ipynb)
 - [.json 파일를 .csv 파일로 변환 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/json-to-csv.ipynb)
 - [korQuAD_v1.0 List to csv 변환 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/korQuADv1.0_json-to-list-to-csv.ipynb)
-- [kowiki 말뭉치 만들기 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/make_corpus_kowiki.ipynb)
+- [kowiki 전처리 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/make_corpus_kowiki.ipynb)
+- [kowiki 한줄/두줄 말뭉치 예제](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/make_corpus_kowiki_line.ipynb)
