@@ -15,10 +15,13 @@
 ### 2) 한국어 추가 사전 학습(Further Pre-Train) 
 - Special domain 을 가진 corpora(말뭉치들)을 가지고, vocab 생성하고, 생성된 vocab을 기존 사전 학습 vocab에 추가하여, 새로운 vocab 생성함.
 - Vocab 만들때 mecab 형태소 분석기를 이용하고, word만 뽑아내서 vocab을 만듬 
+- mecab에는 명사만 추출하는 nouns 와 형태소도 추출하는 morphs 2가지 방법이 있다.
+<br>nouns는 한국어 명사들만 vocab에 추가하는 방식이므로, 한국어 이외 말뭉치에는 적용이 힘들다.
+<br>morphs는 형태소(조사, 부사,어미등)도 vocab에 추가하는 방식으로, 한국어이외 영어등도 vocab에 추가할수 있다.
 
   ex) [make_mecab_vocab.ipynb](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/make_mecab_vocab.ipynb)
 
-```sh
+```
 [vocab 생성 과정]
 
 1. 도메인 말뭉치(예:kowiki.txt)에서 mecab을 이용하여 형태소 분석하여 단어들을 추출함.
