@@ -140,8 +140,8 @@ quantizer.export(
 
 |용도|feature|Huggingface 함수|기타|
 |:-------|:------|:---------------|:-------------|
-|문장임베딩|"default"|ORTModelForSequenceClassification|출력: last_hidden_state 리턴됨|
-|분류(NLI포함)|"sequence-classification"|ORTModelForFeatureExtraction|출력: logits 리턴함|
+|문장임베딩|"default"|ORTModelForFeatureExtraction|출력: last_hidden_state 리턴됨|
+|분류(NLI포함)|"sequence-classification"|ORTModelForSequenceClassification|출력: logits 리턴함|
 |Q&A|"question-answering"|ORTModelForQuestionAnswering||
 |NER|"token-classification"|ORTModelForTokenClassification||
 |CLM모델(GPT계열)|"causal-lm"|ORTModelForCausalLM||
