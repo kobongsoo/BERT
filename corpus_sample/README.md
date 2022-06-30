@@ -148,7 +148,13 @@ Korpora.fetch("kcbert",root_dir='my_data/')
 - 문화에육관광부 국립국어원에서 제공하는 말뭉치 사이트
 - **회원 가입 필요**
 - **신청후 반려될수도 있음**
-
+### [KLUE](https://klue-benchmark.com/)
+- 한국어 기반 인공지능 평가 지표. 총 8개 분야에 대한 훈련 및 평가 데이터 셋 제공함.
+- Hugging Face에도 [klue dataset](https://huggingface.co/datasets/klue) 이 등록되어 있어, 아래처럼 사용 가능.
+```
+from datasets import load_dataset
+dataset = load_dataset('klue', 'sts') # ynat, nli, ner, re, dp, mrc, wos
+```
 ###  [영어-한국어 문장쌍 말뭉치](https://github.com/UKPLab/sentence-transformers/tree/master/examples/training/multilingual)
 - SentenceBERT 훈련시 필요한 영어-한국어 문장쌍 말뭉치 다운로드 사이트
 - 영어-한국어 문장쌍 뿐만 아니라 , 다양한 언어들간 문장쌍 말뭉치를 다운로드 할수 있음
