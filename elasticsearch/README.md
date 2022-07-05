@@ -12,7 +12,8 @@
 - **ElasticSearch 7.0** 부터는 **doc_type 개념이 사라지고, _doc 으로 접근**해야 함.
 - 예제와 관련된 ElasticSearch에 Index 파일은 **/data/index.json** ,데이터 파일은 **/data/KorQuAD_v1.0_train_convert.json** 참조
 - ElasticSearch에 Index(indices), Type, Filed, Document 등은 아래 처럼 관계형 DataBase 연관된다.(아래그림 참조)
-- **ElasticSearch PHP Client** 에 대한 내용은 [여기](https://github.com/elastic/elasticsearch-php) 참조
+- 아래는 [ElasticSearch Python Client](https://elasticsearch-py.readthedocs.io/en/v8.3.1/)를 이용한 예제임
+<br> [ElasticSearch PHP Client](https://github.com/elastic/elasticsearch-php)를 이용할수도 있음.
 
 ![image](https://user-images.githubusercontent.com/93692701/168928961-8b426b51-d937-49a9-8eed-982f2be740bb.png)
 
