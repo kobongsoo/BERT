@@ -3,7 +3,8 @@
  <br> distilbert-multilingual-cased 모델에 아래와 같은 vocab을 추가하여 훈련시켜서, 최종적으로 s-bert를 만들어서 성능을  비교해 봄.
 <br> **sbert-nouns : nouns(명사만) vocab 추가한 모델**
 <br> **sbert-morphs: morphs(형태소=명사+조사+부사등) 추가한 모델**
-- 추가 vocab 사이즈는 32000, s-bert 증류훈련시, 교사모델은 paraphrase-multilingual-mpnet-base-v2 이용(batch_size:32)
+- MLM 훈련시 Hyperparameter: 추가 vocab 사이즈는 32,000, batch_size: 32, epochs: 4, lr:3e-5
+- 증류훈련시 Hyperparameter: 교사모델은 paraphrase-multilingual-mpnet-base-v2 이용,batch_size:32, epochs: 40, lr:3e-5
 - 성능 측정을 위한 말뭉치는, korsts(tune_test.tsv)와 klue-sts(klue-sts-v1.1_dev.json) 를 이용함.
 
 |모델     |korsts|klue-sts|korsts+klue-sts|기타          |
