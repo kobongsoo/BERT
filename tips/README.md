@@ -1,4 +1,45 @@
 ## Tips <img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/>
+### 모델 일부 parameter update 방법
+- 모델 일부를 freeze(고정) 시키고, 일부에 대해서만 parameter 업데이트 하는 방법
+
+#### 모델 B parameter만 업데이트 하기
+- B->A로 가는 gradient 막으면 됨.
+![image](https://user-images.githubusercontent.com/93692701/177694379-b20de390-cc7e-4a9a-bdb2-a50017367ae0.png)
+```
+#detach() 이용
+z=A(x)
+y=B(z.detach())
+```
+```
+#no_grade 이용
+with torch.no_grad():
+    z=A(x)
+y=B(z)
+```
+```
+# requires_grad 사용 => 모델마다 gradient를 끌수 있음.
+for p in A.parameter():
+    p.requires_grad = False
+z=A(x)
+y=B(z)
+```
+
+#### 모델 A parameter만 업데이트 하기
+- B->A로 가는 gradient 막으면 안됨. 따라서 detach() 사용 못함
+- no_grade 는 gradient를 계산하지 않겠다는 의미므로, B가 계산안되면, A도 계산안되므로 사용 불가.
+- requires_grad 만 사용 가능
+
+![image](https://user-images.githubusercontent.com/93692701/177694834-4fcdc007-88c2-422b-9f4d-27fa01d3bce3.png)
+
+```
+# requires_grad 사용 => 모델마다 gradient를 끌수 있음.
+for p in B.parameter():
+  p.requires_grad = False
+z = A(x)
+y = B(z)
+```
+출처 : https://nuguziii.github.io/dev/dev-003/
+
 ### HuggingFace BertTokenizer 방식들
 - Huggingface BertTokenizer 를 사용하는 방식들에 대해 설명한다.
 ```
