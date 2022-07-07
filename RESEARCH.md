@@ -4,8 +4,8 @@
 <br> **sbert-nouns : nouns(명사만) vocab 추가한 모델**
 <br> **sbert-morphs: morphs(형태소=명사+조사+부사등) 추가한 모델**
 - MLM 훈련시 Hyperparameter: 추가 vocab 사이즈는 32,000, batch_size: 32, epochs: 4, lr:3e-5
-- 증류훈련시 Hyperparameter: 교사모델은 paraphrase-multilingual-mpnet-base-v2 이용,batch_size:32, epochs: 40, lr:3e-5
-- 성능 측정을 위한 말뭉치는, korsts(tune_test.tsv)와 klue-sts(klue-sts-v1.1_dev.json) 를 이용함.
+- 증류훈련시 Hyperparameter: 교사모델은 paraphrase-multilingual-mpnet-base-v2 이용,batch_size:32, epochs: 40, lr:3e-5, 말뭉치:TED2020-en-ko-dev.tsv
+- 성능 측정을 위한 말뭉치는, **korsts(tune_test.tsv(1,379쌍문장))** 와 **klue-sts(klue-sts-v1.1_dev.json(519쌍문장))** 를 이용함.
 
 |모델     |korsts|klue-sts|korsts+klue-sts|기타          |
 |:--------|------:|--------:|--------------:|:-----------------|
@@ -14,3 +14,16 @@
 |bongsoo/sentencebert_v1.0|0.743|0.799|0.638||
 |distiluse-base-multilingual-cased-v2|0.747|0.785|0.644||
 |paraphrase-multilingual-mpnet-base-v2|0.820|0.799|0.721||
+
+### sbert-nouns Test
+- sbert-nouns 모델을 가지고 증류훈련만 다르게 시켰을때 결과 
+- **echo 40 이후 부터는 acc가 감소함.**
+ 
+|echo     |korsts|klue-sts|korsts+klue-sts|기타          |
+|:--------|------:|--------:|--------------:|:-----------------|
+|0|0.725|0.755|0.565|증류훈련 안시켰을때|
+|40|0.810|0.754|0.638|     |
+|60|0.807|0.751|0.628||
+|80|0.807|0.754|0.626||
+|100|0.806|0.752|0.624||
+|120|0.806|0.745|0.624||
