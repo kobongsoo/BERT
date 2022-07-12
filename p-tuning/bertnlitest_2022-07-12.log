@@ -1,0 +1,17 @@
+2022-07-12 16:38:23,826 - bertnlitest - INFO - === model: ../../data11/model/bert/bert-multilingual-cased-p-tuing-pp-nli-200 ===
+2022-07-12 16:38:23,829 - bertnlitest - INFO - num_parameters: 187858691
+2022-07-12 16:38:23,900 - bertnlitest - INFO - ---------------------------------------------------------
+2022-07-12 16:38:29,782 - bertnlitest - INFO - eval-accuracy: 0.694
+2022-07-12 16:38:29,783 - bertnlitest - INFO - ---------------------------------------------------------
+2022-07-12 16:38:29,784 - bertnlitest - INFO - === 처리시간: 5.884 초 ===
+2022-07-12 16:38:29,784 - bertnlitest - INFO - -END-
+
+2022-07-13 08:26:28,799 - bertnlitest - INFO - === model: ../../data11/model/bert/bert-multilingual-cased-p-tuing-pp-nli-20 ===
+2022-07-13 08:26:59,725 - bertnlitest - INFO - === model: ../../data11/model/bert/bert-multilingual-cased-p-tuing-pp-nli-20 ===
+2022-07-13 08:26:59,728 - bertnlitest - INFO - num_parameters: 187720451
+2022-07-13 08:27:05,457 - bertnlitest - INFO - ---------------------------------------------------------
+2022-07-13 08:27:10,621 - bertnlitest - INFO - eval-accuracy: 0.6926666666666667
+2022-07-13 08:27:10,622 - bertnlitest - INFO - ---------------------------------------------------------
+2022-07-13 08:27:10,624 - bertnlitest - INFO - === 처리시간: 5.166 초 ===
+2022-07-13 08:27:10,624 - bertnlitest - INFO - -END-
+
