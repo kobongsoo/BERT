@@ -14,6 +14,7 @@ BERT로 부터 파생된 다양한 모델들(2019)
 - [BERT 예제](https://github.com/kobongsoo/BERT/tree/master/bert)
 - [BERT 모델의 출력 차원(dimension) 줄이기](https://github.com/kobongsoo/BERT/tree/master/mymodel)
 - [BERT 추출 요약](https://github.com/kobongsoo/BERT/tree/master/summarizer)
+- [P-Tuning](https://github.com/kobongsoo/BERT/tree/master/p-tuning)
 
 ### DistilBERT
 - [DistilBERT 예제](https://github.com/kobongsoo/BERT/tree/master/distilbert)
