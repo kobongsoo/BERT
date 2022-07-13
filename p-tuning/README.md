@@ -25,7 +25,8 @@ continuous space(연속된 공간)에 prompt가 존재하도록 하는 방법이
 
 ### P-tuning-v2 구현 방식
 - P-tuning-v2의 구현 방식은 prefix N 시퀀스를 생성한 다음, 원래 bert 모델과 연결한다. 
-- 이때 bert의 past_key_values(여기서는 원래 목적인 decoding 속도 개선 목적이 아님)를 이용함.
+- 이때 bert의 **past_key_values**(여기서는 원래 목적인 decoding 속도 개선 목적이 아님)를 이용함.
+<br>따라서 **albert, distilbert 등에서는 past_key_values 인자가 없으므로 적용 못함.**
 - get_prompt() 함수 : prefix를 past_key_value 형식(batch_size, num_heads, sequence_length - 1, embed_size_per_head)으로 조정(만듬)
 - attention_mask : 기존 attention_mask +  prefix_attention_mask 더함.
 
