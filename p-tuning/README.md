@@ -1,4 +1,4 @@
-# p-tuning\
+# P-Tuning
 ## 개요
 - prompt learning 한 방식으로, Fine-tuning 처럼 모델이 모든 파라메터를 업데이트 하지 않고, 모델이 일부 파라메터만 업데이트 하는 방식중 하나임.
 - 원래 처음 GPT 계열의 단점이 NLU 테스크에서 성능이 떨어지고, 좋은 NLU 성능을 내기 위해서는 in context learning(few-shout learning) 하기 위해서 최적의
