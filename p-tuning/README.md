@@ -17,11 +17,12 @@ continuous space(연속된 공간)에 prompt가 존재하도록 하는 방법이
 ### P-tuning
 - P-tuning은 prefix-tuning과 같은데, 좀더 개선된 방식으로, 접두사(시작할때)에만 토큰을 삽입하는게 아니라, 중간에도 토큰을 삽입하는 방식.
 ![image](https://user-images.githubusercontent.com/93692701/178617025-0c87e02c-5f00-4e64-b57d-0a601f52d2f0.png)
+출처 : https://github.com/THUDM/P-tuning
 
 ### P-tuning-v2
 - P-tunin-v2는 새로운 방식이 아니라, NLU(Natual Language Understanding) 향상을 위해 LM 모델(GTP, T5등)뿐만 아니라, MLM 모델(BERT)에도 prefix-tuning을 적용한 방식.
 ![image](https://user-images.githubusercontent.com/93692701/178617332-95bd50c6-35a1-4a22-9987-fb4a20a14d80.png)
-출처 : https://github.com/THUDM/P-tuning / https://github.com/THUDM/P-tuning-v2
+출처 : https://github.com/THUDM/P-tuning-v2
 
 ### P-tuning-v2 구현 방식
 - P-tuning-v2의 구현 방식은 prefix N 시퀀스를 생성한 다음, 원래 bert 모델과 연결한다. 
@@ -145,7 +146,7 @@ class BertSelfAttention(nn.Module):
 
         query_layer = self.transpose_for_scores(mixed_query_layer)
 ```
-<br> 참고 : [past_key_values 사용](https://zhuanlan.zhihu.com/p/459305102) 
+<br> 출처 : [past_key_values 사용](https://zhuanlan.zhihu.com/p/459305102) 
 
 
 ## 테스트
