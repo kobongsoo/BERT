@@ -72,3 +72,7 @@ continuous space(연속된 공간)에 prompt가 존재하도록 하는 방법이
 ### 결론
 - P-tuning-v2 **prefix 크기를 20으로 할때, Fine-tuning 보다는 성능 5%정도 떨어지지만, 훈련속도 및 GPU 사용량에서는 약 40% 정도 향상이 있음.**
 - prefix 크기는 100일때 가장 성능이 좋고, prefix_hidden_size는 768로 하더라도 0.5%정도 미미한 성능 향상이 있음.
+
+### 기타
+- [SwissArmy 라이브러리](https://github.com/THUDM/SwissArmyTransformer/tree/cfcd7b738d4231a2d26c2f9a8391c7438c9aaab9) 
+: P-Tuning을 라이브러리화 한 소스
