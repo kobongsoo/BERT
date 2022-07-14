@@ -106,17 +106,6 @@ with open(out_new_corpus_file, 'w', encoding='UTF8') as f:
 ```
 참고 : https://wdprogrammer.tistory.com/42
 
-### [참고] load_dataset 으로 wikipedia 데이터셋 다운로드 하기
-```
-#!pip install apache_beam
-#!pip install datasets
-from datasets import load_dataset
-load_dataset("wikipedia", language="ko", date="20220620", cache_dir='./data', beam_runner='DirectRunner')
-```
-```
-# korquad_v1 말뭉치 다운로드 예시
-dataset = load_dataset('squad_kor_v1', cache_dir='./data')
-```
 ### [Kopora](https://ko-nlp.github.io/Korpora/)
 - 한국어 말뭉치 다운로드 사이트
 - git 소스는 [여기](https://github.com/ko-nlp/Korpora) 참조
@@ -176,6 +165,33 @@ dataset = load_dataset('klue', 'sts') # ynat, nli, ner, re, dp, mrc, wos
 - [tatoeba를 파일로 다운로드 받기](http://www.manythings.org/anki/)
 - [kowiki 파일 ](https://dumps.wikimedia.org/kowiki/)
 
+### Huggingface
+- Huggingface에는 다양한 말뭉치를 load_dataset 이용하여 불러와 사용할수 있음.
+```
+# korquad_v1 말뭉치 다운로드 예시
+dataset = load_dataset('squad_kor_v1', cache_dir='./data')
+```
+```
+# kor_nli 중 xnli subset 다운로드 예시
+from datasets import load_dataset
+dataset = load_dataset('kor_nli','xnli', cache_dir='./data')
+
+# dataset 출력
+dataset
+DatasetDict({
+    validation: Dataset({
+        features: ['premise', 'hypothesis', 'label'],
+        num_rows: 2490
+    })
+    test: Dataset({
+        features: ['premise', 'hypothesis', 'label'],
+        num_rows: 5010
+    })
+})
+
+# dataset 에서 validation dataset에서 premise만 출력
+dataset['validation']['premise']
+```
 ### 기타 말뭉치
 | 말뭉치 |설명 | 다운로드|
 |:-----------|:--------------------------------------------|:----------|
