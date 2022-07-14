@@ -106,6 +106,12 @@ with open(out_new_corpus_file, 'w', encoding='UTF8') as f:
 ```
 참고 : https://wdprogrammer.tistory.com/42
 
+### [참고] load_dataset 으로 wikipedia 데이터셋 다운로드 하기
+```
+#!pip install datasets
+from datasets import load_dataset
+load_dataset("wikipedia", language="ko", date="20220620", data_dir='./data', beam_runner='DirectRunner')
+```
 ### [Kopora](https://ko-nlp.github.io/Korpora/)
 - 한국어 말뭉치 다운로드 사이트
 - git 소스는 [여기](https://github.com/ko-nlp/Korpora) 참조
