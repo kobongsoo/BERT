@@ -6,6 +6,8 @@
 - MLM 훈련시 Hyperparameter: 추가 vocab 사이즈는 32,000, batch_size: 32, epochs: 4, lr:3e-5
 - 증류훈련시 Hyperparameter: 교사모델은 paraphrase-multilingual-mpnet-base-v2 이용,batch_size:32, epochs: 40, lr:3e-5, 말뭉치:TED2020-en-ko-dev.tsv
 - 성능 측정을 위한 말뭉치는, **korsts(tune_test.tsv(1,379쌍문장))** 와 **klue-sts(klue-sts-v1.1_dev.json(519쌍문장))** 를 이용함.
+- 참고로 **mocomsys nlp_corpus + kowiki20200620 말뭉치를 더해서 약 7M 말뭉치로 훈련할때는, 초기에 계속 메모리 오류 남**(원인은모름)
+<br>따라서 여기서는 nlp_corpus 만으로 훈련시킴.
 
 |모델     |korsts|klue-sts|korsts+klue-sts|기타          |
 |:--------|------:|--------:|--------------:|:-----------------|
@@ -42,3 +44,4 @@
 |80|0.806|0.740|0.635||
 |100|0.804|0.737|0.631||
 |120|0.802|0.737|0.626||
+
