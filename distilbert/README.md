@@ -15,6 +15,7 @@ pip install transformers
 ### 1. 훈련 예제
 - 훈련을 시키기 위해서는 말뭉치와 추가할 vocab, 기존 훈련된 BERT 모델과 vocab 파일 필요함
 - 추가 vocab 만드는 방법은 [여기](https://github.com/kobongsoo/BERT/tree/master/tokenizer_sample) 참조 바람
+- **NSP + MLM 훈련 예제는 없음**(Huggingface에서 BertForPreTraing 과 같은 DistilBertForPreTraing 함수가 없음)
 
 |소스명|설명|기타|
 |:-----------------|:-----------------------------------------------------------|:---------------------|
