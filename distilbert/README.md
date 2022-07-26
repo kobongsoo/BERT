@@ -19,6 +19,7 @@ pip install transformers
 
 |소스명|설명|기타|
 |:-----------------|:-----------------------------------------------------------|:---------------------|
+|[distilbert-MLM-Trainer.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distilbert-MLM-Trainer.ipynb)|**DistilBERT를 Trainer로 Further MLM 훈련시키는 예제** |**load_dataset** 사용, **데이터 로딩 및 훈련시간이 감소됨**|
 |[distilbert-further-pretrain-MaskedLM.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distilbert-further-pretrain-MaskedLM.ipynb)|기존 훈련된 DistilBERT 에, **추가 MLM만 훈련** 시키는 예제 | 훈련 코드는 pytorch로 구현되었음, 추가 vocab 이 필요함|
 |[distilbert-model-create.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/distilbert-model-create.ipynb)|**훈련 안된 빈 껍데기 모델 만드는 예제**|embedding_size, 단어 임베딩 편차등을 설정해야 함|
 |[sentence-distilbert-nli.ipynb](https://github.com/kobongsoo/BERT/blob/master/distilbert/sentence-distilbert-nli.ipynb)|**DistilBERT를 SentenceBERT로 만드는 예제**| NLI 학습시킴, sentence-transformers 패키지를 이용|
