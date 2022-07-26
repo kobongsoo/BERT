@@ -188,6 +188,99 @@ token_ids = tokenizer(text_list, max_length=8, padding="max_length", return_tens
 출처 : https://wikidocs.net/31379
 
 ***
+
+### Python 관련
+#### Generator
+- generator 는 간단하게 설명하면 iterator 를 생성해 주는 function 이다. 
+- iterator 는 next() 메소드를 이용해 데이터에 순차적으로 접근이 가능한 object 이다
+- Generator 생성하는 방법에는 yield 사용, generator expression 2가지 방법이 있다.
+- 장점은 **메모리를 효율적 사용 가능**
+<br> **Lazy evaluation** 즉 계산 결과 값이 필요할 때까지 계산을 늦추는 효과를 볼 수 있다.
+```
+#  list 의 경우 사이즈가 커질 수록 그만큼 메모리 사용량이 늘어나게 된다. 
+하지만, generator 의 경우는 사이즈가 커진다 해도 차지하는 메모리 사이즈는 동일하다. 이는 list 와 generator의 동작 방식의 차이에 기인한다.
+
+import sys
+sys.getsizeof( [i for i in xrange(100) if i % 2] )    # list
+536
+
+sys.getsizeof( [i for i in xrange(1000) if i % 2] )
+4280
+
+sys.getsizeof( (i for i in xrange(100) if i % 2) )    # generator
+80
+
+sys.getsizeof( (i for i in xrange(1000) if i % 2) )    # generator
+80
+```
+
+```
+def sleep_func(x):
+     print "sleep..."time.sleep(1)
+     return x
+
+# list 생성list = [sleep_func(x) for x in xrange(4)]
+
+for i in list:
+    print i
+    
+<결과>
+sleep...
+sleep...
+sleep...
+sleep...
+0
+1
+2
+3
+
+# generator 생성
+gen = (sleep_func(x) for x in xrange(5))
+
+for i in gen:
+    print i
+    
+<결과>
+sleep...
+0
+sleep...
+1
+sleep...
+2
+sleep...
+3
+```
+<br> 출처: https://bluese05.tistory.com/56
+
+##### yield
+- yield 만하면, 됨.
+- generator 함수가 처음부터 시작되는게 아니라 yield 이후 구문부터 시작되게 됨.
+
+```
+def generator(n):    
+    i = 0    
+    while i < n:        
+    yield i        
+    i += 1
+
+for x in generator(4):
+print x
+
+0
+1
+2
+3
+```
+##### generator expression
+- list comprehension 처럼 () 로 묶어 주면됨.
+```
+>>> [ i for i in xrange(10) if i % 2 ]
+[1, 3, 5, 7, 9]
+
+>>> ( i for i in xrange(10) if i % 2 )
+<generator object <genexpr> at 0x7f6105d90960>
+```
+
 ### 기타
 #### 말뭉치에 개행문자(/r/n) 제거
 ```
