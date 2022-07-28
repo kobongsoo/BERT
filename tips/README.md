@@ -364,3 +364,33 @@ quantized_model.config.to_json_file(output_config_file)      # 모델 config.jso
 # tokenizer 저장 =>toeknizer_config.json, added_toekns.json, special_tokens_map.json, vocab.txt 
 tokenizer.save_pretrained(output_dir)   
 ```
+
+### load_dataset 로딩 후 tsv 파일로 저장
+- load_dataset 데이터셋 로딩후, 특정 열만 tsv 파일로 저장하는 예시
+```
+# 
+from datasets import load_dataset
+dataset = load_dataset('csv', data_files='./data11/1113_social_train_set_1210529.csv')
+```
+```
+# dataset 구조 확인
+dataset
+
+DatasetDict({
+    train: Dataset({
+        features: ['sn', 'file_name', 'data_set', 'domain', 'subdomain', 'source', 'ko', 'mt', 'en', 'source_language', 'target_language', 'license', 'style'],
+        num_rows: 1210529
+    })
+})
+```
+```
+# 'en', 'ko' 열만 뽑아내서 .tsv 파일에 쓰기  
+import csv
+from tqdm.notebook import tqdm
+    
+f = open('en_ko_train.tsv', 'w', encoding='utf-8', newline='')
+wr = csv.writer(f, delimiter='\t')
+for data in tqdm(dataset['train']):
+    wr.writerow([data['en'], data['ko']])
+f.close()
+```
