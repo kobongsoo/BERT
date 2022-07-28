@@ -14,6 +14,7 @@
 |sbert-nouns|0.810|0.754|0.638|증류훈련 echo:40|
 |sbert-morphs|0.798|0.751|0.632|증류훈련 echo:40|
 |bongsoo/sentencebert_v1.0|0.743|0.799|0.638||
+|bongsoo/sentencebert_v1.1|0.806|0.749|0.633||
 |distiluse-base-multilingual-cased-v2|0.747|0.785|0.644||
 |paraphrase-multilingual-mpnet-base-v2|0.820|0.799|0.721||
 
