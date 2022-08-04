@@ -21,6 +21,29 @@
 |[sentence-bert-embedding-by-bert.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/sentence-bert-embedding-by-bert.ipynb)|BERT 모델을 Sentence Bert로 만들고(훈련은 안시킴) 유사도 측정하는 예제|**BERT 모델** 이용|
 |[sentence-bert-clustering.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/sentence-bert-clustering.ipynb)|sentence-bert를 가지고 클러스터링 하는 예제|**Sentence Bert 모델** 이용|
 
+#### Sentence Bert 최적화
+<br> 검색 처럼 몇천만개 이상 데이터에서 임베딩 값을 구하고 비교할때 널리 사용되는 최적화 기술에는 아래 2가지 방식(임베딩 정규화, 내적 계산)이 있다.
+<br> 출처 : https://towardsdatascience.com/multilingual-text-similarity-matching-using-embedding-f79037459bf2
+
+- **임베딩 정규화**
+<br> 임베딩 정규화 화면 출력벡터이 길이가 1이 된다.
+```
+# normalize_embedding = True 설정
+corpus_embedding = model.encode(corpus, convert_to_tensor=True, normalize_embeddings =True)
+```
+또는
+```
+# util.normalize_embeddings기존 임베딩을 정규화
+corpus_embedding = model.encode(corpus, convert_to_tensor=True) 
+corpus_embedding = util.normalize_embeddings(corpus_embedding)
+```
+- **내적 계산**
+
+```
+# util.semantic_search 함수 사용
+hits = util.semantic_search(query_embedding, corpus_embedding, score_function=util.dot_score)
+```
+
 ### 3. FAISS(Facebook AI Similarity Search) 예제
 
 |소스명|설명|기타|
