@@ -17,6 +17,7 @@
 |소스명|설명|기타|
 |:-----------------|:-----------------------------------------------------------|:---------------------|
 |[sentence-bert-embedding.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/sentence-bert-embedding.ipynb)|sentence-bert를 가지고 유사도 측정하는 예제|**Sentence Bert 모델** 이용|
+|[sentence-bert-embedding-optimizer.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/sentence-bert-embedding-optimizer.ipynb)|sentence-bert를 가지고 유사도 측정하는 예제|**최적화 option 설정 추가**|
 |[sentence-bert-embedding-by-bert.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/sentence-bert-embedding-by-bert.ipynb)|BERT 모델을 Sentence Bert로 만들고(훈련은 안시킴) 유사도 측정하는 예제|**BERT 모델** 이용|
 |[sentence-bert-clustering.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/sentence-bert-clustering.ipynb)|sentence-bert를 가지고 클러스터링 하는 예제|**Sentence Bert 모델** 이용|
 
