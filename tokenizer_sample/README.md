@@ -66,20 +66,20 @@ with open(output_fpath, "w", encoding="utf-8") as f:
                 f.writelines(k + "\n")
 ```
 
-### 4. BPT 사전 만들기
-- BPT 를 이용하여, 사전(Vocab)을 만드는 방식은 크게 2가지 방식이 있음
-- **1.처음부터 사전 만들기, 2.기존 사전에 도메인 단어들을 추가하기**
+## BPT 사전 만들기
+- BPT 를 이용하여, 사전(Vocab)을 만드는 방식은 크게 3가지 방식이 있음
+- **1.처음부터 사전 만들기, 2.기존 사전에 도메인 단어들을 추가하기, 3.기존 모델 Tokenizer 동일한 Spec 신규 Tokenizer 만들기**
 - 사전을 만들기 위해서는 단어들의 있는 말뭉치가 필요함.
 - **좋은 사전을 만들기 위해서는 전처리 단계로 [한국어 형태소 분석기](https://konlpy.org/ko/latest/index.html)(Mecab,Okt, Komoran등)들을 이용하여 말뭉치에 대해 형태소 분리가 필요함**
 
-#### 4-1.처음부터 사전 만들기
+### 1.처음부터 사전 만들기
 - 1. Mecab을 이용하여 말뭉치 형태소 분리
 - 2. Vocab size, 최소 빈도수(min_frequency), special_tokens 등을 지정 
 - 3. BertWordPieceTokenizer 를 이용하여, 훈련
 
 소스 : [처음부터 사전 만들기 예제](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/bert_tokenizer.ipynb)
 
-#### 4-2.기존 사전에 도메인 단어들을 추가하기
+### 2.기존 사전에 도메인 단어들을 추가하기
 - 기존 pre-trained bert vocab에는 전문단어 domain이 없다(예:문서중앙화, COVID 등)  따라서 **전문 domain을 기존 bert vocab에 추가**하는 방법이 필요하다
 
 - 1. 도메인 말뭉치(예:kowiki.txt)에서 **mecab을 이용하여 형태소 분석하여 단어들을 추출함**.
@@ -91,9 +91,45 @@ with open(output_fpath, "w", encoding="utf-8") as f:
 
 소스 : [기존 사전에 도메인 단어들을 추가하기 예제](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/make_mecab_vocab.ipynb)
 
-### 5. 참고
+### 3.기존 모델 Tokenizer 동일한 Spec 신규 Tokenizer 만들기
+- 1. 말뭉치 로딩
+<br> **yield 이용하여 말뭉치를 generator 형태**로 만듬.
+```
+# wiki_20190620.txt 말뭉치 불러옴.
+corpus = '../korpora/kowiki_20190620/wiki_20190620.txt'
 
-#### 5-1. 한국어 형태소 분석기 중 Mecab 설치 방법(CentOS 기준)
+with open(corpus, 'r', encoding='utf-8') as f:
+    data = [line for line in tqdm(f.read().splitlines()) if (len(line) > 0 and not line.isspace())]
+ 
+#yield 문을 사용하여 for 루프 내에서 제너레이터(generator)를 정의할 수도 있다.
+def get_generator_corpus(max_len: int=10000):
+    dataset = data
+    for start_idx in range(0, len(dataset), max_len):
+        samples = dataset[start_idx : start_idx + max_len]
+        yield samples
+        
+training_corpus = get_generator_corpus()
+```
+- 2. 기존 모델 Tokenizer 로딩
+<br> **AutoTokenizer 이용하여 fast Tokenizer 로딩**
+```
+# 기존 bert-base-cased 모델 Tokenizer 로딩
+from transformers import AutoTokenizer
+old_tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
+```
+
+- 3. 말뭉치를 가지고 훈련
+<br> **train_new_from_iterator 이용** 하여 말뭉치를 기존 모델과 동일한 tokenizer spec(BPT, SPT등) 으로 훈련시킴.
+```
+# 학습 시작 (**오래 걸림)
+# => 새로운 토큰을 만듬. vocab 수는 32000개
+tokenizer = old_tokenizer.train_new_from_iterator(training_corpus, 32000)
+```
+소스 : [신규 Tokenzier 만들기](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/wp_scratch_generator.ipynb)
+
+### 참고
+
+#### 1. 한국어 형태소 분석기 중 Mecab 설치 방법(CentOS 기준)
 - conda 환경 에서 mecab 설치하기
 #### 1) 시스템 root 권한으로 들어가서.
 ```
