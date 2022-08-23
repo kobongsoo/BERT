@@ -89,7 +89,9 @@ with open(output_fpath, "w", encoding="utf-8") as f:
 - 4. 기존 bert vocab.txt 파일에 직접, add_vocab.txt 토큰들 추가(**이때 중복 제거함**)
 - 5. 추가한 vocab을 가지고, tokenizer 생성하고, special 토큰 추가 후, 저장
 
-소스 : [기존 사전에 도메인 단어들을 추가하기 예제](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/make_mecab_vocab.ipynb)
+소스 
+<br>[기존 사전에 도메인 단어들을 추가하기 예제](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/make_mecab_vocab.ipynb)
+<br>[기존 사전에 도메인 단어들을 추가하기 예제2](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/make_mecab_moco-vocab.ipynb)
 
 ### 3.기존 모델 Tokenizer 동일한 Spec 신규 Tokenizer 만들기
 - 1. 말뭉치 로딩
@@ -152,3 +154,6 @@ sentence = "안녕하세요 저는 상휴입니다"
 output = mecab1.morphs(sentence)
 print(output)
 ```
+### 첨부파일
+<br> moco-corpus-32000-vocab.txt : [moco-corpus에서 추출한 vocab](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/moco-vocab/moco-corpus-32000-vocab.txt)
+<br> mdistilbertV1.2 : [mdistilvertV1.1 vocab + moco-corpus에서 추출한 vocab](https://github.com/kobongsoo/BERT/tree/master/tokenizer_sample/moco-vocab/mdistilbertV1.2)
