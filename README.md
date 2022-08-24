@@ -39,4 +39,12 @@ BERT로 부터 파생된 다양한 모델들(2019)
 - [GPU 메모리보다 큰 모델 파인 튜닝하기](https://github.com/kobongsoo/GPUTech/tree/master)
 - [양자화(Quantization) 기법](https://github.com/kobongsoo/BERT/tree/master/Quantization)
 - [가지치기(Purning) 기법](https://github.com/kobongsoo/BERT/tree/master/pruning)
+
+***
+
+### Tips
 - [Tips](https://github.com/kobongsoo/BERT/tree/master/tips)
+- [에러 리포트](https://github.com/kobongsoo/BERT/blob/master/ERRORREPORT.md)
+
+### 개요
+- [Transformers](https://github.com/kobongsoo/BERT/blob/master/TRANSFORMERS.md)
