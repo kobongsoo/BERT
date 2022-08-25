@@ -182,3 +182,36 @@ print(onnx.helper.printable_graph(model.graph))
 <br> [ONNX-DistilBert-NLI 양자화 예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization.ipynb)
 <br> [ONNX-S-BERT-임베딩 앙자화 예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization_2.ipynb)
 <br> [ONNX-DistilBert-NLI 최적화+양자화 예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_optimized.ipynb)
+
+## Q&A
+### 1. cannot import name 'FeaturesManager' from 'transformers.onnx' 에러
+- 아래처럼 transformers와 optimum 등을 업데이트 해줘야함.
+- 업데이트 하면 transformers 버전이 4.15에서 4.21.2 버전으로 업데이트 됨.
+<br> 참고: https://github.com/huggingface/optimum
+```
+pip uninstall transformers
+pip install transformers
+```
+혹은
+```
+python -m pip install git+https://github.com/huggingface/optimum.git
+python -m pip install git+https://github.com/huggingface/optimum.git#egg=optimum[onnxruntime]
+```
+
+<br>이때 trnasformers를 업데이트 하고 나면 아래와 같은 모듈들도 모두 uninstall 하고 나서 최신으로 install 해줘야 함.
+<br> 아래 외에도 몇가지 더 있을수 있음. (*코드 수행하면서 필요한 경우 삭제후 재설치 해줘야 함)
+```
+pip uninstall optimum[onnxruntime]
+pip uninstall optimum[onnxruntime-gpu]  #gpu 사용인 경우
+pip uninstall transformers[onnx]
+pip uninstall optimum
+pip uninstall huggingface-hub
+pip uninstall pyyaml
+pip uninstall tqdm
+pip uninstall tokenizers
+pip uninstall accelerate
+pip uninstall regex
+pip uninstall nltk
+pip uninstall filelock
+pip uninstall click
+```
