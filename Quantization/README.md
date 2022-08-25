@@ -186,7 +186,7 @@ print(onnx.helper.printable_graph(model.graph))
 ## Q&A
 ### 1. cannot import name 'FeaturesManager' from 'transformers.onnx' 에러
 - 아래처럼 transformers와 optimum 등을 업데이트 해줘야함.
-- 업데이트 하면 transformers 버전이 4.15에서 4.21.2 버전으로 업데이트 됨.
+- 업데이트 하면 transformers 모듈이 4.21.2 버전으로 업데이트 됨.(*예: 기존 4.15->4.21.2)
 <br> 참고: https://github.com/huggingface/optimum
 ```
 pip uninstall transformers
