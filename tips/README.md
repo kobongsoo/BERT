@@ -331,6 +331,10 @@ tokenizer.save_pretrained(output_dir)
 # 
 from datasets import load_dataset
 dataset = load_dataset('csv', data_files='./data11/1113_social_train_set_1210529.csv')
+
+#  huggingface load_dataset 예시: glue, subset: stsb, split: train
+#dataset = load_dataset('glue', 'stsb', split='train')
+
 ```
 ```
 # dataset 구조 확인
