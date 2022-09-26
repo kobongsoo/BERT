@@ -42,7 +42,8 @@
 - Special domain 을 가진 copora(말뭉치들)을 가지고 기존 BERT 모델에 MLM 추가학습 시킴
 - Random seed 값을 변경하면서, 여러 번 학습 시킴
 
-  ex) [bert-further-pretrain-BertForMaskedLM.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-further-pretrain-BertForMaskedLM.ipynb)
+  ex)[bert-MLM-Trainer-V1.2.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-MLM-Trainer-V1.2.ipynb) 
+  ,[bert-further-pretrain-BertForMaskedLM.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-further-pretrain-BertForMaskedLM.ipynb)
   , [bert-further-pretrain_trainer.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-further-pretrain_trainer.ipynb)
 
 [참고 : Hugging Face-Transformers](https://huggingface.co/docs/transformers/index)
