@@ -2,7 +2,7 @@
 <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
 [![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fkobongsoo%2FBERT&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
 
-- 아래 과정을 통해 제작된 [sentencebert 모델](https://huggingface.co/bongsoo/sentencebert_v1.0) 을 이용해 Sementic 문장 유사도 테스트 해볼 수 있음.
+- 아래 과정을 통해 제작된 [sentencebert 모델](https://huggingface.co/bongsoo/moco-sentencedistilbertV2.1) 을 이용해 Sementic 문장 유사도 테스트 해볼 수 있음.
 
 ### ![image](https://user-images.githubusercontent.com/93692701/162686553-7d1b46e2-fdf2-4cd7-b842-a5ade3f9cda6.png)
 
