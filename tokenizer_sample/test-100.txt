@@ -1,0 +1,100 @@
+필요 시 입력 데이터를 생성하는 외부시스템이 시스템에 접근할 수 있는 FTP 계정과 비밀번호 설정하며 다른 디렉토리에 접근을 막는다.
+외부시스템과 데이터를 주고 받기 위해 사용되는 디렉토리는 다음과 같다.
+SOA는 비즈니스 프로세스를 기본적인 표준 빌딩 블럭 단위로 분할하여, 이를 IT 프로세스와 유연하게 일치시키는 특징이 있다.
+공공지원 민간임대주택은 주변 시세의 95  이하의 저렴한 임대료 혜택 외에도 품질좋은 주택에서 8년간 안심하고 살 수 있는 장점이 있다 
+위기아동 발생을 미리 예방할 수 있는 지원활동이나 인프라 구축보다는 피해아동이 발생했을 때 그때그때 대처하는 방식에서 벗어나지 못하고 있다는 것이다 
+여야가 각종 현안마다 정치적 타협을 모색하는 대신 검찰과 법원을 찾아 상대를 처벌해 달라고 독촉하는  정치의 사법화 가 극심해지고 있다는 지적이다 
+부동산114는 전국 오피스텔의 연도별 임대수익률 추이를 분석한 결과  2018년 말 기준 연 5 의 임대수익률이 붕괴된 것으로 나타났다고 12일 밝혔다 
+리얼미터는 9 13 부동산대책 발표 직후 종부세 과표 혼선  적용대상 확대 오보에 이은  세금폭탄  논란이 확대된 데 따른 것으로 풀이했다 
+강 장관은 러시아가 유엔 안전보장이사회 비공개회의를 요청한 것과 관련해  대북제재 문제가 논의되지 않을까 예상한다 며 러시아의 요청도 사전에 인지했다고 설명했다 
+민 청장은 개선방안과 관련해  물리력 행사 기준표도 최종 검토단계에 있다 면서  유형별로 세세한 개선과제를 적용해서 정비해야 할 것이 있다 고 설명했다 
+한 네티즌이 강제추행 혐의로 법정구속 된 남편의 억울함을 주장한 사건과 관련  법원 관계자는  담당 판사가 객관적으로 판단한 것 이라고 밝혔다 
+따라서 기업이 내부는 물론 협력사 및 고객과 표준화된 e-비즈니스 환경을 구축할 수 있게 된다.
+이번에 발표된 솔루션군은 IBM 소프트웨어사업본부, 서비스사업조직인 글로벌 서비스, 그리고 컨설팅사업조직인 IBM 비즈니스컨설팅서비스(IBM BCS)가 주축이 되어 공급한다.
+솔루션의 핵심 구성은 SOA 기반 위에 애플리케이션을 구축하고 통합하는 소프트웨어 제품, 환경 평가, 전략 수립 및 기획, 애플리케이션 혁신, 컴포넌트 비즈니스 모델링 컨설팅 등 5종이다.
+또 애플리케이션 혁신 및 통합 서비스, 비즈니스 프로세스 맵을 작성하고 비즈니스를 직원-프로세스-시스템이 담당한 업무별로 구분하는 컴포넌트 비즈니스 모델링 컨설팅 서비스 등이 있다.
+IBM은 이번 솔루션 발표와 함께 이 분야 사업을 대폭 강화하게 되었다.
+“IBM의 SOA 솔루션은 기업이 온디맨드 e-비즈니스를 달성하는 데 필요한 기술을 제공하며 고객, 제휴사, 협력업체 전반에 걸쳐서 애플리케이션을 통합할 수 있도록 함으로써 고객의 요구, 시장 변화, 외부적 요인에 신속하게 적응할 수 있도록 한다.
+웹스피어 비즈니스 인티그레이션 서버 파운데이션: 고객이 서비스 지향적 아키텍처로 애플리케이션을 구축 및 통합할 수 있도록 하는 솔루션.
+대기업 제품으로서는 비즈니스 로직을 실행하기 위한 산업표준 규격인 “비즈니스 프로세스 실행 언어(BPEL, Business Process Execution Language)”를 지원하는 최초의 제품이다.
+웹스피어 비즈니스 인티그레이션을 이용함으로써 기존 웹 서비스 및 패키지 애플리케이션을 이용해 재사용가능 서비스를 구축하고 서비스를 결합해서 비즈니스 프로세스와 소프트웨어 애플리케이션을 연동시킬 수 있다.
+IBM SOA 평가 서비스: 현재 SOA를 도입하려는 고객이 계획하고 있는 SOA의 기능적 및 기술적 측면을 평가하는 서비스로, IBM 글로벌 서비스가 제공한다 .
+국내 및 해외 계열사의 신규 연계 및 오픈을 위하여 다음 절차에 따라 진행하며, 계열사가 신규 연계될 때마다 관련 산출물을 참조하고 항상 최신으로 업데이트 한다.
+신규 계열사 연계를 위한 사전 준비를 마치고 계열사 서버에 EAI Agent를 설치하고 나면, 계열사의 CASE에 해당하는 인터페이스를 EAI 인터페이스 개발 방안에 따라 진행한다.
+Refer to the V$SYSTEM_EVENT view for time waited and average waits for thefollowing actions:
+To estimate the time waited for reads incurred by rereading data blocks that had tobe written to disk because of a request from another instance, multiply the statistic(for example, the time waited for db ﬁle sequential reads) by the percentage of readI/O caused by previous cache ﬂushes as shown in this formula:
+Where "lock buffers for read" is the value for lock converts from N to S derived fromV$LOCK_ACTIVITY and "physical reads" is from the V$SYSSTAT view.
+Similarly, the proportion of the time waited for database ﬁle parallel writes causedby pings can be estimated by multiplying db ﬁle parallel write time as found inV$SYSTEM_EVENTS by:
+Table 11-1 describes some global cache coherence-related views and the types ofstatistics they contain.
+Refer to V$SYSSTAT to countrequests for the actions shownto the right.
+Note: Also refer to the convert type-speciﬁc rows in V$LOCK_ACTIVITY.
+Refer to V$SYSSTAT for theamount of time waited for theactions shown to the right.
+As mentioned, it is useful to maintain application proﬁles per transaction and perunit of time.
+This allows you to compare two distinct workloads or to detectchanges in a workload.
+The rates are also helpful in determining capacities and foridentifying throughput issues.
+Oracle recommends that you incorporate thefollowing ratios of statistics in your performance monitoring scripts:
+Calculate the same statistics per second or minute by dividing the total counts ortimes waited by the measurement interval.
+The percentage of buffers accessed for global work or the percentage of I/O causedby inter-instance synchronization can be important measures of how efﬁcient yourapplication processes share data.
+It can also reveal whether the database is designedfor optimum scalability.
+Use the following calculation to determine the percentage of buffer accesses forlocal operations, in other words, reads and changes of database buffers that are notsubject to a lock conversion:
+Similarly, compute the percentage of read and write I/O for local operations usingthe following equations:
+This calculation implies the percent of times DBWR writes for local work.
+This calculation implies the number of percent reads by user processes for localwork only; it does not refer to forced reads.
+In the previous formula, the physical read statistic from V$SYSSTAT is combinedwith the "Lock buffers for read" value from V$LOCK_ACTIVITY.
+You can base thelocal write ratio entirely on the corresponding values from V$SYSSTAT.
+((consistent gets db block gets) (global cache gets global cache converts) 100)
+11-12 Oracle8i Parallel Server Administration, Deployment, and Performancepatterns.
+Moreover, they represent the probability that a data block access is eitherglobal or local.
+You can therefore use this information as a rough estimator inscalability calculations.
+If your application is not performing well, analyze each component of theapplication to identify which components are causing problems.
+To do this, checkthe operating system and DLM statistics, as explained under the next heading, forindications of contention or excessive CPU usage.
+Excessive lock conversions thatyou can measure with speciﬁc procedures may reveal excessive read/write activityor high CPU requirements by DLM components.
+Examine the statistics from this view andanalyze the hit ratios in the shared pool and the buffer cache.
+These are the result of inserts into index blocks when multipleinstances share a sequence generator for primary key values.
+You may need to use a multiplier such as SEQUENCE_NUMBER xINSTANCE_NUMBER x 1,000,000,000 to prevent the instances from inserting newentries into the same index.
+Creating a sequence without using the CACHE clause may create a lot of overhead.
+The chapter describes Oracle Parallel Server and Cache Fusion-related statistics andprovides procedures that explain how to use these statistics to monitor and tuneperformance.
+This chapter also brieﬂy explains how Cache Fusion resolvesreader/writer conﬂicts in Oracle Parallel Server.
+It describes Cache Fusion’s beneﬁtsin general terms that apply to most types of systems and applications.
+The topics in this chapter include:
+When a data block requested by one instance is in the memory cache of a remoteinstance, Cache Fusion resolves the read/write conﬂict using remote memoryaccess, not disk access.
+The requesting instance sends a request for a consistent-readcopy of the block to the holding instance.
+The Block Server Process (BSP) on theholding instance transmits the consistent-read image of the requested block directlyfrom the holding instance’s buffer cache to the requesting instance’s buffer cacheacross a high speed interconnect.
+As Figure 12-1 illustrates, Cache Fusion enables the buffer cache of one node tosend data blocks directly to the buffer cache of another node by way of low latency,high bandwidth interconnects.
+This reduces the need for expensive disk I/O inparallel cache management.
+Cache Fusion also leverages new interconnect technologies for low latency,user-space based, interprocessor communication.
+This potentially lowers CPUusage by reducing operating system context switches for inter-node messages.
+Note: Cache Fusion is always enabled.
+Cache Fusion only solves part of the block conﬂict resolution issue by providingimproved scalability for applications that experience high levels of reader/writercontention.
+For applications with high writer/writer concurrency, you also need toaccurately partition your application’s tables to reduce the potential forwriter/writer conﬂicts.
+Cache Fusion improves application transaction throughput and scalability byproviding:
+Applications demonstrating high reader/writer conﬂict rates under disk-basedPCM beneﬁt the most from Cache Fusion.
+Packaged applications also scale moreeffectively as a result of Cache Fusion.
+Applications in which OLTP and reportingfunctions execute on separate nodes may also beneﬁt from Cache Fusion.
+Thisreduces the pinging of data blocks to disk.
+Performance gains are derived primarilyfrom reduced X-to-S lock conversions and the corresponding reduction in disk I/Ofor X-to-S lock conversions.
+Furthermore, the instance that was changing the cached data block before itreceived a read request for the same block from another instance would not have torequest exclusive access to the block again for subsequent changes.
+This is becausethe instance retains the exclusive lock and the buffer after the block is shipped to thereading instance.
+Because Cache Fusion exploits high speed IPCs, Oracle Parallel Server beneﬁts fromthe performance gains of the latest technologies for low latency communicationacross cluster interconnects.
+Cache Fusion reduces CPU utilization by taking advantage of user-mode IPCs, alsoknown as "memory-mapped IPCs", for both Unix and NT based platforms.
+If theappropriate hardware support is available, operating system context switches areminimized beyond the basic reductions achieved with Cache Fusion alone.
+This alsoeliminates costly data copying and system calls.
+Once your interconnect is operative, you cannot signiﬁcantly inﬂuence itsperformance.
+Interconnects that support Oracle Parallel Server and Cache Fusion use one of theseprotocols:
+Oracle Parallel Server can use any interconnect product that supports theseprotocols.
+The interconnect product must also be certiﬁed for Oracle Parallel Serverhardware cluster platforms.
+Cache Fusion performance levels may vary in terms of latency and throughputfrom application to application.
+Performance is further inﬂuenced by the type andmixture of transactions your system processes.
+The performance gains from Cache Fusion also vary with each workload.
+Thehardware, the interconnect protocol speciﬁcations, and the operating systemresource usage also affect performance.
+If your application did not demonstrate a signiﬁcant amount of consistent-readcontention prior to Cache Fusion, your performance with Cache Fusion will likelyremain unchanged.
+However, if your application experienced numerous lockconversions and heavy disk I/O as a result of consistent-read conﬂicts, yourperformance with Cache Fusion should improve signiﬁcantly.
+A comparison of the locking and I/O statistics for Oracle 8.
+Fusion statistics to monitor inter-instance performance.
+The main goal of monitoring Cache Fusion and Oracle Parallel Server performanceis to determine the cost of global processing and quantify the resources required tomaintain coherency and synchronize the instances.
+Do this by analyzing theperformance statistics from several views as described in the following sections.
+Use these monitoring procedures on an ongoing basis to observe processing trendsand to maintain processing at optimal levels.
+Many statistics are available to measure the work done by different components ofthe database kernel, such as the cache layer, the transaction layer or the I/O layer.
+Moreover, timed statistics allow you to accurately determine the time spent onprocessing certain requests or the time waited for speciﬁc events.
+From these statistics sources, work rates, wait time and efﬁciency ratios can bederived.
+See Also: Chapter 7 for more information on lock types.
