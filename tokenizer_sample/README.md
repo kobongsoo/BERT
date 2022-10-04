@@ -157,3 +157,7 @@ print(output)
 ### 첨부파일
 <br> moco-corpus-32000-vocab.txt : [moco-corpus에서 추출한 vocab](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/moco-vocab/moco-corpus-32000-vocab.txt)
 <br> mdistilbertV1.2 : [mdistilvertV1.1 vocab + moco-corpus에서 추출한 vocab](https://github.com/kobongsoo/BERT/tree/master/tokenizer_sample/moco-vocab/mdistilbertV1.2)
+
+### 기타
+- [한글인지 영어인지 확인하는 예제](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/export_ko.ipynb)
+- [NLTK를 이용한 영문단어 token 처리 예제](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/nltk_eng.ipynb)
