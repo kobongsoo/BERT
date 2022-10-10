@@ -96,5 +96,11 @@ Do this by analyzing theperformance statistics from several views as described i
 Use these monitoring procedures on an ongoing basis to observe processing trendsand to maintain processing at optimal levels.
 Many statistics are available to measure the work done by different components ofthe database kernel, such as the cache layer, the transaction layer or the I/O layer.
 Moreover, timed statistics allow you to accurately determine the time spent onprocessing certain requests or the time waited for speciﬁc events.
-From these statistics sources, work rates, wait time and efﬁciency ratios can bederived.
+今天的中国有很多问题，因为冠状病毒很流行。
 See Also: Chapter 7 for more information on lock types.
+testtesttesttesttesttesttest
+안녕!!
+무한도전입니다.
+무슨생각하시나요
+무슨생각하시나요
+안녕!!
