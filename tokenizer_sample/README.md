@@ -161,4 +161,4 @@ print(output)
 ### 기타
 - [한글인지 영어인지 확인하는 예제](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/export_ko.ipynb)
 - [NLTK를 이용한 영문단어 token 처리 예제](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/nltk_eng.ipynb)
-- [regular expression 이용한 말뭉치 전처리기 예제](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/re.ipynb)
+- [영어 단어 어간들중 가장 빈도수 높은 단어들 추출](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/export_eng_nouns.ipynb)
