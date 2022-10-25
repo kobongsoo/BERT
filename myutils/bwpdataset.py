@@ -84,6 +84,37 @@ class ClassificationFeatures:
     label: Optional[int] = None
  
 ############################################################
+# GLUE mnli 파일 불러오는 class
+############################################################
+class GlueMNLICorpus:
+    def __init__(self):
+        pass
+
+    def _create_examples(self, data_path):
+        examples = []
+        corpus = open(data_path, "r", encoding="utf-8").readlines()
+        lines = [line.strip().split("\t") for line in corpus]
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            text_a, text_b, label = line
+            examples.append(ClassificationExample(text_a=text_a, text_b=text_b, label=label))
+        return examples
+
+    def get_examples(self, data_fpath):
+        print(f"loading data... LOOKING AT {data_fpath}")
+        examples = self._create_examples(data_fpath)
+        return examples
+
+    def get_labels(self):
+        #entailment (0), neutral (1), contradiction (2).
+        return ["entailment", "neutral", "contradiction"]
+
+    @property
+    def num_labels(self):
+        return len(self.get_labels())
+    
+############################################################
 # KlueNLI.Json 파일 불러오는 class
 ############################################################
 class KlueNLICorpus:
