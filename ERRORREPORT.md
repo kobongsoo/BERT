@@ -11,6 +11,13 @@
 - huggingface 모델 혹은 tokenizer를 불러오기 할때, 관리자 권한이 아니거나, 윈도우 10/11에서 개발자 모드가 꺼져 있는 경우 위 에러 발생함.
 <br> 따라서 아나콘다를 관리자 권한으로 실행하거나, 윈도우 os 개발자 모들를 켜야 함
 
+### 2. please explicitly set TOKENIZERS_PARALLELISM=(true | false)
+- 병렬화 tokenizer 처리 를 disable 시키면 됨.
+```
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+```
+
 ## jupyter lab 관련 에러
 ### 1. 파일저장 및 출력시 에러 
 ```
