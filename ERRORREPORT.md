@@ -34,7 +34,7 @@ model.resize_token_embeddings(len(tokenizer))
 #### 4. KoBert tokenizer 
 - **skt/kobert-base-v1 허깅페이스 모델**을 사용할때 AutoTokenizer 사용하면 안됨.(훈련시 CUBLAS_STATUS_NOT_INITIALIZED 에러 발생함)
 - 이유는 **XLNetTokenizer** 사용하는데, AutoTokenizer 로는 지원하지 않음
-- 따라서 아래처럼 **kobert_tokenizer 패키지를 설치하고 KoBERTTokenizer 함수**를 이용해야 함.
+- 따라서 아래처럼 **kobert_tokenizer 패키지를 설치하고 KoBERTTokenizer 함수 혹은 XLNetTokenizer**를 이용해야 함.
 ```
 #kobert_tokenizer 패키지를 설치
 !pip install 'git+https://github.com/SKTBrain/KOBERT.git#egg=kobert_tokenizer&subdirectory=kobert_hf'
@@ -42,6 +42,9 @@ model.resize_token_embeddings(len(tokenizer))
 ```
 from kobert_tokenizer import KoBERTTokenizer
 tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1')
+
+from transformers import XLNetTokenizer
+tokenizer = XLNetTokenizer.from_pretrained('skt/kobert-base-v1')
 
 from transformers import BertModel
 model = BertModel.from_pretrained('skt/kobert-base-v1')
