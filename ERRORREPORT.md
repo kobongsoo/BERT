@@ -52,6 +52,14 @@ model = BertModel.from_pretrained('skt/kobert-base-v1')
 ```
 - 출처 : https://velog.io/@m0oon0/KoBERT-%EC%82%AC%EC%9A%A9%EB%B2%95
 
+#### 5. truncation 에러
+```
+Be aware, overflowing tokens are not returned for the setting you have chosen, 
+i.e. sequence pairs with the 'longest_first' truncation strategy. So the returned list will always be empty even if some tokens have been removed.
+```
+- tokenizer 에서 max_seq_len이 작은 경우 긴 문장은 잘리는데, 해당 tokenizer에서 지원 안되서 발생하는 문제(kobert nli 훈련시 긴문장 발생함)
+- max_seq_len 를 늘리면 됨
+
 ## jupyter lab 관련 에러
 #### 1. 파일저장 및 출력시 에러 
 ```
