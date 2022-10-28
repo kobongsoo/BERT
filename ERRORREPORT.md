@@ -18,6 +18,37 @@ import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 ```
 
+### 3. CUDA error: CUBLAS_STATUS_NOT_INITIALIZED 
+```
+CUDA error: CUBLAS_STATUS_NOT_INITIALIZED when calling `cublasCreate(handle)
+indexSelectLargeIndex: block: [306,0,0], thread: [0,0,0] Assertion `srcIndex < srcSelectDimSize` failed.
+```
+- 해당 오류는 기존 Embedding(8002, 768, padding_idx=1) 처럼 입력 vocab 사이즈가 8002인데, 0~8001 사이를 초과하는 word idx 값이 들어가면 에러 발생함.
+- 즉 **모델과 tokenizer간에 embedding이 맞지 않아서 발생하는 문제**로 보통 모델이 embeddgin 사이즈를 아래처럼 설정하면 됨
+
+```
+model.resize_token_embeddings(len(tokenizer))
+```
+- 혹은 다른 경우에는 tokenizer 처리된 이전 **cache 말뭉치를 그대로 사용하는 경우**이므로, 이때는 말뭉치 cache 파일을 삭제하면됨 
+
+### 4. KoBert tokenizer 
+- **skt/kobert-base-v1 허깅페이스 모델**을 사용할때 AutoTokenizer 사용하면 안됨.(훈련시 CUBLAS_STATUS_NOT_INITIALIZED 에러 발생함)
+- 이유는 **XLNetTokenizer** 사용하는데, AutoTokenizer 로는 지원하지 않음
+- 따라서 아래처럼 **kobert_tokenizer 패키지를 설치하고 KoBERTTokenizer 함수**를 이용해야 함.
+```
+#kobert_tokenizer 패키지를 설치
+!pip install 'git+https://github.com/SKTBrain/KOBERT.git#egg=kobert_tokenizer&subdirectory=kobert_hf'
+```
+```
+from kobert_tokenizer import KoBERTTokenizer
+tokenizer = KoBERTTokenizer.from_pretrained('skt/kobert-base-v1')
+
+from transformers import BertModel
+model = BertModel.from_pretrained('skt/kobert-base-v1')
+
+```
+- 출처 : https://velog.io/@m0oon0/KoBERT-%EC%82%AC%EC%9A%A9%EB%B2%95
+
 ## jupyter lab 관련 에러
 ### 1. 파일저장 및 출력시 에러 
 ```
