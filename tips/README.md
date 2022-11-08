@@ -358,3 +358,22 @@ for data in tqdm(dataset['train']):
     wr.writerow([data['en'], data['ko']])
 f.close()
 ```
+### load_dataset 불러오기 예시
+```
+[로컬 데이터 파일 로딩]
+dataset = load_dataset("text", data_files='로컬.txt')       # text 로컬 파일 로딩
+dataset = load_dataset("csv", data_files='로컬.csv')        # csv 로컬 파일 로딩
+dataset = load_dataset("csv", data_files='로컬.tsv', delimiter="\t")  # tsv 로컬 파일 로딩
+dataset = load_dataset("json", data_files='로컬.json')      # json 로컬 파일 로딩
+dataset = load_dataset("pandas", data_files='로컬.pkl')     # pickled dataframe 로컬 파일 로딩
+```
+```
+[원격 데이터 파일 로딩]
+url = "https://github.com/crux82/squad-it/raw/master/"
+data_files = {
+ "train": url + "SQuAD_it-train.json.gz",
+"test": url + "SQuAD_it-test.json.gz",
+ }
+ 
+squad_it_dataset = load_dataset("json", data_files=data_files, field="data")
+```
