@@ -23,6 +23,25 @@ from typing import Dict, List
 
 #logger = logging.get_logger(__name__)
 
+# 폴더(서브폴더포함)에 있는 파일들의 풀경로를 얻어오는 함수
+# 출처 : https://thispointer.com/python-how-to-get-list-of-files-in-directory-and-sub-directories/
+def getListOfFiles(dirName):
+    # create a list of file and sub directories 
+    # names in the given directory 
+    listOfFile = os.listdir(dirName)
+    allFiles = list()
+    # Iterate over all the entries
+    for entry in listOfFile:
+        # Create full path
+        fullPath = os.path.join(dirName, entry)
+        # If entry is a directory then get the list of files in this directory 
+        if os.path.isdir(fullPath):
+            allFiles = allFiles + getListOfFiles(fullPath)
+        else:
+            allFiles.append(fullPath)
+                
+    return allFiles
+
 #########################################################################################
 # wordpiece vocab에 special 토큰 추가
 # : vocab.txt, tokenizer_config.json, special_tokens_map.json, added_tokens.json 등이 생성됨
