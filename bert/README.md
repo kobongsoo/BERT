@@ -42,6 +42,7 @@ model = BertForMaskedLM.from_pretrained('bert-base-multilingual-cased' ,cache_di
 |[bert-further-pretrain_trainer.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-further-pretrain_trainer.ipynb)|기존 훈련된 BERT에, **추가 MLM 과 NLP 훈련** 시키는 예제 | 훈련은 **HuggingFace Trainer를 이용**함, 추가 vocab 이 필요함|
 |[bert_pretrain.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert_pretrain.ipynb)|**처음부터 MLM 과 NLP 훈련** 시키는 예제 | 훈련은 **HuggingFace Trainer를 이용**함, **새로운 Vocab 필요**|
 |[bert-MLM-Trainer-V1.2.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-MLM-Trainer-V1.2.ipynb)|기존 훈련된 BERT에, **추가 MLM만 훈련** 시키는 예제| 훈련은 **HuggingFace Trainer를 이용**함, **load_dataset 이용**, **속도향상**|
+|[bert/bert-NSP-MLM-Trainer-V2.0.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/bert-NSP-MLM-Trainer-V2.0.ipynb)|기존 훈련된 BERT에, **추가 NSP+MLM 훈련** 시키는 예제| 훈련은 **HuggingFace Trainer를 이용**함, **load_dataset 이용**, **속도향상**|
 |[sentencepiece-further-pretrain.ipynb](https://github.com/kobongsoo/BERT/blob/master/bert/sentencepiece-further-pretrain.ipynb)|**sentencepiecetokenizer로 MLM 훈련** 시키는 예제 | 훈련은 **HuggingFace Trainer를 이용**함, **새로운 Vocab 필요**|
 
 ### 2. Fine-Tuning 예제
