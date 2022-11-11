@@ -143,6 +143,12 @@ Korpora.fetch("kcbert",root_dir='my_data/')
 - 개방형 한국어 말뭉치 제공 사이트
 - **회원가입 필요**
 - **신청 후 바로 다운로드 받을수 있음**
+#### 예제
+
+| 코드 |내용 | 
+|:-----------|:--------------------------------------------|
+|[ai_hub example-1](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/ai_hub_web_corpus_example.ipynb)|'대규모 웹데이터 기반 한국어 말뭉치 데이터'(json파일)에서 원천말뭉치(ts1,vs1)를 파싱해서 2줄 말뭉치를 만드는 예제|
+|[ai_hub example-2](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/ai_hub_web_corpus_example2.ipynb)|'대규모 웹데이터 기반 한국어 말뭉치 데이터'(json파일)에서 라베링말뭉치(tl1,vl1)를 파싱해서 1줄/2줄/문단 말뭉치를 만드는 예제|
 
 ### [모두의 말뭉치](https://corpus.korean.go.kr/)
 - 문화에육관광부 국립국어원에서 제공하는 말뭉치 사이트
