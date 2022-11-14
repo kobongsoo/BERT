@@ -148,10 +148,13 @@ Korpora.fetch("kcbert",root_dir='my_data/')
 
 | 코드 |내용 | 
 |:-----------|:--------------------------------------------|
-|[ai_hub example-1](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/ai_hub_web_corpus_example.ipynb)|'대규모 웹데이터 기반 한국어 말뭉치 데이터'(json파일)에서 원천말뭉치(ts1,vs1)를 파싱해서 2줄 말뭉치를 만드는 예제|
-|[ai_hub example-2](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/ai_hub_web_corpus_example2.ipynb)|'대규모 웹데이터 기반 한국어 말뭉치 데이터'(json파일)에서 라베링말뭉치(tl1,vl1)를 파싱해서 1줄/2줄/문단 말뭉치를 만드는 예제|
+|[ai_hub exam-1](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/ai_hub_web_corpus_example.ipynb)|'대규모 웹데이터 기반 한국어 말뭉치 데이터'(json파일)에서 원천말뭉치(ts1,vs1)를 파싱해서 2줄 말뭉치를 만드는 예제|
+|[ai_hub exam-2](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/ai_hub_web_corpus_example2.ipynb)|'대규모 웹데이터 기반 한국어 말뭉치 데이터'(json파일)에서 라베링말뭉치(tl1,vl1)를 파싱해서 1줄/2줄/문단 말뭉치를 만드는 예제|
+|[ai_hub paralle exam-1](https://github.com/kobongsoo/BERT/blob/master/corpus_sample/ai_hub_parallel_corpus_ex1.ipynb)|'기술과학 분야 한-영 번역 병렬 말뭉치 데이터' 와 '일상생활 및 구어체 한-영 번역 병렬 말뭉치 데이터'(json파일)에서 라베링말뭉치(tl1,vl1)를 파싱해서 영어-한국어 pair 말뭉치를 만드는 예제|
 
 - [대규모 웹데이터 기반 한국어 말뭉치 데이터](https://aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=realm&dataSetSn=624)
+- [기술과학 분야 한-영 번역 병렬 말뭉치 데이터](https://aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=realm&dataSetSn=71266)
+- [일상생활 및 구어체 한-영 번역 병렬 말뭉치 데이터](https://aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=realm&dataSetSn=71265)
 
 ### [모두의 말뭉치](https://corpus.korean.go.kr/)
 - 문화에육관광부 국립국어원에서 제공하는 말뭉치 사이트
