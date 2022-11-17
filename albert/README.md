@@ -116,7 +116,7 @@ tokenizer = AlbertTokenizer.from_pretrained(vocab_path, unk_token='[UNK]', pad_t
 - vocab 크기 : **32,000개** 가 적당
 - kowiki 말뭉치를 mecab 형태로소 한번 돌린 **kowiki-2019-mecab.txt 로 tokenizer 생성**함.
 - 실제 **훈련할때는 kowiki-2019.txt로 훈련**하는게 효과적임.
-<br> 참고 : [scratch tokenizer 생성](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/sp_scratch.ipynb1)
+<br> 참고 : [scratch tokenizer 생성](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/sp_scratch.ipynb)
 
 ### 2. 빈 albert 모델 생성
 -  hidden_size = 768, num_attention_heads=12, intermediate_size=768*4=3072 
