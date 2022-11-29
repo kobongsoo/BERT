@@ -139,26 +139,35 @@ print(tokenizer.decode(result.input_ids))
 - 한국어 Albert 모델 만들기
 
 ### 1. Tokenizer 생성
-- 한국어 말뭉치(kowiki-2019-mecab)를 이용하여, sentencepiece vocab 생성.
-- vocab 크기 : **32,000개** 가 적당
-- kowiki 말뭉치를 mecab 형태로소 한번 돌린 **kowiki-2019-mecab.txt 로 tokenizer 생성**함.
-- 실제 **훈련할때는 kowiki-2019.txt로 훈련**하는게 효과적임.
+- 한국어 말뭉치를 이용하여, sentencepiece vocab 생성.
+- vocab 크기 : **20,000~32,000개** 가 적당
+- mecab 형태로소 변환후, vocab 생성
+- AlbertTokenizerFast 를 사용하기 위해, AlbertTokenizer로 열고, save_pretrained 함. 
+- 이때 tokenizer_config.json에 **masked_token-normalized:true**  로 해줘야함.
 <br> 참고 : [scratch tokenizer 생성](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/sp_scratch.ipynb)
 
-### 2. 빈 albert 모델 생성
--  hidden_size = 768, num_attention_heads=12, intermediate_size=768*4=3072 
+### 2. Scratch 훈련
+- hidden_size = 768, num_attention_heads=12, intermediate_size=768*4=3072, (small 모델일때는 num_hidden_layer = 6 추가)
+```
+config = AlbertConfig(    
+        vocab_size=len(tokenizer), # default는 영어 기준이므로 내가 만든 vocab size에 맞게 수정해줘야 함
+        hidden_size = 768,         # default는 4096인데, base는 768로 함
+        num_attention_heads = 12,  # default는 64인데, base는 12로함
+        intermediate_size = 3072,  # default는 16384인데 base는 3072로 함hidden_size * 4 = base는 3072임
+        num_hidden_layers = 6      # default, base는 12인데, small버전으로 6으로 줄여봄
+    )
+
+    model = AlbertForPreTraining(config=config)
+```
+<br> 참고 : [scratch(SOP+MLM) 훈련](https://github.com/kobongsoo/BERT/blob/master/albert/albert-SOP-MLM-Trainer-V2.0.ipynb)
+<br> 참고 : [MLM 만 훈련](https://github.com/kobongsoo/BERT/blob/master/albert/albert-further-pretrain-mlm.ipynb)
 <br> 참고 : [빈껍데기albert 제작](https://github.com/kobongsoo/BERT/blob/master/albert/albert-model-create.ipynb)
 
-### 3. 훈련
-- sop 훈련용 말뭉치를 만들기 힘들어서, MLM 훈련만 시킴.
-- 반드시 해당 말뭉치는 tokenizer 만들때 사용한 원본 **kowiki-2019.txt** 로 훈련시킴
-<br> 참고: [MLM Further Pretrain](https://github.com/kobongsoo/BERT/blob/master/albert/albert-further-pretrain-mlm.ipynb)
-
-### 4. sbert 생성
+### 3. sbert 생성
 - sentence-albert 만들기
 <br> 참고: [s-albert 만들기](https://github.com/kobongsoo/BERT/blob/master/albert/albert-sts-to-sbert.ipynb)
 
-### 5. STS 테스트
+### 4. STS 테스트
 
 |모델|설명|klue-sts-v1.1|kor-sts(tune_test.tsv)|
 |:---|:-------|-------:|---------------:|
