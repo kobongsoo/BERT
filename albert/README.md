@@ -108,6 +108,33 @@ AlbertModel(
 
 tokenizer = AlbertTokenizer.from_pretrained(vocab_path, unk_token='[UNK]', pad_token='[PAD]')
 ```
+- AlbertTokenizerFast 인데 한국어도 토큰화되도록 하려면, tokenizer_config.json에 **masked_token-normalized:true**  로 해줘야함.
+<br> 그렇지 않으면 한글 단어들은 모두 [unk] 으로 되어 버림 인데
+```
+bos_token:"[CLS]"
+cls_token:"[CLS]"
+do_lower_case:false
+eos_token:"[SEP]"
+keep_accents:true
+__type:"AddedToken"
+content:"[MASK]"
+lstrip:true
+normalized:true
+rstrip:false
+single_word:false
+```
+```
+import torch
+from transformers import AlbertTokenizer, AlbertTokenizerFast
+tokenizer = AlbertTokenizerFast.from_pretrained(vocab_path, max_len=32, do_lower_case=True, keep_acccents=False, unk_token='[UNK]', pad_token='[PAD]')
+
+sentence_a = "I love you. "
+sentence_b = "난 널 사랑해.충무공 이순신은 조선의 최고의 장수이다.대한민국의 수도는 서울이다.오늘은 날씨가 너무 좋다"
+result = tokenizer(sentence_a, sentence_b, max_length=32, padding=True, truncation=True, return_overflowing_tokens=False)
+
+print(result)
+print(tokenizer.decode(result.input_ids))
+```
 ## Albert from Scratch
 - 한국어 Albert 모델 만들기
 
