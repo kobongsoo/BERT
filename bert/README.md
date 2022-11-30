@@ -6,6 +6,13 @@ pip install transformers
 ```
 - 주로 다국어 BERT 모델(bert-base-multilingual-cased)을 이용하였음
 - 주요 document는 [여기](https://huggingface.co/docs/transformers/model_doc/bert) 참조 바람
+- **scratch 훈련 시, BertConfig로 모델 size를 지정**할수 있다.
+<br> 주로 **hidden_size, num_hidden_layers, intermediate_size 등을 조절** 함으로써, 
+<br> BERT-Tiny(H=128, L=2, I=512), BERT-Mini(H=256, L=4, I=1024), BERT-small(H=512, L=4, I=2048), 
+<br> BERT-Midium(H=512, L=8, I=2048), BERT-base(H=768, L=12, I=3072) 등의 모델을 만들수 있다.
+<br>(실제 사이즈 조절할때는 **기존 모델의 config.json 을 참조**하자) 
+<br> 참조: [BERT 모델 size](https://github.com/google-research/bert)
+
 
 ### 1. 훈련 예제
 - 훈련을 시키기 위해서는 **말뭉치**와 **기존 훈련된 BERT 모델과 vocab** 파일, 그리고 **기존 vocab에 더 추가되어 만들어진 추가 vocab**이 필요함
