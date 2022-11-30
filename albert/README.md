@@ -147,7 +147,7 @@ print(tokenizer.decode(result.input_ids))
 <br> 참고 : [scratch tokenizer 생성](https://github.com/kobongsoo/BERT/blob/master/tokenizer_sample/sp_scratch.ipynb)
 
 ### 2. Scratch 훈련
-- hidden_size = 768, num_attention_heads=12, intermediate_size=768*4=3072, (small 모델일때는 num_hidden_layer = 6 추가)
+- hidden_size = 768, num_attention_heads=12, intermediate_size=768*4=3072, (**small 모델일때는 num_hidden_layer = 6** 추가)
 ```
 config = AlbertConfig(    
         vocab_size=len(tokenizer), # default는 영어 기준이므로 내가 만든 vocab size에 맞게 수정해줘야 함
@@ -171,9 +171,9 @@ config = AlbertConfig(
 
 |모델|설명|klue-sts-v1.1|kor-sts(tune_test.tsv)|
 |:---|:-------|-------:|---------------:|
-|s-albert-1|위 방식대로 kowiki-2019로 MLM 훈련시키고 sbert 만든 모델|0.4792|0.6115|
-|s-albert-2|위 s-albert-1을 korsts로 100번 훈련시킨 모델|0.4520|0.6116|
-|s-albert-3|위 s-albert-2를  TED2020-en-ko-train.tsv 영어-한국어 TS Distilation 훈련 시킨 모델|0.1837|0.4188|
+|s-albert-1|위 방식대로 ai_hub 대용량웹말뭉치로 훈련시키고 sbert 만든 모델|??|??|
+|s-albert-2|위 s-albert-1을 korsts로 ??번 훈련시킨 모델|??|??|
+|s-albert-3|위 s-albert-2를  TED2020-en-ko-train.tsv 영어-한국어 TS Distilation 훈련 시킨 모델|??|??|
 
 ### 결론
 - 한국어만 있는 vocab에서는 [영어-한국어 TS Distilation 훈련](https://github.com/kobongsoo/BERT/blob/master/sbert/sbert-distillaton.ipynb)은 오히려 성능 저하만 불러옴
