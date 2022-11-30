@@ -137,6 +137,11 @@ print(tokenizer.decode(result.input_ids))
 ```
 ## Albert from Scratch
 - 한국어 Albert 모델 만들기
+- **scratch 훈련 시, AlbertConfig로 모델 size를 지정**할수 있다.
+<br> 주로 **hidden_size, num_hidden_layers, intermediate_size 등을 조절** 함으로써, 
+<br> Albert-small(H=768, L=6, I=3072), Albert-base(H=768, L=12, I=3072) 다양한 사이즈의 모델을 만들수 있다.
+<br>(실제 사이즈 조절할때는 **기존 모델의 config.json 을 참조**하자) 
+<br>참조: [albert git](https://github.com/google-research/ALBERT)
 
 ### 1. Tokenizer 생성
 - 한국어 말뭉치를 이용하여, sentencepiece vocab 생성.
