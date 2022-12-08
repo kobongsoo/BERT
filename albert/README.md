@@ -2,8 +2,10 @@
 
 ## 1. 기존 모델 문제점
 - Training speed (훈련속도) 저하, memory limitation ( GPU 메모리 한계)
-<br>BERT base 인 경우 16개 V100(32G) GPU 사용시 ,5일 이상 소요.
-<br>BERT large 인 경우 64개 V100(32G) GPU 사용시 ,8일 이상 소요.
+<br>BERT base 인 경우 4개TPU포드(총 16개 TPU칩), 4일 훈련함
+<br>-GPU로 추정하면, BERT base 인 경우 16개 V100(32G) GPU 사용시 ,5일 이상 소요.
+<br>BERT large 인 경우 16개TPU포드(총 64개 TPU칩), 4일 훈련함
+<br>-GPU로 추정하면, BERT large 인 경우 64개 V100(32G) GPU 사용시 ,8일 이상 소요.
 <br> 참고 : https://timdettmers.com/2018/10/17/tpus-vs-gpus-for-transformers-bert/
 
 ## 2. ALBERT: A LITE BERT FOR SELF-SUPERVISED LEARNING OF LANGUAGE REPRESENTATIONS 
