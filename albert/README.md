@@ -175,17 +175,3 @@ config = AlbertConfig(
 - sentence-albert 만들기
 <br> 참고: [s-albert 만들기](https://github.com/kobongsoo/BERT/blob/master/albert/albert-sts-to-sbert.ipynb)
 
-### 4. STS 테스트
-
-|모델|설명|klue-sts-v1.1|kor-sts(tune_test.tsv)|
-|:---|:-------|-------:|---------------:|
-|s-albert-1|위 방식대로 ai_hub 대용량웹말뭉치로 훈련시키고 sbert 만든 모델|??|??|
-|s-albert-2|위 s-albert-1을 korsts로 ??번 훈련시킨 모델|??|??|
-|s-albert-3|위 s-albert-2를  TED2020-en-ko-train.tsv 영어-한국어 TS Distilation 훈련 시킨 모델|??|??|
-
-### 결론
-- 한국어만 있는 vocab에서는 [영어-한국어 TS Distilation 훈련](https://github.com/kobongsoo/BERT/blob/master/sbert/sbert-distillaton.ipynb)은 오히려 성능 저하만 불러옴
-- 한국어 sts 를 훈련시켜도 데이터가 적어서인지 별 효과 없음.
-<br> MLM 훈련시킨 kowiki-2019로 [증강: Silver STS 말뭉치 제작](https://github.com/kobongsoo/BERT/blob/master/sbert/Augmented/sbert-no-dataset.ipynb)해서 훈련시켜봐야 겠음.
-
-
