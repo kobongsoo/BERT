@@ -18,7 +18,13 @@ from summarizer.sbert import SBertSummarizer
 # sentence bert 모델인 경우=> sentence bert 모델 경로를 SBertSummarizer 함수 인자로 넘겨줌
 model_path = 'sentencebert 모델 경로'
 model = SBertSummarizer(model_path)
+
+# min_length : 설정값 이하 길이 문장은 요약에 포함안됨, num_sentences : 요약문장을 몇문자으로 만들지 설정
+# - 10이하 길이 문장은 요약문에 포함안됨. 요약문은 3개 문장으로 요약함(원본이 3개 이하면 원본 그대로 출력됨)
+result = model(body, min_length=10, num_sentences=3)
 ```
+
+
 - BERT 모델인 경우, Summarizer 이용
 ```
 from summarizer.sbert import SBertSummarizer
