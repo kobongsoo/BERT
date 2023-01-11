@@ -178,6 +178,31 @@ def handle_query():
     
 ```
 
+### 예제1
+- Flask 서버와 Elastic 서버를 이용한 문장 임베딩 예시 
+- [server.py](https://github.com/kobongsoo/BERT/blob/master/Flask/server.py) :문장 임베딩, 추출요약 후 임베딩, ElasticSearch와 연계한 검색을 수행하는 Server
+```
+서버 실행
+python server.py
+```
+- [curl_test.ipynb](https://github.com/kobongsoo/BERT/blob/master/Flask/curl_test.ipynb) : restAPI를 이용하여 server에 접속후 임베딩, 추출요약, 검색등을 수행하는 client
+- curl 이용시 아래 예시 참조(**text에는 한글인 경우에는 인코딩된 값을 넣어야함**)
+```
+# 문장 임베딩 ( '안녕하세요' 임베딩 값 추출)
+# curl -d "{""text"":""%EC%95%88%EB%85%95%ED%95%98%EC%84%B8%EC%9A%94""}" -H "Content-Type: application/json" -X POST http://127.0.0.1:9999/embed
+
+# 문장 요약후 임베딩
+# => curl -d "{""text"":""%EC%95%88%EB%85%95%ED%95%98%EC%84%B8%EC%9A%94""}" -H "Content-Type: application/json" -X POST http://127.0.0.1:9999/summarize?min_length=10&num_sentence=3
+
+# ES vector 검색
+# => curl -d "{""text"":""%EC%95%88%EB%85%95%ED%95%98%EC%84%B8%EC%9A%94""}" -H "Content-Type: application/json" -X POST http://127.0.0.1:9999/search?eshost='http://192
+.168.0.27:9000'&index='korquad-klue-sbert-v1.0-idx1'&size=3
+```
+
+- 테스트시 **doc(무서내용들) 요약한 후 요약 문장들의 평균값으로 임베딩**을 하는 방식이 가장 좋았음.
+- 최종적으로는 **doc2vec 을 어떻게 할 것인가가 핵심**임(요약해서 평균, 모든 문장 평균, 타이틀만 이용 등...)
+
+
 ## 기타
 
 ### 1. ElasticSearch 지원 함수 예제
