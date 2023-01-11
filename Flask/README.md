@@ -5,6 +5,8 @@
 - 설치하기
 ```
 pip install Flask
+pip install flask-cors  # flask Cross-Origin Resource Sharing( CORS는 시스템 수준에서 타 도메인 간 자원 호출을 승인하거나 차단하는 것을 결정하는 것)
+pip install argparse    # arg 파싱 처리
 ```
 - 실행하기
 1. 아래처럼 webservice.py 파일 생성
@@ -37,7 +39,28 @@ python run.py
 http://ip:5000/  혹은 http://127.0.0.1:5000/ 접속하면, 'Hello World!' 가 찍힘
 ```
 
-### 예제
+### 예제1
+- [server.py](https://github.com/kobongsoo/BERT/blob/master/Flask/server.py) :문장 임베딩, 추출요약 후 임베딩, ElasticSearch와 연계한 검색을 수행하는 Server
+```
+서버 실행
+python server.py
+```
+- [curl_test.ipynb](https://github.com/kobongsoo/BERT/blob/master/Flask/curl_test.ipynb) : restAPI를 이용하여 server에 접속후 임베딩, 추출요약, 검색등을 수행하는 client
+- curl 이용시 아래 예시 참조(**text에는 한글인 경우에는 인코딩된 값을 넣어야함**)
+```
+# 문장 임베딩 ( '안녕하세요' 임베딩 값 추출)
+# curl -d "{""text"":""%EC%95%88%EB%85%95%ED%95%98%EC%84%B8%EC%9A%94""}" -H "Content-Type: application/json" -X POST http://127.0.0.1:9999/embed
+
+# 문장 요약후 임베딩
+# => curl -d "{""text"":""%EC%95%88%EB%85%95%ED%95%98%EC%84%B8%EC%9A%94""}" -H "Content-Type: application/json" -X POST http://127.0.0.1:9999/summarize?min_length=10&num_sentence=3
+
+# ES vector 검색
+# => curl -d "{""text"":""%EC%95%88%EB%85%95%ED%95%98%EC%84%B8%EC%9A%94""}" -H "Content-Type: application/json" -X POST http://127.0.0.1:9999/search?eshost='http://192
+.168.0.27:9000'&index='korquad-klue-sbert-v1.0-idx1'&size=3
+```
+
+
+### 예제2
 
 |소스명|설명|기타|
 |:-----------------|:-----------------------------------------------------------|:---------------------|
