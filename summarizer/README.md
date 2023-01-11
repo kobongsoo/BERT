@@ -1,11 +1,11 @@
-### BERT 추출 요약(Extractive summary) <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
+### BERT 추출 요약(Extractive summary)&키워드 추출  <img src="https://img.shields.io/badge/Pytorch-EE4C2C?style=flat-square&logo=Pytorch&logoColor=white"/><img src="https://img.shields.io/badge/Python-3766AB?style=flat-square&logo=Python&logoColor=white"/></a>
 
 #### 1.개요
 - 문서 요약에는 생성(추상)요약(abstractive summary)과 추출요약(extractive summary)이 있음.
 - 생성(추상)요약은 GPT(Transformers 디코더),T5(인/디코더) 처럼 문장을 생성해서 요약하는 것임.
 - 추출요약은 BERT(Transformers 인코더)처럼 다수의 문장에서 중요 문장을 추출하여 요약하는 것임.
 
-#### 2.예제
+#### 2.추출 요약 예제
 - 기존 bert 모델, sentencebert 모델을 이용하여 문장에 대한 추출 요약하는 예제로,  NeuralCoref(신경참조) 를 이용한다.
 - bert 추출 요약을 위해 아래 [bert-extractive-summarizer 패키지](https://github.com/dmmiller612/bert-extractive-summarizer) 설치해야 함
 ```
@@ -39,5 +39,25 @@ bertmodel = BertModel.from_pretrained(model_path, output_hidden_states=True)
 model = Summarizer(custom_model=bertmodel, custom_tokenizer=tokenizer)
 ```
 
-#### 3. 참고
+#### 3. keyword 추출 예제
+- [keybert.ipynb](https://github.com/kobongsoo/BERT/blob/master/summarizer/keybert.ipynb) : doc에서 키워드 등를 추출하는 예
+```
+pip install keybert
+```
+
+```
+from keybert import KeyBERT
+from transformers import AutoModel
+
+model_path = "bongsoo/albert-small-kor-v1"#"klue/bert-base"
+model = AutoModel.from_pretrained(model_path)
+model.eval()
+text = {TEXT}
+kw_model = KeyBERT(model)
+keywords = kw_model.extract_keywords(text, keyphrase_ngram_range=(1, 1), stop_words=None, top_n=5)  # top_n= 키워드 출력 계수
+print(keywords)
+```
+
+#### 4. 참고
 - [Bert Extractive Summarizer](https://github.com/dmmiller612/bert-extractive-summarizer)
+- [keybert](https://maartengr.github.io/KeyBERT/ )  
