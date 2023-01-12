@@ -32,7 +32,7 @@ embedder = SentenceTransformer(model_path, device='cpu')
 - 단점 : 문장이 많으면 **처리 속도가 엄청 느림**(예로 10,000개 문장을 클러스터링 하려면 10,000개 문장쌍인 약 5천만개 문장을 계산해야 함(약 60시간 걸림))
 - 두문장간 스코어 출력 모델이면, **num_label=1로 sts 훈련** 시켜야 하며, **추론(num_label=3) 모델이면 nli**로 훈련시켜야 함.
 - Bi-Encoder 처럼 **nli 훈련 후 sts로 훈련 시킬수 없음**.(CrossEncoder(model_path, num_labels=3) 으로 해서 훈련시키면 evaluator에서 오류 발생함) 
-- 굳이 NLI 모델을 STS로 훈련하려면 BERT 모델로 다시 만든 후 훈련 시켜야 함.
+- 굳이 NLI 모델을 STS로 훈련하려면 [BERT 모델로 다시 만든](https://github.com/kobongsoo/BERT/blob/master/sbert/cross-encoder/sbert-crossencoder-test.ipynb) 후 훈련 시켜야 함.
 - 예제 : [STS 훈련 예](https://github.com/kobongsoo/BERT/blob/master/sbert/cross-encoder/sbert-corossencoder-train-sts.ipynb), [NLI 훈련 예](https://github.com/kobongsoo/BERT/blob/master/sbert/cross-encoder/sbert-corossencoder-train-sts.ipynb), [평가 예](https://github.com/kobongsoo/BERT/blob/master/sbert/cross-encoder/sbert-crossencoder-test.ipynb)
 
 ### 3. Bi-Encder + Corss-Encoder 조합 모델
