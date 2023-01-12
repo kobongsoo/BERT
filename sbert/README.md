@@ -30,6 +30,8 @@ embedder = SentenceTransformer(model_path, device='cpu')
 - Cross-Encoder는 문장 임베딩을 생성하지 않고, 1개의 문장만 Cross-Encoder에 전달할 수 있음
 - 장점 : **Bi-Encoder 방식 보다 정확도가 높음**
 - 단점 : 문장이 많으면 **처리 속도가 엄청 느림**(예로 10,000개 문장을 클러스터링 하려면 10,000개 문장쌍인 약 5천만개 문장을 계산해야 함(약 60시간 걸림))
+- 두문장간 스코어 출력 모델이면, **num_label=1로 sts 훈련** 시켜야 하며, **추론(num_label=3) 모델이면 nli**로 훈련시켜야 함.
+- Bi-Encoder 처럼 **nli 훈련 후 sts로 훈련 시킬수 없음**.(CrossEncoder(model_path, num_labels=3) 으로 해서 훈련시키면 evaluator에서 오류 발생함) 
 - 예제 : [STS 훈련 예](https://github.com/kobongsoo/BERT/blob/master/sbert/cross-encoder/sbert-corossencoder-train-sts.ipynb), [NLI 훈련 예](https://github.com/kobongsoo/BERT/blob/master/sbert/cross-encoder/sbert-corossencoder-train-sts.ipynb), [평가 예](https://github.com/kobongsoo/BERT/blob/master/sbert/cross-encoder/sbert-crossencoder-test.ipynb)
 
 ### 3. Bi-Encder + Corss-Encoder 조합 모델
