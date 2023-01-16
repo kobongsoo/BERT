@@ -303,16 +303,27 @@ df = pd.DataFrame((zip(context_list, question_list, answer_list)), columns = ['c
 ```
 ```
 # 예제 2)
+# 영어-한국어 쌍 말뭉치를 df->list로 변환후 한국어-영어 쌍 tsv 파일로 만
 # df -> list로 만들기(df.values.tolist())
 
 import numpy as np
 import pandas as pd
+from tqdm.notebook import tqdm
+import csv
 
-train_file = '../../data11/korpora/pair/en-ko/en_ko_train.tsv' #영어-한국어
+# 영어-한국어 쌍 tsv 파일 불러옴 
+train_file = '../../data11/korpora/pair/en-ko/news_talk_en_ko_train.tsv' #영어-한국어
 
 df = pd.read_csv(train_file, sep = '\t')
-dataset = df.values.tolist()
+dataset = df.values.tolist()  # df->list로 변환
 print(dataset[0:5])
+
+# 한국어-영어 쌍 tsv 로 만듬
+f = open('../../data11/korpora/pair/en-ko/news_talk_ko_en_train.tsv', 'w', encoding='utf-8', newline='')
+wr = csv.writer(f, delimiter='\t')
+for data in tqdm(dataset):
+    wr.writerow([data[1], data[0]])
+f.close()
 
 ```
 
