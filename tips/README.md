@@ -270,7 +270,6 @@ df=pd.read_json(file_path)   #json 파일 로딩
 outfile_fpath = "../../korpora/mycorpus/newspaper.csv"
 df.to_csv(outfile_fpath, index=False, header= None)
 ```
-
 #### 파일들 병합 하기 
 ```
 filenames = [
@@ -289,6 +288,7 @@ with open(out_file, 'w') as outfile:
 ```                
 #### df 를 list로 변환
 ```
+# 예제 1)
 # csv 파일 로딩해봄
 outfile_fpath = "../../korpora/korQuAD/KorQuAD_v1.0_train.csv"
 df1 = pd.read_csv(outfile_fpath)
@@ -297,10 +297,23 @@ df1 = pd.read_csv(outfile_fpath)
 context_list = np.array(df['context'].tolist())
 question_list = np.array(df['question'].tolist())
 answer_list = np.array(df['answer'].tolist())
-```
-```
+
 # list들을 zip 으로 묶고, df 생성함
 df = pd.DataFrame((zip(context_list, question_list, answer_list)), columns = ['context','question','answer'])
+```
+```
+# 예제 2)
+# df -> list로 만들기(df.values.tolist())
+
+import numpy as np
+import pandas as pd
+
+train_file = '../../data11/korpora/pair/en-ko/en_ko_train.tsv' #영어-한국어
+
+df = pd.read_csv(train_file, sep = '\t')
+dataset = df.values.tolist()
+print(dataset[0:5])
+
 ```
 
 ### torch.save 모델 저장
