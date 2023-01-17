@@ -108,3 +108,5 @@ tokenizer.save_pretrained(OUTPATH)
 |bongsoo/albert-small-kor-sbert-v1      |0.8305    |0.8588    |0.8419           |0.7965|
 |bongsoo/kpf-sbert-v1.1                 |0.8750    |0.8900    |0.8863           |0.8554|
 |bongsoo/albert-small-kor-sbert-v1.1    |0.8526    |0.8833    |0.8484           |0.8286|
+
+  ex) [sbert-distillation2.ipynb](https://github.com/kobongsoo/BERT/blob/master/sbert/sbert-distillaton2.ipynb)
