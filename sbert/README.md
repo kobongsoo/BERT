@@ -70,4 +70,41 @@ tokenizer.save_pretrained(OUTPATH)
 - 3단계: **gold sts dataset + silver sts dataset 을 훈련 데이터**로 하여 Bi-Encoder 훈련 시킴
 - 예제: [도메인 STS dataset이 적은 경우](https://github.com/kobongsoo/BERT/blob/master/sbert/Augmented/sbert-limited-dataset.ipynb)
 
+## 4. S-BERT 지식 증류 학습
+![image](https://user-images.githubusercontent.com/93692701/175485631-ab223288-b99d-4179-8497-73b860f3847b.png)
+<br> 참고 : https://sbert.net/examples/training/multilingual/README.html
 
+### 1. 다국어 모델 증류 
+- 교사모델은 **paraphrase-multilingual-mpnet-base-v2 혹은 distiluse-base-multilingual-cased-v2 둘중 하나 선택**, 학생모델은 제작한 S-BERT 모델로 설정 하여 학습시킴.<br>
+자체 테스트시, 위 2개의 모델이 가장 성능이 좋았음(*아래표 참조)
+
+ 다운로드 : [paraphrase-multilingual-mpnet-base-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-mpnet-base-v2)
+,[distiluse-base-multilingual-cased-v2](https://huggingface.co/sentence-transformers/distiluse-base-multilingual-cased-v2)
+ 
+- **교사모델과 학생모델의 word_embedding_dimension(예: Dim=768)은 반드시 같아야함. 다르면 훈련시,'The size of tensor a (768) must match the size of tensor b (384) at non-singleton dimension 1' 에러 발생함**
+- 이때 말뭉치는 **영어-한글 쌍으로 이루어진 말뭉치**를 이용함(예: [news_talk_en_ko](https://huggingface.co/datasets/bongsoo/news_talk_en_ko), TED2020-en-ko-train.tsv)
+- 아래 표는 [S-BERT Pretrain 모델들](https://www.sbert.net/docs/pretrained_models.html)에 대해 영어-한글 쌍 말뭉치(TED2020-en-ko-train.tsv) 로 학습 후, korsts, klue-sts 로 평가해본 결과임
+
+|교사모델명(S-BERT)|설명|korsts|Klue-sts|korsts+Klue-sts 평균|기존성능평가|
+|:-------------:|:---------------------------|:-----:|:-----:|:-----:|:-----------------------------|
+|all-mpnet-base-v2|base 모델: microsoft/mpnet-base, size:420MB, max_seq_len: 384|74.2%|74.7%|74.7%|embedding:69.57%, search:57.0%,GPU Speed(sentence/sec):2,800|
+|multi-qa-distilbert-cos-v1|base 모델: distill-base, size:250MB, max_seq_len: 512|73.2%|73.4%|73.3%|embedding:69.98%, search:52.83%,GPU Speed:4,000|
+|paraphrase-multilingual-mpnet-base-v2|교사/학생 모델: paraphrase-mpnet-base2/xlm-reberta-base, size:970MB, max_seq_len: 128, +50개 추가 언어 지원(한국어포함)|78.8%|78.2%|78.5%|embedding:65.83%, search:41.68%,GPU Speed:2,500|
+|distiluse-base-multilingual-cased-v1|교사/학생 모델: mUSE/distilbert-base-multilingual, size:480MB, max_seq_len: 128, +15개 언어 지원(한국어포함)|74.2%|80.1%|77.15%|embedding:61.3%, search:29.87%,GPU Speed:4,000|
+|distiluse-base-multilingual-cased-v2|교사/학생 모델: mUSE/distilbert-base-multilingual, size:480MB, max_seq_len: 128, +50개 추가 언어 지원(한국어포함)|75.0%|80.5%|77.75%|embedding:60.18%, search:27.35%,GPU Speed:4,000|
+
+  ex) [sbert-distillation.ipynb](https://github.com/kobongsoo/BERT/blob/master/sbert/sbert-distillaton.ipynb)
+
+### 2. 한국어 모델 증류 
+- 여기서는 기존 학습잘 된 한국어 모델(교사모델)을 이용해서 작은 사이즈에 모델(학생모델)에 한국어를 증류하는 방식으로, 위 증류 방법을 참고 하여 증류 해봄
+- 교사모델로는 [kpf-sbert-v1.1](https://huggingface.co/bongsoo/kpf-sbert-v1.1), 학생모델은 [albert-small-kor-v1](https://huggingface.co/bongsoo/albert-small-kor-v1) 이용
+- 말뭉치는 **한국어-영어 쌍으로 이루어진 말뭉치**를 이용([news_talk_ko_en](https://huggingface.co/datasets/bongsoo/news_talk_ko_en))
+- 아래표는 위 방식대로 제작된 [albert-small-kor-sbert-v1.1](https://huggingface.co/bongsoo/albert-small-kor-sbert-v1.1) 모델에 대해 다른 모델과  평가 비교해본 결과
+
+|모델     |korsts|klue-sts|glue(stsb)|stsb_multi_mt(en)|
+|:--------|------:|--------:|--------------:|------------:|
+|distiluse-base-multilingual-cased-v2   |0.7475    |0.7855    |0.8193           |0.8075|
+|paraphrase-multilingual-mpnet-base-v2  |0.8201    |0.7993    |0.8907           |0.8682|
+|bongsoo/albert-small-kor-sbert-v1      |0.8305    |0.8588    |0.8419           |0.7965|
+|bongsoo/kpf-sbert-v1.1                 |0.8750    |0.8900    |0.8863           |0.8554|
+|bongsoo/albert-small-kor-sbert-v1.1    |0.8526    |0.8833    |0.8484           |0.8286|
