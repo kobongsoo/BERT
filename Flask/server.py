@@ -253,7 +253,7 @@ def search_text():
 
 #==================================================================================================================================
 # main(메인 함수) : 임베딩 모델, 추출요약 모델 설정, vector 함수 정의, 평균 vector 함수 정의
-# => IN: -host=IP, -port=9999, -sbert={SBERT 모델 경로}
+# => IN: -host=IP, -port=9999, -embedder={embedder 모델 경로}, -summarizer={summarizer 모델 경로}, -crossencoder={crossencoder 모델 경로}
 #==================================================================================================================================
 if __name__ == '__main__':
     
@@ -261,27 +261,36 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('-host', dest='host', help='', default='0.0.0.0')  # Flask 서버 바인딩 host
     parser.add_argument('-port', dest='port', help='', default=9999)       # Flask 서버 바인딩 port
-    parser.add_argument('-sbert', dest='sbert', help='sbert model full path', default='bongsoo/albert-small-kor-sbert-v1') # sbert 모델 경로
+    parser.add_argument('-embedder', dest='embedder', help='embedder model full path', default='bongsoo/albert-small-kor-sbert-v1.1') # 임베딩 모델 경로
+    parser.add_argument('-summarizer', dest='summarizer', help='summarizer model full path', default='bongsoo/albert-small-kor-sbert-v1.1') # 추출 요약 모델 경로
+    parser.add_argument('-crossencoder', dest='crossencoder', help='crossencoder model full path', default='bongsoo/albert-small-kor-cross-encoder-v1') # crossencoder 모델 경로
     
     args = parser.parse_args()
-    print(f'sbert path:{args.sbert}')
-
     #=====================================================================
     # 문장 임베딩 모델 정의
-    embedder = SentenceTransformer(args.sbert, device=device)
+    print("==========================================================================")
+    print(f'*embedder path:{args.embedder}')    
+    embedder = SentenceTransformer(args.embedder, device=device)
     print(f'embedder:{embedder}')
+    print("==========================================================================\n")
     #=====================================================================
     
     #=====================================================================   
     # 추출 요약 모델 정의
-    summarizer = SBertSummarizer(args.sbert)
+    print("==========================================================================")
+    print(f'*summarizer path:{args.summarizer}') 
+    summarizer = SBertSummarizer(args.summarizer)
     print(f'summairzer:{summarizer}')
+    print("==========================================================================\n")
     #=====================================================================
     
     #=====================================================================
     # crossencoder 모델 설정
-    crossencoder = CrossEncoder(args.sbert, device=device)
-    print(f'crossencoder:{summarizer}')
+    print("==========================================================================")
+    print(f'*crossencoder path:{args.crossencoder}')
+    crossencoder = CrossEncoder(args.crossencoder, device=device)
+    print(f'crossencoder:{crossencoder}')
+    print("==========================================================================\n")
     #=====================================================================
         
     # embedding 모델에서 vector를 구하는 함수    
