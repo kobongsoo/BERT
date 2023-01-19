@@ -27,7 +27,7 @@
 # 참고: https://losskatsu.github.io/programming/py-flask-korean/#2-%EC%84%9C%EB%B2%84-flask-%ED%95%9C%EA%B8%80-post-%EC%9A%94%EC%B2%AD-%EB%B0%9B%EA%B8%B0
 #==================================================================================================================================
 
-from flask import Flask, request, jsonify, abort, make_response
+from flask import Flask, request, jsonify, abort, make_response, render_template
 from flask_cors import CORS
 import argparse
 from typing import List
@@ -126,7 +126,11 @@ def summarize_text():
 # => IN : 검색 문장, esurl={ESurl}, index={ES 인덱스명}, size={검색 출력 계수}
 # => OUT: 검색결과
 #==================================================================================================================================
-@app.route('/search', methods=['POST'])
+@app.route('/search')
+def index():
+	return render_template('search.html')
+
+@app.route('/essearch', methods=['POST'])
 def search_text():
     # json 파일 파싱
     args = request.json
@@ -244,10 +248,10 @@ def search_text():
     
     # 5. es 종료
     es.transport.close()
- 
+	
     return jsonify({
         'count': count,
-        'result': results
+        'results': results
     })
     #return response
 
