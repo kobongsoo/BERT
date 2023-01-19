@@ -40,6 +40,8 @@ http://ip:5000/  혹은 http://127.0.0.1:5000/ 접속하면, 'Hello World!' 가 
 ```
 
 ### 예제1
+- ES 서버와 별도로 Flask 서버를 돌리고, **CURL 혹은 [curl_test.ipynb](https://github.com/kobongsoo/BERT/blob/master/Flask/curl_test.ipynb) pythoh을 이용하여 검색**하는 예시
+- ES 서버에는 [es_summarize_vector](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/es_summarize_vector.ipynb)코드를 이용하여 문서요약문들이 미리 인덱싱 되어 있어야 한다.
 - [server.py](https://github.com/kobongsoo/BERT/blob/master/Flask/server.py) :문장 임베딩, 추출요약 후 임베딩, ElasticSearch와 연계한 검색을 수행하는 Server
 ```
 서버 실행
@@ -64,12 +66,20 @@ python server.py
 - 최종적으로는 **doc2vec 을 어떻게 할 것인가가 핵심**임(요약해서 평균, 모든 문장 평균, 타이틀만 이용 등...)
 
 ### 예제2
+- ES 서버와 별도로 Flask 서버를 돌리고, **웹에서 Flask서버로 접속하여 ES 서버와 연동해서 검색**하는 예시임.
+- ES 서버에는 [es_summarize_vector](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/es_summarize_vector.ipynb)코드를 이용하여 문서요약문들이 미리 인덱싱 되어 있어야 한다.
+
 - [server.py](https://github.com/kobongsoo/BERT/blob/master/Flask/server.py) :문장 임베딩, 추출요약 후 임베딩, ElasticSearch와 연계한 검색을 수행하는 Server
 ```
 서버 실행
 python server.py
 ```
 ![image](https://user-images.githubusercontent.com/93692701/213373591-5edb5005-cec7-4fe6-a8bd-6d9d21d8af1d.png)
+
+- 임베딩 모델, 추출요약모델(기본:bongsoo/albert-small-kor-sbert-v1.1), cross-encoder 모델(기본:ongsoo/albert-small-kor-cross-encoder-v1)등을 인자로 넘겨 실행할수 있음.
+```
+python server.py -host=0.0.0.0 -port=9999 -embedder={embedder 모델 경로} -summarizer={summarizer 모델 경로} -crossencoder={crossencoder 모델 경로}
+```
 
 웹에서 검색 실행 
 - [search.html](https://github.com/kobongsoo/BERT/blob/master/Flask/search.html)코드에서 서버ip와 es 인덱스, 검색 수 등을 아래처럼 변경해야 함.
