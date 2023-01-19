@@ -64,6 +64,26 @@ python server.py
 - 최종적으로는 **doc2vec 을 어떻게 할 것인가가 핵심**임(요약해서 평균, 모든 문장 평균, 타이틀만 이용 등...)
 
 ### 예제2
+- [server.py](https://github.com/kobongsoo/BERT/blob/master/Flask/server.py) :문장 임베딩, 추출요약 후 임베딩, ElasticSearch와 연계한 검색을 수행하는 Server
+```
+서버 실행
+python server.py
+```
+![image](https://user-images.githubusercontent.com/93692701/213373591-5edb5005-cec7-4fe6-a8bd-6d9d21d8af1d.png)
+
+웹에서 검색 실행 
+- [search.html](https://github.com/kobongsoo/BERT/blob/master/Flask/search.html)코드에서 서버ip와 es 인덱스, 검색 수 등을 아래처럼 변경해야 함.
+```
+// **엘라스틱서치 서버 정보를 추가해서 url 구성해야 함.
+// =>esurl={elasticsearch 서버 url}&index={elasticserch 검색 index}&size={검색계수}
+url: "/essearch?esurl=http://192.168.0.27:9200/&index=korquad-albert-small-kor-sbert-v1.1&size=5",
+```
+- 웹페이지 실행해서 url에  {서버 ip}/search 입력
+- 검색어(예:대한민국) 입력하면 검색 결과 출력됨.
+
+![image](https://user-images.githubusercontent.com/93692701/213374856-8669e92f-c5f9-4f7a-af90-5c4fe8ee8cb2.png)
+
+### 예제3
 
 |소스명|설명|기타|
 |:-----------------|:-----------------------------------------------------------|:---------------------|
