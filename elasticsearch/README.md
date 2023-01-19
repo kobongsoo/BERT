@@ -179,7 +179,8 @@ def handle_query():
 ```
 
 ### 예제1
-- Flask 서버와 Elastic 서버를 이용한 문장 임베딩 예시 
+- ES 서버와 별도로 Flask 서버를 돌리고, **CURL 혹은 [curl_test.ipynb](https://github.com/kobongsoo/BERT/blob/master/Flask/curl_test.ipynb) pythoh을 이용하여 검색**하는 예시
+- ES 서버에는 [es_summarize_vector](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/es_summarize_vector.ipynb)코드를 이용하여 문서요약문들이 미리 인덱싱 되어 있어야 한다.
 - [server.py](https://github.com/kobongsoo/BERT/blob/master/Flask/server.py) :문장 임베딩, 추출요약 후 임베딩, ElasticSearch와 연계한 검색을 수행하는 Server
 ```
 서버 실행
@@ -199,9 +200,37 @@ python server.py
 .168.0.27:9000'&index='korquad-klue-sbert-v1.0-idx1'&size=3
 ```
 
-- 테스트시 **doc(문서내용들) 요약한 후 요약 문장들의 평균값으로 임베딩**을 하는 방식이 가장 좋았음. 
+- 테스트시 **doc(문서내용들) 요약한 후 (요약 문장들의 평균값으로 임베딩 + 제목 임베딩)/2**을 하는 방식이 가장 좋았음. 
 - **단 문서 요약은 CPU 환경에서 테스트시 약 400 문서처리시 1시간 정도, 오래 걸리므로 GPU 환경도 고려해야 함**(korquad 1420 요약 처리.임베딩추출.ES 인덱싱까지 총 3.5H 걸림) 
 - 최종적으로는 **doc2vec 을 어떻게 할 것인가가 핵심**임(요약해서 평균, 모든 문장 평균, 타이틀만 이용 등...)
+
+### 예제2
+- ES 서버와 별도로 Flask 서버를 돌리고, **웹에서 Flask서버로 접속하여 ES 서버와 연동해서 검색**하는 예시임.
+- ES 서버에는 [es_summarize_vector](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/es_summarize_vector.ipynb)코드를 이용하여 문서요약문들이 미리 인덱싱 되어 있어야 한다.
+
+- [server.py](https://github.com/kobongsoo/BERT/blob/master/Flask/server.py) :문장 임베딩, 추출요약 후 임베딩, ElasticSearch와 연계한 검색을 수행하는 Server
+```
+서버 실행
+python server.py
+```
+![image](https://user-images.githubusercontent.com/93692701/213373591-5edb5005-cec7-4fe6-a8bd-6d9d21d8af1d.png)
+
+- 임베딩 모델, 추출요약모델(기본:bongsoo/albert-small-kor-sbert-v1.1), cross-encoder 모델(기본:ongsoo/albert-small-kor-cross-encoder-v1)등을 인자로 넘겨 실행할수 있음.
+```
+python server.py -host=0.0.0.0 -port=9999 -embedder={embedder 모델 경로} -summarizer={summarizer 모델 경로} -crossencoder={crossencoder 모델 경로}
+```
+
+웹에서 검색 실행 
+- [search.html](https://github.com/kobongsoo/BERT/blob/master/Flask/search.html)코드에서 서버ip와 es 인덱스, 검색 수 등을 아래처럼 변경해야 함.
+```
+// **엘라스틱서치 서버 정보를 추가해서 url 구성해야 함.
+// =>esurl={elasticsearch 서버 url}&index={elasticserch 검색 index}&size={검색계수}
+url: "/essearch?esurl=http://192.168.0.27:9200/&index=korquad-albert-small-kor-sbert-v1.1&size=5",
+```
+- 웹페이지 실행해서 url에  {서버 ip}/search 입력
+- 검색어(예:대한민국) 입력하면 검색 결과 출력됨.
+
+![image](https://user-images.githubusercontent.com/93692701/213374856-8669e92f-c5f9-4f7a-af90-5c4fe8ee8cb2.png)
 
 
 ## 기타
