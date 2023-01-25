@@ -220,14 +220,14 @@ python server.py
 python server.py -host=0.0.0.0 -port=9999 -embedder={embedder 모델 경로} -summarizer={summarizer 모델 경로} -crossencoder={crossencoder 모델 경로}
 ```
 
-웹에서 검색 실행 
+##### 웹에서 검색 실행 
 - [search.html](https://github.com/kobongsoo/BERT/blob/master/Flask/search.html)코드에서 서버ip와 es 인덱스, 검색 수 등을 아래처럼 변경해야 함.
 ```
 // **엘라스틱서치 서버 정보를 추가해서 url 구성해야 함.
 // =>esurl={elasticsearch 서버 url}&index={elasticserch 검색 index}&size={검색계수}
 url: "/essearch?esurl=http://192.168.0.27:9200/&index=korquad-albert-small-kor-sbert-v1.1&size=5",
 ```
-- 웹페이지 실행해서 url에  {서버 ip}/search 입력
+- 웹페이지 실행해서 url에  {서버 ip:9999}/search 입력
 - 검색어(예:대한민국) 입력하면 검색 결과 출력됨.
 
 ![image](https://user-images.githubusercontent.com/93692701/213374856-8669e92f-c5f9-4f7a-af90-5c4fe8ee8cb2.png)
