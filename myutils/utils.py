@@ -16,7 +16,7 @@ import warnings
 from filelock import FileLock
 #from transformers.utils import logging
 from tqdm.notebook import tqdm
-import gluonnlp as nlp                  # GluonNLP는 버트를 간단하게 로딩하는 인터페이스를 제공하는 API 임
+#import gluonnlp as nlp                  # GluonNLP는 버트를 간단하게 로딩하는 인터페이스를 제공하는 API 임
 
 from transformers import BertTokenizer
 from typing import Dict, List
@@ -89,7 +89,7 @@ def AddWPVocabSpecialToken(input_wpfpath:str, output_folder:str):
 #              k:[MASK], idx:4
 #              k:[PAD], idx:1
 #########################################################################################
-
+'''
 def SPVocabToWPVocab(input_fpath:str, output_fpath:str, first_special_token:list):
     
     # 입력 파일경로가 없으면 에러
@@ -127,7 +127,7 @@ def SPVocabToWPVocab(input_fpath:str, output_fpath:str, first_special_token:list
                 f.writelines(k + "\n")
         
     print("spvocap:'{}' -> wpvocab: '{}' change success!!".format(input_fpath, output_fpath))
-
+'''
 #########################################################################################    
 # mlogging 설정
 #########################################################################################

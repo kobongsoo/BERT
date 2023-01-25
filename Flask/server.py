@@ -247,7 +247,7 @@ def search_text():
     print(f'results:\n{results}\r\n')
     
     # 5. es 종료
-    es.transport.close()
+   # es.transport.close()
 	
     return jsonify({
         'count': count,
