@@ -206,7 +206,7 @@ python server.py
 
 ### 예제2
 - ES 서버와 별도로 Flask 서버를 돌리고, **웹에서 Flask서버로 접속하여 ES 서버와 연동해서 검색**하는 예시임.
-- ES 서버에는 [es_summarize_vector](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/es_summarize_vector.ipynb)코드를 이용하여 문서요약문들이 미리 인덱싱 되어 있어야 한다.
+- ES 서버에는 [es_summarize_vector](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/es_summarize_vector.ipynb) 혹은 [es_summarize_vector_ai_hub](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/es_summarize_vector_ai_hub.ipynb)코드를 이용하여 문서요약문들이 미리 인덱싱 되어 있어야 한다.
 
 - [server.py](https://github.com/kobongsoo/BERT/blob/master/Flask/server.py) :문장 임베딩, 추출요약 후 임베딩, ElasticSearch와 연계한 검색을 수행하는 Server
 ```
