@@ -8,11 +8,11 @@
       <div class="card-header">엘라스틱서치 검색예제</div>
       <div class="card-body text-dark">
         <h8 class="card-title">검색어를 입력하면 ES에서 코사인유사도 측정 후 가장 유사한 문장들을 보여줍니다.</h8>
-		<!--<input type="text" class="form-control" aria-describedby="basic-addon3" id="esindex" name="esindex", placeholder="엘라스틱서치 검색 index 입력"/>-->
+		<input type="text" class="form-control" aria-describedby="basic-addon3" id="esindex" name="esindex", placeholder="엘라스틱서치 검색 index 명칭 입력"/>
+		<input type="text" class="form-control" aria-describedby="basic-addon3" id="searchsize" name="searchsize" placeholder="검색계수 입력 (예: 5)"/>
   		<input type="text" class="form-control" aria-describedby="basic-addon3" id="texts" name="texts" onkeypress="if(event.keyCode==13) {api_call(); return false;}" placeholder="검색어를 입력하고, Enterkey를 누르세요"/>
         <p class="card-text">
-            <div class="alert alert-info" role="alert">
-				<p id="count" class="mb-0"></p>
+            <div class="alert alert-info" role="alert"> 				<p id="count" class="mb-0"></p>
 				<p></p>
                	<p id="result-search" class="mb-0"></p>
             </div>
@@ -25,16 +25,19 @@
 
 <script>
 function api_call() {
-    var texts = $("#texts").val();      // form에 업력한 검색어 가져옴
-	// var esindex = $("#esindex").val();
+	var esindex = $("#esindex").val();		 // form에 입력한 ES 검색 인덱스명 가져옴
+	var searchsize = $("#searchsize").val(); // form에 입력한 검색계수 가져옴
+    var texts = $("#texts").val();           // form에 업력한 검색어 가져옴
 
-	console.log(texts);	//검색어 콘솔에 뿌려봄
+	console.log(searchsize)   // 검색계수 콘솔에 뿌려봄 
+	console.log(texts);	      // 검색어 콘솔에 뿌려봄
 
     $.ajax({
 		//+=======================================================================================
 		// **엘라스틱서치 서버 정보를 추가해서 url 구성해야 함.
-	    // =>esurl={elasticsearch 서버 url}&index={elasticserch 검색 index}&size={검색계수}
-        url: "/essearch?esurl=http://192.168.0.27:9200/&index=korquad-albert-small-kor-sbert-v1.1&size=5",
+	    // =>esurl={elasticsearch 서버 url}&index={elasticserch 검색 index}
+        // url: "/essearch?esurl=http://192.168.0.27:9200/&index=aihub-ts1-albert-small-kor-sbert-v1.1-bwsg",
+		url: "/essearch?esurl=http://192.168.0.27:9200/",
         //+=======================================================================================
 		method: 'POST',
         contentType: 'application/json',
@@ -43,8 +46,9 @@ function api_call() {
 
 		// 전송할 데이터 구성(json 형식)
         data: JSON.stringify({
-		//'index':esindex,
-		'text':texts, // 검색어
+		'index': esindex,   // ES 검색 인덱스명
+		'size': searchsize, // 검색계수
+		'text':texts,       // 검색어
 		}),
 		
 		success: sucessHandler, // 성공 처리 함수 호출
@@ -68,7 +72,8 @@ function sucessHandler( data, textStatus, jQxhr )
 	// results 목록을 순서대로 읽어와서 json 문자열로 변환함.
 	for(var i=0;i<data.results.length;i++)
 	{
-		var result = "제목: "+data.results[i].title+"</br>"+"cross: "+data.results[i].cross_score+"</br>"+"es: "+data.results[i].es_score+"</br>"+"요약문:"+"</br>"+data.results[i].summarize+"</br></br>"
+		var count = i+1
+		var result = "("+count+") "+"제목: "+data.results[i].title+"</br>"+"cross: "+data.results[i].cross_score+"</br>"+"es: "+data.results[i].es_score+"</br>"+"요약문:"+"</br>"+data.results[i].summarize+"</br></br>"
 		//console.log("result:",result)
 
 		// jsvascript 값=>json 문자열로 변환 

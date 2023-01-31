@@ -137,9 +137,18 @@ def search_text():
     print(args)
     
     # 인자로 넘어온 arg에서 esurl 추출함
-    esurl = request.args.get('esurl', "http://localhost:9200/")   # es 서버 url
-    esindex = request.args.get('index', "indexname")              # es 안덱스명(예:korquad-albert-small-kor-sbert-v1)
-    essearchsize = int(request.args.get('size', 3))               # 검색 출력 계수(가장 유사한 몇개 까지 검색할지)
+    esurl = request.args.get('esurl', "http://localhost:9200/")    # es 서버 url (명칭, 기본값)
+    #esindex = request.args.get('index', "indexname")              # es 안덱스명(예:korquad-albert-small-kor-sbert-v1)
+    #essearchsize = int(request.args.get('size', 3))               # 검색 출력 계수(가장 유사한 몇개 까지 검색할지)
+    
+    # 넘어온 args 데이터에서 ES인덱스, 검색계수(size) 추출함.
+    esindexarg = args['index']
+    esindex = parse.unquote(esindexarg, 'utf-8')
+    if not esindex:
+        abort(make_response(jsonify(message="Request must have raw esindex name"), 400))
+        
+    essearchsize = int(args['size'])
+   
     print(f'esurl: {esurl}, esindex: {esindex}, essearchsize: {essearchsize}\r\n')
     
     # 검색어 : json으로 넘어온 데이터에서 texe 추출함
