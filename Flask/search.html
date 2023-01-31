@@ -10,9 +10,25 @@
         <h8 class="card-title">검색어를 입력하면 ES에서 코사인유사도 측정 후 가장 유사한 문장들을 보여줍니다.</h8>
 		<input type="text" class="form-control" aria-describedby="basic-addon3" id="esindex" name="esindex", placeholder="엘라스틱서치 검색 index 명칭 입력"/>
 		<input type="text" class="form-control" aria-describedby="basic-addon3" id="searchsize" name="searchsize" placeholder="검색계수 입력 (예: 5)"/>
+
+		<select id="bitext">
+			<option value="0">=[bi-encode]검색어와 비교할 문장 선택=</option>
+			<option value="1">제목</option>
+			<option value="2">요약문(평균)</option>
+			<option value="3">본문</option>
+		</select>
+
+		<select id="cetext">
+			<option value="0">=[cross-encode]검색어와 비교할 문장 선택=</option>
+			<option value="1">제목</option>
+			<option value="2">요약문</option>
+			<option value="3">제목+요약문</option>
+		</select>
+
   		<input type="text" class="form-control" aria-describedby="basic-addon3" id="texts" name="texts" onkeypress="if(event.keyCode==13) {api_call(); return false;}" placeholder="검색어를 입력하고, Enterkey를 누르세요"/>
         <p class="card-text">
-            <div class="alert alert-info" role="alert"> 				<p id="count" class="mb-0"></p>
+            <div class="alert alert-info" role="alert"> 				
+			<p id="count" class="mb-0"></p>
 				<p></p>
                	<p id="result-search" class="mb-0"></p>
             </div>
@@ -25,10 +41,22 @@
 
 <script>
 function api_call() {
-	var esindex = $("#esindex").val();		 // form에 입력한 ES 검색 인덱스명 가져옴
-	var searchsize = $("#searchsize").val(); // form에 입력한 검색계수 가져옴
-    var texts = $("#texts").val();           // form에 업력한 검색어 가져옴
 
+	var esindex = $("#esindex").val();			// form에 입력한 ES 검색 인덱스명 가져옴
+	var searchsize = $("#searchsize").val();	// form에 입력한 검색계수 가져옴
+
+	// bi-encoder 비교 문장 가져옴
+	var bitextdoc = document.getElementById('bitext');			
+	var bitext = bitextdoc.options[bitextdoc.selectedIndex].value;
+
+	// cross-encode 비교 문장 가져옴
+	var cetextdoc = document.getElementById('cetext');			
+	var cetext = cetextdoc.options[cetextdoc.selectedIndex].value;
+
+    var texts = $("#texts").val();				// form에 업력한 검색어 가져옴
+
+	console.log(bitext)		  // bi-encode 비교 문장 종류 뿌려봄
+	console.log(cetext)		  // cross-encode 비교 문장 종류 뿌려봄
 	console.log(searchsize)   // 검색계수 콘솔에 뿌려봄 
 	console.log(texts);	      // 검색어 콘솔에 뿌려봄
 
@@ -46,6 +74,8 @@ function api_call() {
 
 		// 전송할 데이터 구성(json 형식)
         data: JSON.stringify({
+		'bitext': bitext,   // bi-encode 비교 문장 종류(제목, 요약문, 본문)
+		'cetext': cetext,   // cross-encode 비교 문장 종류(제목, 요약문, 제목+요약문)
 		'index': esindex,   // ES 검색 인덱스명
 		'size': searchsize, // 검색계수
 		'text':texts,       // 검색어
@@ -87,9 +117,14 @@ function sucessHandler( data, textStatus, jQxhr )
 }
 
 // 에러시 처리 함수 
-function errorHandler( jqXhr, textStatus, errorThrown )
+function errorHandler( request, textStatus, errorThrown )
 {
-    $('#api_output').html( "There was an error" );
+    // 에러값 출력 : error: BAD REQUEST
+	// {{"message":"Request bitext < 1!!"}
+    $('#result-search').html( textStatus + " : " + errorThrown + "</br>" + request.responseText);
+
     console.log( errorThrown );
+	console.log( textStatus );
+	console.log(request.responseText)
 }
 </script>

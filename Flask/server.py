@@ -141,15 +141,29 @@ def search_text():
     #esindex = request.args.get('index', "indexname")              # es 안덱스명(예:korquad-albert-small-kor-sbert-v1)
     #essearchsize = int(request.args.get('size', 3))               # 검색 출력 계수(가장 유사한 몇개 까지 검색할지)
     
-    # 넘어온 args 데이터에서 ES인덱스, 검색계수(size) 추출함.
+    
+    # 0. 넘어온 args 데이터에서 bi-encode 비교문장(1=제목, 2=요약문, 3=본문), cross-encode 비교문장(1=제목, 2=요약문, 3=제목+요약문), ES인덱스, 검색계수(size) 추출함.
+    
+     # bi-encode 비교문장(1=제목, 2=요약문, 3=본문)
+    bitext = int(args['bitext'])
+    if bitext < 1:
+        abort(make_response(jsonify(message="Request bitext < 1!!"), 400))
+        
+    # cross-encode비교문장(1=제목, 2=요약문, 3=제목+요약문)
+    cetext = int(args['cetext'])
+    if cetext < 1:
+        abort(make_response(jsonify(message="Request cstext < 1!!"), 400))
+     
+    # ES 인덱스명
     esindexarg = args['index']
     esindex = parse.unquote(esindexarg, 'utf-8')
     if not esindex:
         abort(make_response(jsonify(message="Request must have raw esindex name"), 400))
-        
+    
+    # 검색계수
     essearchsize = int(args['size'])
    
-    print(f'esurl: {esurl}, esindex: {esindex}, essearchsize: {essearchsize}\r\n')
+    print(f'cetext: {cetext}, esurl: {esurl}, esindex: {esindex}, essearchsize: {essearchsize}\r\n')
     
     # 검색어 : json으로 넘어온 데이터에서 texe 추출함
     text = args['text']
@@ -170,13 +184,20 @@ def search_text():
     
     #print(f'*vector:\n{query_vector}\r\n')
     
-     #3.쿼리 구성
+     #3.쿼리 구성 (뒤에 1.0 은 코사인유사도 측정된 값 +1 해줌. 안그러면 es 에러 발생함)
+    if bitext == 1: # 1=제목 벡터
+        cosine_script = "cosineSimilarity(params.query_vector, doc['title_vector'])+1"
+    elif bitext == 2: # 2=요약문 벡터
+        cosine_script = "cosineSimilarity(params.query_vector, doc['summarize_vector'])+1"
+    elif bitext == 3: # 3=본문 벡터
+        cosine_script = "cosineSimilarity(params.query_vector, doc['paragraph_vector'])+1"
+      
     script_query = {
         "script_score":{
             "query":{
                 "match_all": {}},
             "script":{
-                "source": "cosineSimilarity(params.query_vector, doc['summarize_vector']) + 1.0",  # 뒤에 1.0 은 코사인유사도 측정된 값 + 1.0을 더해준 출력이 나옴
+                "source": cosine_script,  
                 "params": {"query_vector": query_vector}
             }
         }
@@ -200,9 +221,10 @@ def search_text():
     
     print(f'response:\n{response}\r\n')
        
-    # 6. response 데이터 파싱 후 리스트에 담아둠.
+    # 5. response 데이터 파싱 후 리스트에 담아둠.
     summarizes = []
     titles = [] 
+    titles_summarizes = [] # titles와 summzrizes 합친 문장
     es_scores = []
     for hit in response["hits"]["hits"]: 
         '''
@@ -218,46 +240,58 @@ def search_text():
         # 리스트에 저장해둠
         titles.append(hit["_source"]["title"])
         summarizes.append(hit["_source"]["summarize"])
+        titles_summarizes.append(hit["_source"]["title"]+hit["_source"]["summarize"]) # titles와 summzrizes 합친 문장
         es_scores.append(hit["_score"])
-        
-    # 7. crossencoder 처리
+         
+    # 6. crossencoder 처리
     start_cross_time = time.time()
     
     # crossencoder로 스코어 구하기 위해 [query, title] 쌍으로 문장을 만든다.
-    sentence_combinations = [[query, title] for title in titles if title != '']
-    print(f'sentence_combinations:\n{sentence_combinations}\r\n')
+    if cetext == 1: # 제목 
+        sentence_combinations = [[query, title] for title in titles if title != '']   # title 만으로 crossencoder 스코어 구함
+    elif cetext == 2: # 요약문
+        sentence_combinations = [[query, summarize] for summarize in summarizes if summarize != '']   # 요약문문 만으로 crossencoder 스코어 구함
+    elif cetext == 3: # 제목+요약문
+        sentence_combinations = [[query, ts] for ts in titles_summarizes if ts != '']  # title+요약문 한것으로 crossencoder 스코어 구함
     
-    # crossencoder 실행 : 뒤에 score+1 해줌 = es 스코어와 맞추기위해
-    cross_scores = crossencoder.predict(sentence_combinations)+1 
+    #print(f'sentence_combinations:\n{sentence_combinations}\r\n')
     
+    # crossencoder 실행 : 뒤에 score +1 해줌 = es 스코어와 맞추기위해
+    cross_scores = crossencoder.predict(sentence_combinations)+1
+    #round(cross_scores, 4)
+
     end_cross_time = time.time() - start_cross_time
     print("*cross time: {:.2f} ms\r\n".format(end_cross_time * 1000)) 
     
-    # 8. return 데이터 구성
+    # 7. ES return 데이터 구성
     # 내림 차순으로 정렬
     dec_cross_scores = reversed(np.argsort(cross_scores))
     #print(type(es_scores[1]))
     #print(type(cross_scores[1]))  
     #print(type(cross_scores[1].item())) 
     
-    # 데이터 구성
+    #print(round(es_scores[1], 4))  # round 소숫점 4자리까지 출력해봄
+    #print(round(cross_scores[1], 4))
+
+    # 8. 검색 결과 데이터 구성=>JSON 형식으로 만듬
     results = []
     count = 0
     for idx in dec_cross_scores:
         result = {
             'title':titles[idx],           # 제목
             'summarize':summarizes[idx],   # 요약문
-            'es_score': es_scores[idx],    # es 코사인스코어      
-            'cross_score':cross_scores[idx].item(), # cross인코더 스코어: numpy.float 를 그대로 보내면 json 변환시 오류남. 따라서 numpy.float64->float형으로 변환(.item() 해주면됨)
+            'es_score':round(es_scores[idx], 4),     # es 코사인스코어  (소숫점 4자리까지만 출력)    
+            'cross_score':round(cross_scores[idx].item(), 4), # cross인코더 스코어: numpy.float 를 그대로 보내면 json 변환시 오류남. 따라서 numpy.float64->float형 변환(.item() 하면됨)
         }
         results.append(result)
         count+=1
     
     print(f'results:\n{results}\r\n')
     
-    # 5. es 종료
-   # es.transport.close()
-	
+    # 9. es 종료
+    es.transport.close()
+
+    # 10. 검색 결과 JSON 형식으로 return
     return jsonify({
         'count': count,
         'results': results
@@ -282,7 +316,7 @@ if __name__ == '__main__':
     #=====================================================================
     # 문장 임베딩 모델 정의
     print("==========================================================================")
-    print(f'*embedder path:{args.embedder}')    
+    print(f'*embedder model:{args.embedder}')    
     embedder = SentenceTransformer(args.embedder, device=device)
     print(f'embedder:{embedder}')
     print("==========================================================================\n")
@@ -291,7 +325,7 @@ if __name__ == '__main__':
     #=====================================================================   
     # 추출 요약 모델 정의
     print("==========================================================================")
-    print(f'*summarizer path:{args.summarizer}') 
+    print(f'*summarizer model:{args.summarizer}') 
     summarizer = SBertSummarizer(args.summarizer)
     print(f'summairzer:{summarizer}')
     print("==========================================================================\n")
@@ -300,7 +334,7 @@ if __name__ == '__main__':
     #=====================================================================
     # crossencoder 모델 설정
     print("==========================================================================")
-    print(f'*crossencoder path:{args.crossencoder}')
+    print(f'*crossencoder model:{args.crossencoder}')
     crossencoder = CrossEncoder(args.crossencoder, device=device)
     print(f'crossencoder:{crossencoder}')
     print("==========================================================================\n")
