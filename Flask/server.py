@@ -128,7 +128,7 @@ def summarize_text():
 #==================================================================================================================================
 @app.route('/search')
 def index():
-	return render_template('search.html')
+    return render_template('search.html')
 
 @app.route('/essearch', methods=['POST'])
 def search_text():
@@ -141,10 +141,9 @@ def search_text():
     #esindex = request.args.get('index', "indexname")              # es 안덱스명(예:korquad-albert-small-kor-sbert-v1)
     #essearchsize = int(request.args.get('size', 3))               # 검색 출력 계수(가장 유사한 몇개 까지 검색할지)
     
-    
     # 0. 넘어온 args 데이터에서 bi-encode 비교문장(1=제목, 2=요약문, 3=본문), cross-encode 비교문장(1=제목, 2=요약문, 3=제목+요약문), ES인덱스, 검색계수(size) 추출함.
     
-     # bi-encode 비교문장(1=제목, 2=요약문, 3=본문)
+    # bi-encode 비교문장(1=제목, 2=요약문, 3=본문)
     bitext = int(args['bitext'])
     if bitext < 1:
         abort(make_response(jsonify(message="Request bitext < 1!!"), 400))
@@ -161,8 +160,9 @@ def search_text():
         abort(make_response(jsonify(message="Request must have raw esindex name"), 400))
     
     # 검색계수
-    essearchsize = int(args['size'])
-   
+    searchsize = int(args['size'])
+    essearchsize = searchsize * 3 # es검색은 실제 겁색 size에 3배 정도 러프하게 일단 검색하도록 *3 해줌.
+    
     print(f'cetext: {cetext}, esurl: {esurl}, esindex: {esindex}, essearchsize: {essearchsize}\r\n')
     
     # 검색어 : json으로 넘어온 데이터에서 texe 추출함
@@ -179,8 +179,8 @@ def search_text():
     # 2. 검색 문장 embedding 후 벡터값 
     start_embedding_time = time.time()
     query_vector = embed_text([query])[0]
-    end_embedding_time = time.time() - start_embedding_time
-    print("*embedding time: {:.2f} ms\r\n".format(end_embedding_time * 1000)) 
+    end_embedding_time = (time.time() - start_embedding_time) * 1000
+    print("*embedding time: {:.2f} ms\r\n".format(end_embedding_time)) 
     
     #print(f'*vector:\n{query_vector}\r\n')
     
@@ -208,6 +208,7 @@ def search_text():
     
     # 4. 실제 ES로 검색 쿼리 날리고 응답 받음
     start_search_time = time.time()
+   
     response = es.search(
         index=esindex,
         body={
@@ -216,8 +217,8 @@ def search_text():
             "_source":{"includes": ["title", "summarize"]}
         }
     )
-    end_search_time = time.time() - start_search_time
-    print("*search time: {:.2f} ms\r\n".format(end_search_time * 1000)) 
+    end_search_time = (time.time() - start_search_time) * 1000
+    print("*search time: {:.2f} ms\r\n".format(end_search_time)) 
     
     print(f'response:\n{response}\r\n')
        
@@ -241,7 +242,7 @@ def search_text():
         titles.append(hit["_source"]["title"])
         summarizes.append(hit["_source"]["summarize"])
         titles_summarizes.append(hit["_source"]["title"]+hit["_source"]["summarize"]) # titles와 summzrizes 합친 문장
-        es_scores.append(hit["_score"])
+        es_scores.append(hit["_score"]) # elasticsearch 코사인스코어(+1된값임)
          
     # 6. crossencoder 처리
     start_cross_time = time.time()
@@ -260,11 +261,10 @@ def search_text():
     cross_scores = crossencoder.predict(sentence_combinations)+1
     #round(cross_scores, 4)
 
-    end_cross_time = time.time() - start_cross_time
-    print("*cross time: {:.2f} ms\r\n".format(end_cross_time * 1000)) 
+    end_cross_time = (time.time() - start_cross_time) * 1000
+    print("*cross time: {:.2f} ms\r\n".format(end_cross_time)) 
     
-    # 7. ES return 데이터 구성
-    # 내림 차순으로 정렬
+    # crossencoder 결과 score를 내림 차순으로 정렬 => 1.9, 1.8, 1.7, 1.6, 1.5
     dec_cross_scores = reversed(np.argsort(cross_scores))
     #print(type(es_scores[1]))
     #print(type(cross_scores[1]))  
@@ -274,9 +274,15 @@ def search_text():
     #print(round(cross_scores[1], 4))
 
     # 8. 검색 결과 데이터 구성=>JSON 형식으로 만듬
+    # - 검색계수만큼 cross 스코어가 높은 검색 데이터만 검색 결과로 response할 json 데이터로 만듬.
     results = []
     count = 0
     for idx in dec_cross_scores:
+        
+        # 검색 계수보다 크거나 같으면 return
+        if count >= searchsize:
+            break
+        
         result = {
             'title':titles[idx],           # 제목
             'summarize':summarizes[idx],   # 요약문
@@ -293,8 +299,11 @@ def search_text():
 
     # 10. 검색 결과 JSON 형식으로 return
     return jsonify({
-        'count': count,
-        'results': results
+        'count': count,    # 검색 계수
+        'qembedtime' : round(end_embedding_time, 2), # 검색 쿼리문 임베딩 벡터 생성 시간(ms)
+        'essearchtime' : round(end_search_time, 2),  # es-검색 시간(ms)
+        'crosstime' : round(end_cross_time, 2),      # cross-encoder 시간(ms)
+        'results': results                           # 검색 결과 data(list임)  
     })
     #return response
 

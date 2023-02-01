@@ -28,7 +28,7 @@
   		<input type="text" class="form-control" aria-describedby="basic-addon3" id="texts" name="texts" onkeypress="if(event.keyCode==13) {api_call(); return false;}" placeholder="검색어를 입력하고, Enterkey를 누르세요"/>
         <p class="card-text">
             <div class="alert alert-info" role="alert"> 				
-			<p id="count" class="mb-0"></p>
+				<p id="count" class="mb-0"></p>
 				<p></p>
                	<p id="result-search" class="mb-0"></p>
             </div>
@@ -84,7 +84,7 @@ function api_call() {
 		success: sucessHandler, // 성공 처리 함수 호출
 		error: errorHandler,    // 에러 처리 함수 호출 
 
-        timeout: 3000
+        timeout: 30000          // 타임아웃시간: 30초로 늘림
     });
 }
 
@@ -95,7 +95,9 @@ function sucessHandler( data, textStatus, jQxhr )
 	console.log("data:", data );					
 	console.log("len:", data.results.length)
 	
-	$('#count').html("*count: "+data.count);  // 검색 계수 출력
+	// 검색수, 쿼리벡터생성시간(임베딩시간), es 검색시간, cross 인코딩처리시간 등을 표기해줌.
+	var info_result = "*검색수: "+data.count + "</br>" +"*쿼리벡터생성시간(ms): " + data.qembedtime + "</br>" +"*ES검색시간(ms): " + data.essearchtime + "</br>" +"*Cross인코딩시간(ms): " + data.crosstime
+	$('#count').html(info_result);  // 검색 계수 출력
 
 	var str_result = ''; // str 변수 초기화
 
@@ -119,9 +121,9 @@ function sucessHandler( data, textStatus, jQxhr )
 // 에러시 처리 함수 
 function errorHandler( request, textStatus, errorThrown )
 {
-    // 에러값 출력 : error: BAD REQUEST
-	// {{"message":"Request bitext < 1!!"}
-    $('#result-search').html( textStatus + " : " + errorThrown + "</br>" + request.responseText);
+	var error = textStatus + " : " + errorThrown + "</br>" + request.responseText
+	//var str_error = JSON.stringify(error)
+    $('#result-search').html(error);
 
     console.log( errorThrown );
 	console.log( textStatus );
