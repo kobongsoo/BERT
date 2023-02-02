@@ -74,6 +74,15 @@ distance, idx = index.search(np.array([embeddings[1]]), k=10)
 print(distance)
 print(idx)
 ```
+- 저장 및 불러오기
+```
+# 저장
+faiss.write_index(index, "test.index")
+```
+```
+# 불러오기
+index2 = faiss.read_index("test.index")
+```
 ### 4. 기타
 - [embedding_viewer.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/embedding_viewer.ipynb): 단어 embedding들을 3D 화면으로 보여주는 예제
 1. 단어들은 meta.tsv 파일로 저장, 임베딩값들은 vecs.tsv 파일로 저장(**이때 임베딩 각 값들은 탭으로 띄어야 함**)
