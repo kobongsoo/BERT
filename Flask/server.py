@@ -265,7 +265,7 @@ def search_text():
     print("*cross time: {:.2f} ms\r\n".format(end_cross_time)) 
     
     # crossencoder 결과 score를 내림 차순으로 정렬 => 1.9, 1.8, 1.7, 1.6, 1.5
-    dec_cross_scores = reversed(np.argsort(cross_scores))
+    dec_cross_idx = reversed(np.argsort(cross_scores))
     #print(type(es_scores[1]))
     #print(type(cross_scores[1]))  
     #print(type(cross_scores[1].item())) 
@@ -277,7 +277,7 @@ def search_text():
     # - 검색계수만큼 cross 스코어가 높은 검색 데이터만 검색 결과로 response할 json 데이터로 만듬.
     results = []
     count = 0
-    for idx in dec_cross_scores:
+    for idx in dec_cross_idx:
         
         # 검색 계수보다 크거나 같으면 return
         if count >= searchsize:
@@ -317,7 +317,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('-host', dest='host', help='', default='0.0.0.0')  # Flask 서버 바인딩 host
     parser.add_argument('-port', dest='port', help='', default=9999)       # Flask 서버 바인딩 port
-    parser.add_argument('-embedder', dest='embedder', help='embedder model full path', default='bongsoo/albert-small-kor-sbert-v1.1') # 임베딩 모델 경로
+    parser.add_argument('-embedder', dest='embedder', help='embedder model full path', default='bongsoo/kpf-sbert-v1.1') # 임베딩 모델 경로
+    parser.add_argument('-pooling', dest='pooling', help='pooling_mode(mean,cls,max)', default='mean') # 임베딩 pooling_mode
     parser.add_argument('-summarizer', dest='summarizer', help='summarizer model full path', default='bongsoo/albert-small-kor-sbert-v1.1') # 추출 요약 모델 경로
     parser.add_argument('-crossencoder', dest='crossencoder', help='crossencoder model full path', default='bongsoo/albert-small-kor-cross-encoder-v1') # crossencoder 모델 경로
     
@@ -325,8 +326,18 @@ if __name__ == '__main__':
     #=====================================================================
     # 문장 임베딩 모델 정의
     print("==========================================================================")
-    print(f'*embedder model:{args.embedder}')    
-    embedder = SentenceTransformer(args.embedder, device=device)
+    # 임베딩 벡터 폴링 모드 선택 (*아래값중 문자열로 입력함, 기본=mean)
+    # mean=단어 평균, max=최대값, cls=문장, 
+    #['mean', 'max', 'cls', 'weightedmean', 'lasttoken']
+    pooling_mode = args.pooling
+    print(f'*pooling_mode:{pooling_mode}')  
+
+    print(f'*embedder model:{args.embedder}')  
+    #embedder = SentenceTransformer(args.embedder, device=device)
+    word_embedding_model = models.Transformer(args.embedder, max_seq_length=256, do_lower_case=True, tokenizer_name_or_path=args.embedder)
+    pooling_model = models.Pooling(word_embedding_model.get_word_embedding_dimension(), pooling_mode=pooling_mode)   
+    embedder = SentenceTransformer(modules=[word_embedding_model, pooling_model])
+
     print(f'embedder:{embedder}')
     print("==========================================================================\n")
     #=====================================================================
@@ -344,7 +355,7 @@ if __name__ == '__main__':
     # crossencoder 모델 설정
     print("==========================================================================")
     print(f'*crossencoder model:{args.crossencoder}')
-    crossencoder = CrossEncoder(args.crossencoder, device=device)
+    crossencoder = CrossEncoder(args.crossencoder, max_length=512, device=device)
     print(f'crossencoder:{crossencoder}')
     print("==========================================================================\n")
     #=====================================================================
