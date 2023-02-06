@@ -16,6 +16,119 @@ from .utils import mlogging
 from tqdm.notebook import tqdm
 from typing import Dict, List, Optional
 
+#==================================================================================================
+# MRR(Mean Reciprocal Rank) 함수
+# => IN : ground_truths - 정답 contextid 1차원 리스트(예: [10001,10002, 10003, 10004,...])
+#         predictions - 예측값 contextid 2차원 리스트(예: [[10003,10004,...],[10010, 10007,...],[],[],...]
+# => OUT : 각 쿼리에 대한 ranks 값 리스트(0~1범위), 전체 평균 쿼리 ranks 값(MRR) 리턴함
+#==================================================================================================
+def mean_reciprocal_rank(ground_truths, predictions):
+    reciprocal_ranks = []
+    
+    for gt, prediction in zip(ground_truths, predictions):
+        rank = 1
+        bsearch=False
+        for p in prediction:
+            #print(f'pred:{p}-gt:{gt}')
+            #if p in gt:
+            if p == gt:
+                reciprocal_ranks.append(1/rank)
+                bsearch=True
+                #print(f'gt:{gt}=>{1/rank}')
+                break
+            rank += 1
+            
+        if bsearch==False:
+            reciprocal_ranks.append(0)
+            #print(f'gt:{gt}=>0')
+       
+    # 각 쿼리에 대한 ranks 값(0~1범위), 전체 평균 쿼리 ranks 값(MRR) 리턴함
+    return reciprocal_ranks, sum(reciprocal_ranks) / len(reciprocal_ranks)
+#==================================================================================================
+
+#==================================================================================================================
+# AI_HUB-뉴스기사 기계독해 데이터-2.Validataion-라벨링데이터-VL_text_entailment.JSON 파일 로딩 하여, 각 리스트들을 출력하는 함수
+# => IN : VL_text_entailment.JSON 경로
+# => OUT : contexts(문장 리스트), questions(질의리스트), answers(답변리스트), 
+#          contextid(문장 id 리스트 : 10001 부터시작), pcontextid(질의와 연관된 문장 id 리스트: 10001부터 시작)
+#==================================================================================================================
+def read_aihub_qua_json(filepath):
+    
+    context_list = []
+    question_list = []
+    qcontextid_list = []
+    answer_list = []
+    contextid_list = []
+    
+    # KorQuAD_v1.0_train.json 파일을 불러옴
+    json_data = json.load(open(filepath, "r", encoding="utf-8"))["data"]
+
+    # KorQuAD_v1.0 포멧에 맞게 파싱하여, context, question, answer 목록들을 구함.
+    context_id = 10000
+    for entry in json_data:
+        for paragraph in entry["paragraphs"]:
+            context_text = paragraph["context"]
+                
+            context_id += 1
+            context_list.append(context_text)
+            contextid_list.append(context_id)
+                
+            for qa in paragraph["qas"]:
+                question_text = qa["question"]
+                answer_text = qa["answers"]['text']
+                     
+                # question, context, answer, startposition 등을 설정함
+                if question_text and answer_text and context_text:
+                    question_list.append(question_text)
+                    answer_list.append(answer_text)
+                    qcontextid_list.append(context_id)
+                            
+    return context_list, question_list, answer_list, contextid_list, qcontextid_list
+#==================================================================================================================
+
+#==================================================================================================================
+# KorQuAD_v1.0_dev.json 파일 로딩 하여, 각 리스트들을 출력하는 함수
+# => IN : KorQuAD_v1.0_dev.json 경로
+# => OUT : contexts(문장 리스트), questions(질의리스트), answers(답변리스트), 
+#          contextid(문장 id 리스트 : 10001 부터시작), pcontextid(질의와 연관된 문장 id 리스트: 10001부터 시작)
+#==================================================================================================================
+def read_korquad_v1_json(filepath):
+    
+    context_list = []
+    question_list = []
+    qcontextid_list = []
+    answer_list = []
+    contextid_list = []
+    
+    # KorQuAD_v1.0_train.json 파일을 불러옴
+    json_data = json.load(open(filepath, "r", encoding="utf-8"))["data"]
+
+    # KorQuAD_v1.0 포멧에 맞게 파싱하여, context, question, answer 목록들을 구함.
+    context_id = 10000
+    for entry in json_data:
+            for paragraph in entry["paragraphs"]:
+                context_text = paragraph["context"]
+                context_id += 1
+                context_list.append(context_text)
+                contextid_list.append(context_id)
+                
+                for qa in paragraph["qas"]:
+                    question_text = qa["question"]
+                    
+                    for answer in qa["answers"]:
+                        answer_text = answer["text"]
+                        start_position_character = answer["answer_start"]
+
+                        # question, context, answer, startposition 등을 설정함
+                        if question_text and answer_text and context_text and start_position_character:
+                            question_list.append(question_text)
+                            answer_list.append(answer_text)
+                            qcontextid_list.append(context_id)
+                            
+    return context_list, question_list, answer_list, contextid_list, qcontextid_list
+#==================================================================================================================
+
+
 # 모델 저장 
 def SaveBERTModel(model, tokenizer, OUTPATH, epochs, lr, batch_size):
     
