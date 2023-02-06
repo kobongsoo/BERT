@@ -83,7 +83,24 @@ faiss.write_index(index, "test.index")
 # 불러오기
 index2 = faiss.read_index("test.index")
 ```
-### 4. 기타
+### 4. 검색 모델 측정
+- 검색 모델 성능을 측정하는 방식에는 word2vec 이용할때는 TF-IDF, **BM25(엘라스틱서치)** 등이 있다.
+```
+# bm25 pip 설치
+pip install rank_bm25
+```
+
+- 문장 임베딩을 이용할때 **MRR(Mean Reciprocal Rank)**, MAP, MDCG 방식등의 있다.
+![image](https://user-images.githubusercontent.com/93692701/216910548-4d55e6ca-5fdc-4ee4-b92f-89390d71b668.png)
+
+|소스명|설명|기타|
+|:-----------------|:-----------------------------------------------------------|:---------------------|
+|[bm25-test](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/bm25-test.ipynb)|BM25 샘플 예제||
+|[mrr-test](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/mrr-test.ipynb)|MRR 샘플 예제||
+|[sbert-Faiss-MRR-korquad](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/sbert-Faiss-MRR-korquad.ipynb)|korquad-V1.0 말뭉치와 FAISS를 이용한 MRR 및 BM25 측정 예제|**SBERT와 Cross-encoder 이용**, 말뭉치는 data 폴더에 있음|
+|[sbert-Faiss-MRR-test](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/sbert-Faiss-MRR-test.ipynb)|aihub에 QuA 말뭉치와 FAISS를 이용한 MRR 및 BM25 측정 예제|**SBERT와 Cross-encoder 이용**, 말뭉치는 data 폴더에 있음|
+
+###  기타
 - [embedding_viewer.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/embedding_viewer.ipynb): 단어 embedding들을 3D 화면으로 보여주는 예제
 1. 단어들은 meta.tsv 파일로 저장, 임베딩값들은 vecs.tsv 파일로 저장(**이때 임베딩 각 값들은 탭으로 띄어야 함**)
 2. 이후 https://projector.tensorflow.org 접속하여, [load] 버튼 클릭->[Choose file] 버튼 클릭하여, vecs.tsv, meta.tsv 파일 선택 하면 완료
