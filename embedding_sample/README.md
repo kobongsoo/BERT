@@ -91,7 +91,6 @@ pip install rank_bm25
 ```
 
 - 문장 임베딩을 이용할때 **MRR(Mean Reciprocal Rank)**, MAP, MDCG 방식등의 있다.
-![image](https://user-images.githubusercontent.com/93692701/216910548-4d55e6ca-5fdc-4ee4-b92f-89390d71b668.png)
 
 |소스명|설명|기타|
 |:-----------------|:-----------------------------------------------------------|:---------------------|
@@ -99,6 +98,15 @@ pip install rank_bm25
 |[mrr-test](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/mrr-test.ipynb)|MRR 샘플 예제||
 |[sbert-Faiss-MRR-korquad](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/sbert-Faiss-MRR-korquad.ipynb)|korquad-V1.0 말뭉치와 FAISS를 이용한 MRR 및 BM25 측정 예제|**SBERT와 Cross-encoder 이용**, 말뭉치는 data 폴더에 있음|
 |[sbert-Faiss-MRR-test](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/sbert-Faiss-MRR-test.ipynb)|aihub에 QuA 말뭉치와 FAISS를 이용한 MRR 및 BM25 측정 예제|**SBERT와 Cross-encoder 이용**, 말뭉치는 data 폴더에 있음|
+
+![image](https://user-images.githubusercontent.com/93692701/216910548-4d55e6ca-5fdc-4ee4-b92f-89390d71b668.png)
+
+1. 만약 당신이 우선순위(rank)가 없는 IR(정보검색: Information Retrieval) 을 사용한다면 정밀도와 재현율을 같이 사용해보도록 하자. IR에서 선정해준 컨텐츠가 얼마나 관련이 있는지, 관련성 있는 컨텐츠를 놓치지 않고 있는지 평가해줄 것이다.
+2. 만약 당신이 추천 시스템과 같이 우선순위가 중요한 IR을 사용한다면 MRR, MAP, NDCG를 고려해보자.
+3. 사용자가 잘 알만한 컨텐츠를 추천하고 추천하는 첫 번째 관련 컨텐츠가 중요하다면 MRR을 사용해보자.
+4. 추천 컨텐츠의 관련도를 이분법으로 판단할 수 있고, 추천 컨텐츠의 노출 위치가 중요하다면 MAP을 사용해보자.
+5. 추천 컨텐츠의 관련도를 여러 가지 값으로 표현할 수 있고, 관련도에 따른 가중치 조정을 하고 싶다면 NDCG을 사용해보자.
+</br> 출처 : https://lamttic.github.io/2020/03/20/01.html
 
 ###  기타
 - [embedding_viewer.ipynb](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/embedding_viewer.ipynb): 단어 embedding들을 3D 화면으로 보여주는 예제
