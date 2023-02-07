@@ -60,8 +60,15 @@ hits = util.semantic_search(query_embedding, corpus_embedding, score_function=ut
 ```
 - instance index 생성
 ```
+# Cosine Similarity 사용인 경우 IndexFlatIP 사용
 import faiss
-index = faiss.IndexFlatL2(embeddings.shape[1])
+index = faiss.IndexFlatIP(embeddings.shape[1]) # 768 차원 설정
+aiss.normalize_L2(embeddings) # vector를 add하기 전에 **normalize_L2** 해줘야 함
+```
+```
+# Euclidean Distance 사용인 경우 IndexFlatL2 사용
+import faiss
+index = faiss.IndexFlatL2(embeddings.shape[1]) # 768 차원 설정
 ```
 - id를 매핑
 ```
