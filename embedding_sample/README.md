@@ -76,9 +76,9 @@ index = faiss.IndexIDMap(index)
 index.add_with_ids(embeddings, df.번호.values)
 ```
 - 유사도 비교
-</br> Cosine Similarity 사용을 위해 **IndexFlatIP 로 인덱스 만든 경우에는 쿼리문 벡터도 평활화 처리(normalize_L2)**해줘야함
+- Cosine Similarity 사용을 위해 **IndexFlatIP 로 인덱스 만든 경우에는 쿼리문 벡터도 평활화 처리(normalize_L2)** 해줘야함
 ```
-Faiss.normalize_L2(embeddings) # **Cosine Similarity 사용인 경우에만 
+Faiss.normalize_L2(embeddings) # **Cosine Similarity 사용인 경우에만 벡터 평활화 처리(normalize_L2) 함
 
 # Cosine Similarity 인 경우에는 distance가 MAX인게 가장 유사한 벡터임.(distance가 max 순으로 출력됨=[0.9, 0.7, 0.6])
 # Euclidean Distance 사용인 경우 경우에는 distance가 MIN인게 가장 유사한 벡터임(distance가 min 순으로 출력됨=[0.6, 0.7, 0.9])
