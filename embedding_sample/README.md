@@ -108,8 +108,8 @@ pip install rank_bm25
 |:-----------------|:-----------------------------------------------------------|:---------------------|
 |[bm25-test](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/bm25-test.ipynb)|BM25 샘플 예제||
 |[mrr-test](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/mrr-test.ipynb)|MRR 샘플 예제||
-|[sbert-Faiss-MRR-korquad](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/sbert-Faiss-MRR-korquad.ipynb)|korquad-V1.0 말뭉치와 FAISS를 이용한 MRR 및 BM25 측정 예제|**SBERT와 Cross-encoder 이용**, 말뭉치는 data 폴더에 있음|
-|[sbert-Faiss-MRR-test](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/sbert-Faiss-MRR-test.ipynb)|aihub에 QuA 말뭉치와 FAISS를 이용한 MRR 및 BM25 측정 예제|**SBERT와 Cross-encoder 이용**, 말뭉치는 data 폴더에 있음|
+|[sbert-Faiss-MRR-embdding](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/sbert-Faiss-MRR-embdding-test.ipynb)|korquad-V1.0 및 aihub에 QuA 말뭉치와 Faiss 이용한 MRR 및 BM25 측정 예제|**SBERT와 Cross-encoder 이용**, 말뭉치는 data 폴더에 있음|
+|[sbert-Faiss-MRR-vocab-embedding](https://github.com/kobongsoo/BERT/blob/master/embedding_sample/faiss/sbert-Faiss-MRR-vocab-embedding-test.ipynb)|문서에 여러문장들의 단어들에 대해 임베딩 후 Faiss 인덱스를 만들어서 단어별 비교해 검색하는 예시|**SBERT이용. Colbert 검색 방식과 동일. 엘라스틱서치에 적용 어려움**, 말뭉치는 data 폴더에 있음|
 
 ![image](https://user-images.githubusercontent.com/93692701/216910548-4d55e6ca-5fdc-4ee4-b92f-89390d71b668.png)
 
