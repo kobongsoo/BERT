@@ -79,9 +79,6 @@ index.add(embeddings)
 index = faiss.IndexIDMap(index)
 index.add_with_ids(embeddings, df.번호.values)
 ```
-```
-
-```
 - 유사도 비교
 - Cosine Similarity 사용을 위해 **IndexFlatIP 로 인덱스 만든 경우에는 쿼리문 벡터도 평활화 처리(normalize_L2)** 해줘야함
 ```
