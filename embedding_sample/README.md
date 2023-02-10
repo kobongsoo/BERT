@@ -70,10 +70,17 @@ Faiss.normalize_L2(embeddings) # vector를 add하기 전에 **normalize_L2** 해
 import faiss
 index = faiss.IndexFlatL2(embeddings.shape[1]) # 768 차원 설정
 ```
-- id를 매핑
+- embedding 추가
+```
+index.add(embeddings)
+```
+- id를 매핑도 하면서 embedding 추가
 ```
 index = faiss.IndexIDMap(index)
 index.add_with_ids(embeddings, df.번호.values)
+```
+```
+
 ```
 - 유사도 비교
 - Cosine Similarity 사용을 위해 **IndexFlatIP 로 인덱스 만든 경우에는 쿼리문 벡터도 평활화 처리(normalize_L2)** 해줘야함
@@ -95,6 +102,21 @@ faiss.write_index(index, "test.index")
 # 불러오기
 index2 = faiss.read_index("test.index")
 ```
+
+- IVF with FAISS
+</br>IVF 인덱스 만들기
+</br>Clustering을 통해 가까운 Cluster내 벡터들만 비교하여 빠른 검색
+</br>Cluster내에는 여전히 전체 벡터와 거리 비교 (Flat)
+![image](https://user-images.githubusercontent.com/93692701/218005731-563e1b09-ab9c-4329-8a68-d5514a516f95.png)
+
+- IVF-PQ with FAISS
+벡터 압축 기법(PQ) 활용
+전체 벡터를 저장하지 않고 압축된 벡터만 저장
+메모리 사용량 줄일 수 있음
+![image](https://user-images.githubusercontent.com/93692701/218005934-1eb61c56-282f-4509-ab5f-790c6cdf1fae.png)
+
+출처 : https://amber-chaeeunk.tistory.com/109
+
 ### 4. 검색 모델 측정
 - 검색 모델 성능을 측정하는 방식에는 word2vec 이용할때는 TF-IDF, **BM25(엘라스틱서치)** 등이 있다.
 ```
