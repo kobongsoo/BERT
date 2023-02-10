@@ -110,9 +110,9 @@ index2 = faiss.read_index("test.index")
 ![image](https://user-images.githubusercontent.com/93692701/218005731-563e1b09-ab9c-4329-8a68-d5514a516f95.png)
 
 - IVF-PQ with FAISS
-벡터 압축 기법(PQ) 활용
-전체 벡터를 저장하지 않고 압축된 벡터만 저장
-메모리 사용량 줄일 수 있음
+</br>벡터 압축 기법(PQ) 활용
+</br>전체 벡터를 저장하지 않고 압축된 벡터만 저장
+</br>메모리 사용량 줄일 수 있음
 ![image](https://user-images.githubusercontent.com/93692701/218005934-1eb61c56-282f-4509-ab5f-790c6cdf1fae.png)
 
 출처 : https://amber-chaeeunk.tistory.com/109
