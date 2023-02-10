@@ -103,16 +103,35 @@ faiss.write_index(index, "test.index")
 index2 = faiss.read_index("test.index")
 ```
 
+### FAISS 훈련
+- 벡터를 확보하고 나면, 이 벡터들을 training한다. 그 이유는 FAISS를 사용하기 위해서는 Clustering을 확보해야 한다.
+- Clustering을 위해 어떤 벡터가 서로 유사한지 알아야 하고, 이를 위해 index training이 필요하다. 또한 Scalar Quantization(SQ)을 할 때(float32 to int8)도 float의 min, max값을 기반으로 scale, offset을 결정해야하므로 index training이 요구된다. 
+
+![image](https://user-images.githubusercontent.com/93692701/218006362-fff61a31-b689-4825-88ee-b5c975d648e9.png)
+
+- 이렇게 index training이 끝나고 Cluster와 SQ8을 확보하면, 이제 이 Cluster안에 SQ8의 형태로 index들을 넣어준다.
+따라서 크게 Train index와 Add index로 나뉜다.
+
+- 이렇게 FAISS index가 만들어지면, Inference단계에서 query가 들어오고 검색을 한 후 가장 가까운 cluster를 방문해서 cluster 내의 vector을 일일이 비교하여 top-k의 문서 벡터를 추출한다.
+
+![image](https://user-images.githubusercontent.com/93692701/218006546-a8899c7b-2051-424e-8006-2e2ce3e34e8f.png)
+
+- FAISS basic
+</br> brute-force로 모든 쿼리와 벡터를 비교하는 단순한 인덱스 만들기
+![image](https://user-images.githubusercontent.com/93692701/218006645-dd3cddf1-9631-48b4-97ae-72d50c5788ec.png)
+
 - IVF with FAISS
 </br>IVF 인덱스 만들기
 </br>Clustering을 통해 가까운 Cluster내 벡터들만 비교하여 빠른 검색
 </br>Cluster내에는 여전히 전체 벡터와 거리 비교 (Flat)
+
 ![image](https://user-images.githubusercontent.com/93692701/218005731-563e1b09-ab9c-4329-8a68-d5514a516f95.png)
 
 - IVF-PQ with FAISS
 </br>벡터 압축 기법(PQ) 활용
 </br>전체 벡터를 저장하지 않고 압축된 벡터만 저장
 </br>메모리 사용량 줄일 수 있음
+
 ![image](https://user-images.githubusercontent.com/93692701/218005934-1eb61c56-282f-4509-ab5f-790c6cdf1fae.png)
 
 출처 : https://amber-chaeeunk.tistory.com/109
