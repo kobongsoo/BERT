@@ -401,3 +401,8 @@ data_files = {
  
 squad_it_dataset = load_dataset("json", data_files=data_files, field="data")
 ```
+### sklenarn 으로 cosine 확인 예제
+```
+from sklearn.metrics.pairwise import cosine_similarity
+cosine_sim = cosine_similarity([embed_querys[0]], [embed_querys_1[0]]) # (1,768) 식에 2차원 배열입력되어야 함.
+```
