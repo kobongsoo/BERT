@@ -177,6 +177,53 @@ def handle_query():
         print(hit["_source"]["paragraph"]) 
     
 ```
+- JAVA 쿼리 예제1
+```
+    # 문단별 50개의 벡터와 쿼리벡터를 서로 비교하여 최대값 갖는 문단들중 가장 유사한  문단 출력
+    # - script """ 안에 java 코드를 추가해서 만듬
+    script_query = {
+        "script_score":{
+            "query":{
+                "match_all": {}},
+            "script":{
+                "source": """
+                
+                  float max_score = 0;
+                  // 한 문단에 임베딩된 50개 벡터 for문을 돌면서 벡터값과 길이를 가져와서 쿼리 벡터와 유사도 구함.
+                  for(int i = 1; i <= 50; i++) 
+                  {
+                      float[] v = doc['vector'+i].vectorValue; // 벡터값 가져옴
+                      float vm = doc['vector'+i].magnitude;    // 벡터 길이 가져옴
+                      
+                      // 벡터 768개와 쿼리벡터768개를 곱하여 docProduct 만듬
+                      float dotProduct = 0;
+                      for (int j = 0; j < v.length; j++) 
+                      {
+                          dotProduct += v[j] * params.queryVector[j];
+                      }
+                      
+                      // docProduct를 (벡터길이 * 쿼리길이) 로 나눠서 스코어 구함.
+                      float score = dotProduct / (vm * (float) params.queryVectorMag);
+                      
+                      // 구한 스코어가 최대 스코어인지 비교후 최대 스코어면 저장해둠.
+                      if (score > max_score) 
+                      {
+                          max_score = score;
+                      }
+                  }
+
+                  // 최대 스코어 리턴.  
+                  return max_score
+                """,
+                "params": 
+                {
+                  "queryVector": query_vector,
+                  "queryVectorMag": 5.25357
+                }
+            }
+        }
+    }
+```
 
 ### 예제1
 - ES 서버와 별도로 Flask 서버를 돌리고, **CURL 혹은 [curl_test.ipynb](https://github.com/kobongsoo/BERT/blob/master/Flask/curl_test.ipynb) pythoh을 이용하여 검색**하는 예시
