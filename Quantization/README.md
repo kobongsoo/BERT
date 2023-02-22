@@ -182,6 +182,7 @@ print(onnx.helper.printable_graph(model.graph))
 <br> [ONNX-DistilBert-NLI 양자화 예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization.ipynb)
 <br> [ONNX-S-BERT-임베딩 앙자화 예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_Dynamic_Quantization_2.ipynb)
 <br> [ONNX-DistilBert-NLI 최적화+양자화 예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_optimized.ipynb)
+<br> [ONNX-S-BERT-임베딩 최적화+앙자화 예제](https://github.com/kobongsoo/BERT/blob/master/Quantization/ONNX_sbert_optimized.ipynb)
 
 ## Q&A
 ### 1. cannot import name 'FeaturesManager' from 'transformers.onnx' 에러
