@@ -1,0 +1,217 @@
+{			"settings": {
+				"number_of_shards": 2,
+				"number_of_replicas": 1,
+				"index": {
+					"merge": {
+						"scheduler": {
+							"max_thread_count": 1
+						}
+					}
+				},
+				"analysis": {
+					"analyzer": {
+						"mpower10u_korean_analyzer": {
+							"type": "custom",
+							"tokenizer": "mpower10u_korean_tokenizer",
+							"filter": [
+								"lowercase",
+								"stop",
+								"nori_readingform",
+								"mpower10u_korean_pos"
+							]
+						}
+					},
+					"tokenizer": {
+						"mpower10u_korean_tokenizer": {
+							"type": "nori_tokenizer",
+							"decompound_mode": "discard"
+						}
+					},
+					"filter": {
+						"mpower10u_korean_pos": {
+							"type": "nori_part_of_speech",
+							"stoptags": [
+								"J", "E", "XSA", "XSN", "XSV"
+							]
+						}
+					}
+				}
+			},
+			"mappings": {
+				"_source": {
+					"enabled": true
+				},
+				"dynamic":"strict",
+				"properties": {
+					"rfile_name": {
+						"type": "text",
+						"store": true
+					},
+					"rfile_text": {
+						"type": "text",
+						"store": false,
+						"analyzer": "mpower10u_korean_analyzer"
+					},
+					"vector1": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector2": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector3": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector4": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector5": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector6": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector7": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector8": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector9": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector10": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector11": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector12": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector13": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector14": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector15": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector16": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector17": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector18": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector19": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector20": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector21": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector22": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector23": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector24": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector25": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector26": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector27": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector28": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector29": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector30": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector31": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector32": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector33": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector34": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector35": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector36": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector37": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector38": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector39": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					},
+					"vector40": {
+        					"type": "dense_vector",
+        					"dims": 128
+      					}
+				}
+			}
+}

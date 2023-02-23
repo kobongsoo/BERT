@@ -6,6 +6,7 @@ import torch.nn as nn
 import logging
 import warnings
 from tqdm.notebook import tqdm
+from torch import Tensor
 
 from sentence_transformers import SentenceTransformer
 from sentence_transformers import models
@@ -101,15 +102,54 @@ def embed_text(model, paragraphs:list, token_embeddings=False, return_tensor=Fal
     else:
         return np.array([embedding for embedding in vectors]).astype("float32")#float32 로 embeddings 타입 변경 =>numpy 타입으로 리턴됨
 
+    
+#------------------------------------------------------------------------------------------------------------------------------
+# sbert.net에 Dense 함수를 이용하여 768 차원을 줄여서 128 차원 벡터 만드는 함수
+# -in : embed_tensor : 원본 2차원 tensor 배열 (예:tensor(27, 768) )
+# -in : out_features : 줄일 차원 숫자 
+# -out : 차원 변경된 tensor 배열 (예:tensor(27,128))
+#------------------------------------------------------------------------------------------------------------------------------
+def dense_model(embed_tensor, out_f:int=128, weight:Tensor=None , bias:Tensor=None, debug=False, idd:int=0):
+    
+    if debug == True:
+        print(f'[dense_model]embed_tensor:{embed_tensor.size()}')
+        print(f'[dense_model]embed_tensor-----------------------------------------------')
+        print(f'{embed_tensor}')
+        print(f'[dense_model]embed_tensor0:{embed_tensor.shape[0]}')
+        print(f'[dense_model]embed_tensor1:{embed_tensor.shape[1]}')
+        print()
+        print(f'[dense_model]out_features:{out_f}')
+        print(f'[dense_model]weight:{weight.size()}')
+        print(f'[dense_model]bias:{bias.size()}')
+        print(f'[dense_model]idd:{idd}')
+        
+        
+    in_f = embed_tensor.shape[1]
+    
+    assert in_f > 0, f"in_features is bed"
+    assert out_f > 0, f"out_features is bed"
+    
+    # Dense 모델 정의하기
+    dmodel = models.Dense(in_features=in_f, out_features=out_f, bias=False, init_weight=weight, init_bias=bias, activation_function=nn.Tanh())  
+    #state_dict = torch.load(os.path.join(model_path, 'pytorch_model.bin'))
+    #dmodel.load_state_dict(state_dict, map_location=torch.device('cpu'))
+    #dense_model.load(model)
+    
+    # dict로 변경 하고 입력
+    embed_dict = {"sentence_embedding":embed_tensor.cpu()}
+    dense_embed = dmodel(embed_dict)
+    
+    return dense_embed['sentence_embedding']
+    
+    
 #------------------------------------------------------------------------------------------------------------------------------
 # bi_encoer 모델 불러오기
-# => IN: model_path=모델경로, max_seq_len=최대토큰계수, do_lower_case=true이면 영어일때 소문자로 변환
-#        pooling_mode=임베딩 벡터 폴링 모드 선택 (*아래값중 문자열로 입력함, 기본=mean)
-#        ['mean', 'max', 'cls', 'weightedmean', 'lasttoken'] (mean=단어 평균, max=최대값, cls=문장) 
-#        out_dimension=출력 임베딩 크기 지정 (0=기본 모델 embedding 사이즈, 0>=해당 임베딩 크기로 줄임)
-# => OUT : Word 임베딩 모델, bi_encoder 모델
+# - in: model_path=모델경로, max_seq_len=최대토큰계수, do_lower_case=true이면 영어일때 소문자로 변환
+# - in: pooling_mode=임베딩 벡터 폴링 모드 선택 (*아래값중 문자열로 입력함, 기본=mean) ['mean', 'max', 'cls', 'weightedmean', 'lasttoken'] (mean=단어 평균, max=최대값, cls=문장) 
+# - in: out_dimension=출력 임베딩 크기 지정 (0=기본 모델 embedding 사이즈, 0>=해당 임베딩 크기로 줄임)
+# - out : Word 임베딩 모델, bi_encoder 모델
 #------------------------------------------------------------------------------------------------------------------------------
-def bi_encoder(model_path: str=None, max_seq_len: int=512, do_lower_case: bool=True, pooling_mode: str = 'mean', out_dimension: int = 0, device: str='cpu'):
+def bi_encoder(model_path:str=None, max_seq_len:int=512, do_lower_case:bool=True, pooling_mode:str = 'mean', out_dimension:int = 0, device:str='cpu'):
     
     assert model_path is not None, f"Input model_path cannot be None"
    

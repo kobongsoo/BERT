@@ -12,15 +12,15 @@ import numpy as np
 # - in: divide_arrs : 해당 배열을 몇개씩 나눌지 값 배열 (예: [2,3] = 1번째는 2개 평균, 2번째는 3개 평균, 3번째는 다시 2개 평균, ....구함)
 # - out: 평균구한 2차원 배열 예 (9, 768) 
 #---------------------------------------------------------------
-def divide_arr_avg_exten(embed_arr, divide_arrs = [5,10,15]):
+def divide_arr_avg_exten(embed_arr, divide_arrs = [5,10,15], debug=False):
     boundaries = []
-    boundaries.append(1)  # 0번지는 [CLS]이므로 pass
-    embed_arr_len = len(embed_arr)-2 # 2개 정도는 빼도 상관없지 않을까?
-    if embed_arr_len < 1:
-        embed_arr = len(embed_arr)
-    arr_count = 1          
+    boundaries.append(0)  
+    embed_arr_len = len(embed_arr)
+    arr_count = 0          
     stop = False
-
+    
+ 
+    
     # 바운드리 구함. 
     # 예: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]
 
@@ -30,21 +30,20 @@ def divide_arr_avg_exten(embed_arr, divide_arrs = [5,10,15]):
         for i in range(256):
             for divide_len in divide_arrs:
                 arr_count += divide_len
-                if arr_count < embed_arr_len:
-                    boundaries.append(arr_count)
+                if arr_count <= embed_arr_len:
+                    if arr_count not in boundaries:
+                        boundaries.append(arr_count)
                 else:
-                    #boundaries.append(embed_arr_len)  # 맨 마지막 부분 임베딩은 하지 않음
+                    if embed_arr_len not in boundaries:
+                        boundaries.append(embed_arr_len)  
                     stop = True
                     break
             if stop==True:
                 break
 
-    #print(boundaries)
-    
     # 인덱스 범위 구함
     # 예: [(1, 2), (2, 4), (4, 6), (6, 8), (8, 10), (10, 12), (12, 14), (14, 16), (16, 18), (18, 20), (20, 22), (22, 24)]
     index_list = [(boundaries[i], boundaries[i+1]) for i in range(len(boundaries) - 1)]
-    #print(index_list)
     
     # 각 단계에서의 평균값을 저장할 리스트 생성
     result = []
@@ -56,6 +55,14 @@ def divide_arr_avg_exten(embed_arr, divide_arrs = [5,10,15]):
         # 결과 리스트에 추가
         result.append(mean)
 
+    if debug == True:
+        divide_arrs
+        print(f'[divide_arr_avg_exten]divide_arrs:{divide_arrs}')
+        print(f'[divide_arr_avg_exten]len:{len(embed_arr)}')
+        print(f'[divide_arr_avg_exten]boundaries:{boundaries}')
+        print(f'[divide_arr_avg_exten]index_list:{index_list}')
+        print(f'[divide_arr_avg_exten]result_len:{len(result)}')
+        
     return np.array(result).astype('float32')
 
 #---------------------------------------------------------------
