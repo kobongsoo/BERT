@@ -3,8 +3,6 @@ import random
 import numpy as np
 from typing import Dict, List, Optional
 
-import numpy as np
-
 #---------------------------------------------------------------
 # 2차원 배열을 (210,768) 입력 받아서, 5, 10, 15, 5, 10, 15,... 단위로 차레대로 배열을 분리해서
 # 각 분리된 배열의 평균을 구하는 함수
@@ -150,3 +148,7 @@ def remove_duplicate_lists_not_order(lst):
 #------------------------------------------------------------------------------------------------------------------------------
 def remove_duplicate_lists_order(lst):
     return list(dict.fromkeys(lst))
+
+# main    
+if __name__ == '__main__':
+    main()

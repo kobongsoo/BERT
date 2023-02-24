@@ -7,4 +7,6 @@ from .model import *
 from .faiss_utils import *
 from .mecab_utils import *
 from .python_utils import *
+from .onnx import *
+from .re_utils import *
 
