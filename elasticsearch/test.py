@@ -25,6 +25,7 @@ from tqdm.notebook import tqdm
 from elasticsearch import Elasticsearch
 from elasticsearch import helpers
 
+import time
 
 # FutureWarning 제거
 import warnings
@@ -62,7 +63,7 @@ IS_ONNX_MODEL = True        # True=onnx 모델 사용
 #------------------------------------------------------------------------------------
 INDEX_NAME = 'aihub-ts1-acsampe-klue-sbert-v1-mpower10u-128d-onnx-1'  # ES 인덱스 명 (*소문자로만 지정해야 함)
 INDEX_FILE = './data/mpower10u_128d.json'                 # 인덱스 구조 파일
-DATA_FOLDER = '../../../data11/ai_hub/ts1/sample3/'     # 인덱스할 파일들이 있는 폴더경로 
+DATA_FOLDER = '../../../data11/ai_hub/ts1/sample4/'     # 인덱스할 파일들이 있는 폴더경로 
 BATCH_SIZE = 100
 
 #------------------------------------------------------------------------------------
@@ -153,7 +154,7 @@ def embedding(paragrphs:list):
 #-------------------------------------------------------------------------------------
 # 안덱싱 처리
 #-------------------------------------------------------------------------------------
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 import kss
 from myutils import embed_text, divide_arr_avg_exten, clean_text
 
@@ -198,9 +199,12 @@ def index_data(createindex:bool = True):
             #print(doc['title'])
             
             if count % BATCH_SIZE == 0:
+                start = time.time()
+                    
                 index_batch(docs)
                 docs = []
-                print("Indexed {} documents.".format(count))
+                print(f'*Indexed {count} documents./time:{time.time()-start:.4f}')
+                
                   
             # ** 10 개만 보냄
             #if count >= 10:
@@ -227,10 +231,25 @@ def index_batch(docs):
         sub_contexts = []
         #------------------------------------------------------------------------------------------------------------------------
         paragraph = clean_text(paragraph)  # 전처리 : (한글, 숫자, 영문, (), {}, [], %, ,,.,",')  등을 제외한 특수문자 제거
+        
+        # 입력 문단 길이가 999개 크면, 속도가 느려지므로 최대 999개 까지만 문자 입력 받음.
+        if len(paragraph) > 999:
+            #print(f'paragraph_len:{len(paragraph)}')
+            paragraph = paragraph[0:999]
+            
         # 입력 문단을 여러 문장들로 나눔.
         #sentences = [sentence for sentence in paragraph.split('.') if sentence != '' and len(sentence) > 10]  # '.'(마침표) 로 구분해서 sub 문장을 만듬.
-        sentences = [sentence for sentence in kss.split_sentences(paragraph) if sentence != '' and len(sentence) > 10] # kss 이용해서 sub 문장을 만듬
+        #sentences = [sentence for sentence in kss.split_sentences(paragraph) if sentence != '' and len(sentence) > 10] # kss 이용해서 sub 문장을 만듬
         
+        # 최대 10개 문장만 추출함.
+        sentences = []
+        count = 0
+        for sentence in kss.split_sentences(paragraph):
+            if sentence != '' and len(sentence) > 10:
+                sentences.append(sentence)
+                if count > 10:
+                    break
+                    
         # 만약 sentences(sub 문장) 가 하나도 없으면 원본문장을 담고, 10이상이면  10개만 담음.
         sub_contexts.append([paragraph] if len(sentences) < 1 else sentences[0:10] if len(sentences) > 10 else sentences)
        
@@ -332,7 +351,11 @@ def main():
     #======================================================================================
   
     # 2. index 처리
+    start = time.time()
+    
     index_data(False)
+    
+    print(f'*인덱싱 총 시간 : {time.time()-start:.4f}')
     
 if __name__ == '__main__':
     main()
