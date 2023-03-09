@@ -2,7 +2,7 @@ import faiss
 
 #===================================================================================== 
 # faiss 인덱스 생성
-# =>in: embedding: 임베딩 벡터 목록 (100,768)
+# =>in: embedding: 임베딩 벡터 목록 (100,768) => 2차원 numpy.array 배열
 # =>in : method: faiss 인덱스 생성 방식(0= Cosine Similarity 적용(IndexFlatIP 사용), 1= Euclidean Distance 적용(IndexFlatL2 사용))
 # =>out : index : faiss에서 생성된 인덱스
 #===================================================================================== 

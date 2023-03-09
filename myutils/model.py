@@ -79,12 +79,13 @@ def embed_text_avg(model, paragraph:list, dimension:int=768, return_tensor=False
 
 #------------------------------------------------------------------------------------------------------------------------------
 # 입력 text(리스트)에 대한 embed vector 생성 후 배열로 리턴함
-# - in : model=모델 인스턴스, contexts=1차원 text 리스트 예: ['오늘 날씨가 너무 좋다']
+# - in : model=모델 인스턴스
+# - in : paragraphs=1차원 text 리스트 예: ['오늘 날씨가 너무 좋다','내일은 비가 온다']
 # - in : return_tensor=True 이면 tensor값으로 임베딩벡터생성됨.
 # - in : token_embeddings=출력을 어떻게 할지 False=>'sentence embeddings'->768 문장 임베딩 값, True=> token_embeddings=>토큰별 임베딩값
 # - in : normalize : True=임베딩 정규화 화면 출력벡터이 길이가 1이 된다.
 # - out : token_embeddings=True 일때=>토큰별 embedding 으로 출력함=> list[tensor(250,768), tensor(243,768), tensor(111,768),..] tensor 리스트 타입으로 리턴됨.
-#          token_embeddings=False 일때 =>1개의 embedding으로 출력함=> array[768, 768, 768,...] float32 array 타입으로 리턴함.
+#         token_embeddings=False 일때 =>1개의 embedding으로 출력함=> array[768, 768, 768,...] float32 array 타입으로 리턴함.
 #------------------------------------------------------------------------------------------------------------------------------
 def embed_text(model, paragraphs:list, token_embeddings=False, return_tensor=False, normalize=True):
     
