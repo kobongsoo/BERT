@@ -226,6 +226,35 @@ def handle_query():
         }
     }
 ```
+- kibana-dev tool 에서 각종 쿼리 예제
+```
+# 해당 문장 토큰 파악
+POST /my-index/_analyze
+{
+  "analyzer": "mpower10u_korean_analyzer",
+  "text": "오늘 할일은 뭔지 알수 있을까요?"
+}	
+
+# 해당 인덱스에 모든 도큐먼트 출력(1000개 까지 한꺼번에 출력됨)
+GET /my-index/_search
+{
+  "query": {
+    "match_all": {}
+  }
+}	
+
+# 해당 index에서 rfile_text 필드에 "정부"가 들어간 도큐먼트 검색
+GET /my_index/_search
+{
+	"_source": true,
+	"query": {"match": 
+   {
+	   "rfile_text": "정부"
+	 }
+   }
+}
+
+```
 
 ### 예제1
 - ES 서버와 별도로 Flask 서버를 돌리고, **CURL 혹은 [curl_test.ipynb](https://github.com/kobongsoo/BERT/blob/master/Flask/curl_test.ipynb) pythoh을 이용하여 검색**하는 예시
