@@ -1,4 +1,12 @@
-from konlpy.tag import Mecab
+import platform
+
+# os가 윈도우면 from eunjeon import Mecab 
+if platform.system() == 'Windows':
+    from eunjeon import Mecab 
+else:
+    import konlpy
+    from konlpy.tag import Mecab
+    
 import numpy as np
 from .model import embed_text
 
