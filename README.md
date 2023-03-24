@@ -39,8 +39,8 @@ BERT로 부터 파생된 다양한 모델들(2019)
 - [양자화(Quantization) 기법](https://github.com/kobongsoo/BERT/tree/master/Quantization)
 - [가지치기(Purning) 기법](https://github.com/kobongsoo/BERT/tree/master/pruning)
 - [Regular Expressions](https://github.com/kobongsoo/BERT/blob/master/Regular_Expessions)
-
-***
+- [클러스터링](https://github.com/kobongsoo/BERT/tree/master/clustering)
+- [synap 문서 추출 필터 이용한 임베딩 예제](https://github.com/kobongsoo/BERT/tree/master/synap)
 
 ### Tips
 - [Tips](https://github.com/kobongsoo/BERT/tree/master/tips)
