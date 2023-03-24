@@ -4,6 +4,19 @@ import numpy as np
 from typing import Dict, List, Optional
 
 #---------------------------------------------------------------
+# 들어온 문자열을 dot 구분자로 뒤에서 부터 찾아서 해당 구분자 까지만 출력하는 함수
+# - in: string : 문자열 (예: '1.보안사업부 사업.계획.txt')
+# - in: dot : 구분자 (예: . )
+# - out: 뒤에서 부터 . 찾아서 제거한 문자열 (예: '1.보안사업부 사업.계획)
+#---------------------------------------------------------------
+def remove_reverse(string:str, dot:str='.'):
+    assert string is not None, f'string is None'
+    
+    dot_index = string.rfind(dot)
+    string = string[:dot_index] 
+    return string
+    
+#---------------------------------------------------------------
 # 2차원 배열을 (210,768) 입력 받아서, 5, 10, 15, 5, 10, 15,... 단위로 차레대로 배열을 분리해서
 # 각 분리된 배열의 평균을 구하는 함수
 # - in: embed_arr : 입력받은 2차원 배열 예:(210,768)

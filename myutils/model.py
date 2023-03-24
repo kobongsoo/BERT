@@ -11,6 +11,8 @@ from torch import Tensor
 from sentence_transformers import SentenceTransformer
 from sentence_transformers import models
 #from sentence_transformers.cross_encoder import CrossEncoder
+from .kss_utils import split_sentences
+
 
 #------------------------------------------------------------------------------------------------------------------------------
 # 문장을 .(마침표)로 여러 문장으로 나누고 나눈문장을 1개씩 임베딩 구한후 계수만큼 나워서 평균 임베딩 구하기
@@ -45,16 +47,17 @@ def embed_text_avg2(model, paragraph:list, dimension:int=768, return_tensor=Fals
 #------------------------------------------------------------------------------------------------------------------------------
 # 입력 문장을 '.' 기준으로 여러 문장으로 나누고, 임베딩을 구한후 평균 embed vector 를 리턴하는 함수
 # - in : model=bi_encoder 모델 인스턴스
-# - in : paragraphs=1차원 리스트 예: ['오늘 날씨가 너무 좋다']
+# - in : paragraphs=string형: '오늘 날씨가 너무 좋다.내일은 날씨가 어떨가?'
 # - in : dimension=임베딩차원(기본:768), return_tensor=True 이면 tensor값으로 임베딩벡터생성됨.
 # - out : 문단을 나눈 문장들에 대한 평균 => 1차원 배렬 예: (768)
 #------------------------------------------------------------------------------------------------------------------------------
-def embed_text_avg(model, paragraph:list, dimension:int=768, return_tensor=False):
+def embed_text_avg(model, paragraph:str, dimension:int=768, return_tensor=False):
     avg_paragraph_vec = np.zeros((1,dimension))
     
-    # 2차원 문장 배열로 만든다.
+     # 1차원 문장 배열로 만든다.
     sentences = [sentence for sentence in paragraph.split('.') if sentence != '' and len(sentence) > 20]
     #print(sentences)
+    
     
     # 문장이 10보다 크면 10개 까지만 처리함.
     #if len(sentences) > 10:

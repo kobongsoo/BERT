@@ -16,9 +16,10 @@ from sklearn.cluster import KMeans
 # - in : num_clusters: 클러스터링 몇개로 묶을지 (*무조건 embeddings 계수 11보다 작아야 함)
 # - out : 각 클러스터링 후 생성된 평균 임베딩 벡터 2차원 배열 (예: (num_clusters, 768), *무조건 0번지는 num_clusters 임)
 #------------------------------------------------------------------------------------------------------------------------------
-def clustering_embedding(embeddings, num_clusters:int, seed:int=111, debug:bool = False):
+def clustering_embedding(embeddings, num_clusters:int, seed:int=111, outmode:str="mean", debug:bool = False):
     
-    assert num_clusters > 1, f'error!! num_clusers{num_clusers} <= 1'
+    assert num_clusters > 1, f'error!! num_clusers{num_clusers}값은 1보다 크게 입력해야 합니다.'
+    assert outmode == "mean" or outmode == "max", f'error!! outmode 입력으로 mean, max 만 입력해야 합니다.=>입력 outmode={outmode}'
     
     # embedding 계수가 > num_clusers 보다 큰 경우에만 처리 
     if len(embeddings) > num_clusters:
@@ -39,18 +40,46 @@ def clustering_embedding(embeddings, num_clusters:int, seed:int=111, debug:bool 
             print(cluster_id_list)
             print()
     
-        # 클러스터링 목록을 불러와서 평균 임베딩 구함.
+    
         embeddings_list = []
-        for cluster_sub in cluster_id_list:
-            clustered_embeddings = np.zeros((embeddings.shape[1]))
-            count = 0
-            for sentence_id in cluster_sub:
-                clustered_embeddings += embeddings[sentence_id] 
-                count += 1
-            clustered_embeddings /= count
-            embeddings_list.append(clustered_embeddings)
         
-        embedding_arr = np.array(embeddings_list).astype('float32')
+        if outmode == "mean":      # 클러스터링 목록을 불러와서 평균 임베딩 구함.
+            for cluster_sub in cluster_id_list:
+                cluster_vector = np.zeros((embeddings.shape[1]))
+                count = 0
+                for sentence_id in cluster_sub:
+                    cluster_vector += embeddings[sentence_id] 
+                    count += 1
+                cluster_vector /= count
+                embeddings_list.append(cluster_vector)
+
+            embedding_arr = np.array(embeddings_list).astype('float32')
+        
+        elif outmode == "max": # 클러스터링 목록을 불어와서 최대값 임베딩 구함.
+            for cluster_sub in cluster_id_list:
+                arr_list = []
+                for sentence_id in cluster_sub:
+                    arr_list.append(embeddings[sentence_id])
+
+                arr = np.array(arr_list).astype('float32')
+                
+                #print(arr)
+                #print()
+                
+                # 임베딩 벡터가 2개 이상인 경우에만 max 최대값 구함.
+                if len(arr_list) > 1:
+                    max_index = np.argmax(np.linalg.norm(arr, axis=1))# 최대값을 갖는 벡터의 인덱스를 찾습니다.
+                    cluster_max_vector = embeddings[max_index] # 최대값을 갖는 벡터를 출력합니다.
+                else: # 임베딩 벡터가 1개인 경우에는 그대로 출력
+                    cluster_max_vector = arr[0]
+                    
+                #print(f'max_index:{max_index}')
+                #print(f'max_vector:{cluster_max_vector}')
+                #print()
+                    
+                embeddings_list.append(cluster_max_vector)
+            
+            embedding_arr = np.array(embeddings_list).astype('float32')
         
         if debug == True:
             print(f'*len(embedding_arr):{len(embedding_arr)}')
