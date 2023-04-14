@@ -38,6 +38,11 @@
 |[es_summarize_vector](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/es_summarize_vector.ipynb)|ElasticSearch+S-BERT를 이용한 임베딩 테스트 예제+**추출요약**||
 |[elasticsearch_search_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_search_test.ipynb)|ElasticSearch 접속/데이터 추가,삭제/인덱스 생성,삭제 등 관련 테스트 예제||
 |[elasticsearch_analyze_test](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/elasticsearch_analyze_test.ipynb)|ElasticSearch 검색/분석 관련  테스트 예제||
+|[es_summarize_vector_ai_hub](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/es_summarize_vector_ai_hub.ipynb)|ElasticSearch 문장 요약 검색 테스트 예제1|ai_hub 말뭉치 이용|
+|[es_summarize_vector_ai_hub2](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/es_summarize_vector_ai_hub2.ipynb)|ElasticSearch 문장 요약 검색 테스트 예제2|ai_hub 말뭉치 이용|
+|[es_synap](https://github.com/kobongsoo/BERT/blob/master/elasticsearch/es_synap.ipynb)|ElasticSearch+synap 문서 Text추출 필터를 이용한 문서 클러스터링 검색 예제|실제 엠파워에 253개 Text 추출한 파일을 이용함|
+
+
 
 ### 1. SentenceBert 정의
 - sentenceTransformers 라이브러리 설치
