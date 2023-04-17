@@ -67,7 +67,9 @@ IS_ONNX_MODEL = False
 
 # 차원 축소
 out_dimension = 128  # 768은 0으로 입력, 128=128 입력
-
+if out_dimension == 0:
+    dimension=768
+    
 # 문장 전처리
 remove_sentence_len = 8    # 문장 길이가 10이하면 제거 
 remove_duplication = False  # 중복된 문장 제거(*중복된 문장 제거 안할때 1%정도 정확도 좋음)
@@ -361,13 +363,13 @@ def index_data(es, df_contexts, df_questions, doc_sentences:list):
         #---------------------------------------------------    
 
         if count % BATCH_SIZE == 0:
-            index_batch(es, docs, vector_len=num_clusters, dim_size=out_dimension)
+            index_batch(es, docs, vector_len=num_clusters, dim_size=dimension)
             docs = []
             print("Indexed {} documents.".format(count))
             print()
 
     if docs:
-        index_batch(es, docs, vector_len=num_clusters, dim_size=out_dimension)
+        index_batch(es, docs, vector_len=num_clusters, dim_size=dimension)
         print("Indexed {} documents.".format(count))   
         print()
 
