@@ -12,4 +12,5 @@ from .token_utils import *
 from .sklearn_utils import *
 from .mecab_utils import *
 from .model import *
+from .es_utils import *
 

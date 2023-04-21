@@ -1,0 +1,36 @@
+# 모델 관련 변수
+model:
+  MODEL_PATH: 'bongsoo/kpf-sbert-128d-v1' # 모델 경로
+  POLLING_MODE: 'mean'  # 폴링모드*(mean, cls, max 중 1나)
+  OUT_DIMENSION: 128    # 임베딩 모델 출력 차원(128, 768)
+
+# 임베딩 변수
+embedding:
+  EMBEDDING_METHOD: 0   # 임베딩 방식(0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)
+  FLOAT_TYPE: 'float16' # 임베딩 출력 벡터 타입('float32', 'float16')
+
+# ES 관련 전역 변수
+es:
+  ES_URL: 'http://192.168.0.27:9200/'  # ES 서버 주소
+  ES_INDEX_FILE: './data/mpower10u_128d_10.json'  # 인덱스 파일 경로
+  BATCH_SIZE: 20  # 배치 사이즈 = 20이면 20개씩 ES에 인덱싱함.
+
+# 클러스터링 전역 변수
+custring:
+  # 클러스트링 param
+  CLUSTRING_MODE: "kmeans"  # "kmeans" = k-평균 군집 분석, kmedoids =  k-대표값 군집 분석
+  NUM_CLUSTERS: 10          # 클러스터링 계수 
+  OUTMODE: "mean"           # 클러스터링후 출력벡터 정의(kmeans 일때 => mean=평균벡터 출력, max=최대값벡터출력 / kmedoids 일때=>mean=평균벡터, medoid=대표값벡터)
+
+# 문장 전처리
+preprocessing:
+  REMOVE_SENTENCE_LEN: 8     # 문장 길이가 8이하면 제거 
+  REMOVE_DUPLICATION: False  # 중복된 문장 제거(*중복된 문장 제거 안할때 1%정도 정확도 좋음)
+
+# 검색 관련
+search:
+  SEARCH_SIZE: 5             # 검색 계수
+  # ES 벡터 크기 값(임의이 값지정) =>벡터의 크기는 각 구성 요소의 제곱 합의 제곱근으로 정의된다.. 
+  # 예를 들어, 벡터 [1, 2, 3]의 크기는 sqrt(1^2 + 2^2 + 3^2) 즉, 3.7416이 된다.
+  # 클수록 -> 스코어는 작아짐, 작을수록 -> 스코어 커짐.
+  VECTOR_MAG: 0.8   
