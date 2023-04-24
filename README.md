@@ -34,6 +34,7 @@ BERT로 부터 파생된 다양한 모델들(2019)
 ### 기타
 - [말뭉치(Corpus)](https://github.com/kobongsoo/BERT/tree/master/corpus_sample)
 - [FLASK](https://github.com/kobongsoo/BERT/tree/master/Flask)
+- [FastAPI](https://github.com/kobongsoo/BERT/tree/master/FastAPI)
 - [WandB](https://github.com/kobongsoo/WandB/tree/master)
 - [GPU 메모리보다 큰 모델 파인 튜닝하기](https://github.com/kobongsoo/GPUTech/tree/master)
 - [양자화(Quantization) 기법](https://github.com/kobongsoo/BERT/tree/master/Quantization)
