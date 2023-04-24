@@ -2,6 +2,81 @@ import os
 import random
 import numpy as np
 from typing import Dict, List, Optional
+from tqdm.notebook import tqdm
+
+# ES 관련
+from elasticsearch import Elasticsearch
+from elasticsearch.helpers import bulk
+from elasticsearch import helpers
+
+#---------------------------------------------------------------------------
+# ES 인덱스 생성
+# -in : es : ElasticSearch 객체.
+# -in : index_file_path: 인덱스 파일명
+# -in : index_name: 인덱스명
+# -in : create : 기존에 동일한 인덱스는 삭제하고 다시 생성.
+#---------------------------------------------------------------------------
+def create_index(es, index_file_path:str, index_name:str, create:bool = True):
+    
+    assert es is not None, f'error!!=>es is None'
+    assert index_file_path is not None, f'error!!=>index_file_path is None'
+    assert index_name is not None, f'error!!=>index_name is None'
+    
+    # create==True이면 삭제후 생성, 인덱스명이 없으면 생성, 인덱스가 있으면 pass
+    if create == True or not es.indices.exists(index_name):
+        es.indices.delete(index=index_name, ignore=[404])
+        count = 0
+        
+        # 인덱스 생성
+        with open(index_file_path) as index_file:
+            source = index_file.read().strip()
+            count += 1
+            print(f'{count}:{source}') # 인덱스 구조 출력
+            es.indices.create(index=index_name, body=source)
+#---------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------
+# 엠파워 문서 인덱스 batch 처리
+# - in: ES 객체
+# - in: docs=인덱스 처리할 data
+# - in : index_name = 인덱스명
+# - in: vector_len=한문서에 인덱싱할 벡터수=클러스터링수와 동일(기본=10개)
+# - in: dim_size=벡터 차원(기본=128)
+#---------------------------------------------------------------------------
+def mpower_index_batch(es, index_name:str, docs, vector_len:int=10, dim_size:int=128):
+        
+    requests = []
+    assert index_name is not None, f'error!!=>index_name is None'
+    assert len(docs) > 0, f'error!! len(docs) < 1=>len(docs):{len(docs)}'
+
+    for i, doc in enumerate(tqdm(docs)):
+        rfile_name = doc['rfile_name']
+        rfile_text = doc['rfile_text']
+        dense_vectors = doc['dense_vectors']
+        
+        #--------------------------------------------------------------------
+        # ES에 문단 인덱싱 처리
+        request = {}  #dict 정의
+        request["rfile_name"] = rfile_name   # 제목               
+        request["rfile_text"] = rfile_text   # 문장
+        
+        request["_op_type"] = "index"        
+        request["_index"] = index_name
+        
+        # vector 1~40 까지 값을 0으로 초기화 해줌.
+        for i in range(vector_len):
+            request["vector"+str(i+1)] = np.zeros((dim_size))
+            
+        # vector 값들을 담음.
+        for i, dense_vector in enumerate(dense_vectors):
+            request["vector"+str(i+1)] = dense_vector
+            
+        requests.append(request)
+        #--------------------------------------------------------------------
+                
+    # batch 단위로 한꺼번에 es에 데이터 insert 시킴     
+    bulk(es, requests)
+#---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
 # ES 쿼리 스크립트 구성

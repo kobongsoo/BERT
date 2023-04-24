@@ -6,15 +6,26 @@ import logging
 import pickle
 import copy
 import json
+import yaml # pip install PyYAML
 
 from filelock import FileLock
 from dataclasses import dataclass
-from typing import List, Optional
 from torch.utils.data.dataset import Dataset
 from transformers import PreTrainedTokenizer
 from .utils import mlogging
 from tqdm.notebook import tqdm
 from typing import Dict, List, Optional
+
+#---------------------------------------------------------------------------
+# .yaml 파일 호출
+# -in : file_path = .yaml 파일이 있는 경로
+#---------------------------------------------------------------------------
+def get_options(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        options = yaml.load(file, Loader=yaml.FullLoader)
+    
+    return options
+#---------------------------------------------------------------------------
 
 #==================================================================================================
 # MRR(Mean Reciprocal Rank) 함수

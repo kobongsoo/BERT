@@ -11,23 +11,13 @@ import argparse
 import time
 import os
 import platform
+import pandas as pd
+import numpy as np
+from tqdm.notebook import tqdm
 
 # os가 윈도우면 from eunjeon import Mecab 
 if platform.system() == 'Windows':
     os.environ["OMP_NUM_THREADS"] = '1' # 윈도우 환경에서는 쓰레드 1개로 지정함
-
-import torch
-import pandas as pd
-import numpy as np
-import time
-from tqdm.notebook import tqdm
-
-# 문서 포멧 관련
-import json
-import yaml
-
-# 한국어 문장 분리기
-import kss
 
 # 클러스터링 관련 
 from sklearn.cluster import KMeans
@@ -50,10 +40,10 @@ from elasticsearch import helpers
 import sys
 sys.path.append('..')
 from myutils import bi_encoder, dense_model, onnx_model, onnx_embed_text
-from myutils import seed_everything, GPU_info, mlogging, getListOfFiles
-from myutils import remove_reverse, getListOfFiles, clean_text
-from myutils import embed_text, onnx_embed_text, fassi_index, clustering_embedding, kmedoids_clustering_embedding
-from myutils import sliding_window_tokenizer, split_sentences, split_sentences1, get_text_chunks, make_query_script
+from myutils import seed_everything, GPU_info, mlogging, getListOfFiles, get_options
+from myutils import remove_reverse, clean_text, make_query_script, create_index, mpower_index_batch
+from myutils import embed_text, clustering_embedding, kmedoids_clustering_embedding
+from myutils import split_sentences, split_sentences1, get_text_chunks 
 
 # FutureWarning 제거
 import warnings
@@ -82,7 +72,7 @@ DEVICE = 'cpu'           # 디바이스 (예: 'cpu', 'cuda:0')
 SEED = 111
 
 # ES 관련 전역 변수
-ES_URL = "http://192.168.0.27:9200/"
+ES_URL = "http://localhost:9200/"
 ES_INDEX_NAME = 'test_index'
 ES_INDEX_FILE = './data/mpower10u_128d_10.json'  # 인덱스 파일 경로
 BATCH_SIZE = 20  # 배치 사이즈 = 20이면 20개씩 ES에 인덱싱함.
@@ -107,17 +97,6 @@ VECTOR_MAG = 0.8
 #---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
-# 옵션 호출
-# -in : paragrphs 문단 리스트
-#---------------------------------------------------------------------------
-def get_options(file_path):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        options = yaml.load(file, Loader=yaml.FullLoader)
-    
-    return options
-#---------------------------------------------------------------------------
-
-#---------------------------------------------------------------------------
 # 임베딩 처리 함수 
 # -in : paragrphs 문단 리스트
 #---------------------------------------------------------------------------
@@ -129,27 +108,8 @@ def embedding(paragrphs:list)->list:
 #---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
-# ES 인덱스 생성
-# -in : es : ElasticSearch 객체.
-# -in : create : 기존에 동일한 인덱스는 삭제하고 다시 생성.
-#---------------------------------------------------------------------------
-def create_index(es, create:bool = True):
-    
-    if create == True:
-        es.indices.delete(index=ES_INDEX_NAME, ignore=[404])
-        count = 0
-        
-        # 인덱스 생성
-        with open(ES_INDEX_FILE) as index_file:
-            source = index_file.read().strip()
-            count += 1
-            print(f'{count}:{source}') # 인덱스 구조 출력
-            es.indices.create(index=ES_INDEX_NAME, body=source)
-#---------------------------------------------------------------------------
-
-#---------------------------------------------------------------------------
 # text 추출된 문서파일들을 불러와서 datafframe 형태로 만듬
-# -in: documents = 문서내용, titles=문서제목
+# -in: documents = 문서내용, titles=문서제목, myuids=uid
 # -out: df_contexts, df_questions
 #---------------------------------------------------------------------------
 def load_docs(mydocuments:list, mytitles:list, myuids:list):
@@ -165,7 +125,7 @@ def load_docs(mydocuments:list, mytitles:list, myuids:list):
         pattern = r"\.\.PAGE:\d+\s?"
         document = clean_text(text=document, pattern=pattern)
 
-        print(f'[load_docs]titles:{title}, uids:{uid}, document:{document}')
+        #print(f'[load_docs]titles:{title}, uids:{uid}, document:{document}')
 
         contexts.append(document)        # 파일 내용 저장 
         titles.append(title)         # 제목으로 저장(추후 쿼리할 문장이 됨)
@@ -213,46 +173,6 @@ def get_sentences(df_contexts, df_questions)->List[str]:
     
     return doc_sentences
 #----------------------------------------------------------------------------
-
-#---------------------------------------------------------------------------
-# 인덱스 batch 처리
-# - in: ES 객체
-# - in: docs=인덱스 처리할 data
-# - in: vector_len=한문서에 인덱싱할 벡터수=클러스터링수와 동일(기본=10개)
-# - in: dim_size=벡터 차원(기본=128)
-#---------------------------------------------------------------------------
-def index_batch(es, docs, vector_len:int=10, dim_size:int=128):
-        
-    requests = []
-    
-    for i, doc in enumerate(tqdm(docs)):
-        rfile_name = doc['rfile_name']
-        rfile_text = doc['rfile_text']
-        dense_vectors = doc['dense_vectors']
-        
-        #--------------------------------------------------------------------
-        # ES에 문단 인덱싱 처리
-        request = {}  #dict 정의
-        request["rfile_name"] = rfile_name   # 제목               
-        request["rfile_text"] = rfile_text   # 문장
-        
-        request["_op_type"] = "index"        
-        request["_index"] = ES_INDEX_NAME
-        
-        # vector 1~40 까지 값을 0으로 초기화 해줌.
-        for i in range(vector_len):
-            request["vector"+str(i+1)] = np.zeros((dim_size))
-            
-        # vector 값들을 담음.
-        for i, dense_vector in enumerate(dense_vectors):
-            request["vector"+str(i+1)] = dense_vector
-            
-        requests.append(request)
-        #--------------------------------------------------------------------
-                
-    # batch 단위로 한꺼번에 es에 데이터 insert 시킴     
-    bulk(es, requests)
-#---------------------------------------------------------------------------
   
 #---------------------------------------------------------------------------
 #문단에 문장들의 임베딩을 구하여 각각 클러스터링 처리함.
@@ -284,7 +204,7 @@ def index_data(es, df_contexts, df_questions, doc_sentences:list):
             else:
                 print(sentences)
                 
-            print(f'embeddings.shape: {embeddings.shape}')
+            LOGGER.info(f'*[index_data] embeddings.shape: {embeddings.shape}')
             print()
 
         # 0=문장클러스터링 임베딩
@@ -305,7 +225,7 @@ def index_data(es, df_contexts, df_questions, doc_sentences:list):
             emb = embeddings
 
         if i < 3:
-            print(f'emb.shape: {emb.shape}')
+            print(f'*[index_data] emb.shape: {emb.shape}')
             #print(f'emb:{emb[0]}')
             print()
 
@@ -321,15 +241,13 @@ def index_data(es, df_contexts, df_questions, doc_sentences:list):
         #---------------------------------------------------    
 
         if count % BATCH_SIZE == 0:
-            index_batch(es, docs, vector_len=NUM_CLUSTERS, dim_size=dimension)
+            mpower_index_batch(es, ES_INDEX_NAME, docs, vector_len=NUM_CLUSTERS, dim_size=dimension)
             docs = []
-            print("Indexed {} documents.".format(count))
-            print()
+            LOGGER.info("Indexed {} documents.".format(count))
 
     if docs:
-        index_batch(es, docs, vector_len=NUM_CLUSTERS, dim_size=dimension)
-        print("Indexed {} documents.".format(count))   
-        print()
+        mpower_index_batch(es, ES_INDEX_NAME, docs, vector_len=NUM_CLUSTERS, dim_size=dimension)
+        LOGGER.info("Indexed {} documents.".format(count))   
 
     es.indices.refresh(index=ES_INDEX_NAME)
 
@@ -366,11 +284,11 @@ async def root():
     return {"서버": "문장 임베딩 AI 모델", 
             "*host":HOST, 
             "*port":PORT, 
-            "*임베딩모델": MODEL_PATH, "*출력차원": OUT_DIMENSION,"*임베딩방식": EMBEDDING_METHOD, "*출력벡터타입": FLOAT_TYPE,
-            "*ES서버URL":ES_URL, "*ES인덱스파일": ES_INDEX_FILE, "*ES인덱스명": ES_INDEX_NAME, "*ES배치크기": BATCH_SIZE,
-            "*클러스터링방식": CLUSTRING_MODE, "*클러스터링 계수": NUM_CLUSTERS, "*클러스터링 출력": OUTMODE,
-            "*문장전처리-제거문장길이": REMOVE_SENTENCE_LEN, "*문장전처리-중복제거": REMOVE_DUPLICATION,
-            "*검색계수": SEARCH_SIZE, "*검색비교벡터값": VECTOR_MAG
+            "*임베딩모델":{"모델경로": MODEL_PATH, "출력차원": OUT_DIMENSION,"임베딩방식": EMBEDDING_METHOD, "출력벡터타입": FLOAT_TYPE},
+            "*ES서버":{"URL":ES_URL, "인덱스파일": ES_INDEX_FILE, "인덱스명": ES_INDEX_NAME, "배치크기": BATCH_SIZE},
+            "*클러스터링":{"방식": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력": OUTMODE},
+            "*문장전처리":{"제거문장길이": REMOVE_SENTENCE_LEN, "중복제거": REMOVE_DUPLICATION},
+            "*검색":{"검색수": SEARCH_SIZE, "*검색비교벡터값": VECTOR_MAG}
             }
 
 #=========================================================
@@ -380,7 +298,7 @@ async def root():
 # - out: 문장 리스트에 대한 임베딩 벡터
 #=========================================================
 class EmbedIn(BaseModel):
-    uid: str            # uid(문서 고유id)
+    uid: str            # uid(문서 고유id)->rfilename
     sentences: list      # 문장리스트  
 
 @app.post("/embed/")
@@ -398,33 +316,38 @@ async def embed(Data:EmbedIn):
 # 입력 문장 리스트에 대한 임베딩값 구하고 ElasticSearch(이하:ES) 추가.
 # => http://127.0.0.1:8000/embed/es/?esindex=myindex
 # - in : docs: 문서 (예: ['오늘 날씨가 좋다', '내일은 비가 온다'] ), titles: 문서제목, uids(문서 고유id)
-# - in : esindexname : ES 인덱스명
+# - in : esindexname : ES 인덱스명, createindex=True(True=무조건 인덱스생성. 만약 있으면 삭제후 생성/ Flase=있으면 추가, 없으면 생성)
 # - out: ES 성공 실패??
 #=========================================================
 class DocsEmbedIn(BaseModel):
-    uids: list       # uid(문서 고유id)
-    titles: list     # 제목
-    documents: list       # 문서내용  
+    uids: list       # uid(문서 고유id)->rfilename
+    titles: list     # 제목->rfiletext
+    documents: list  # 문서내용  
 
 @app.post("/embed/es/")
-async def embed(esindex:str, Data:DocsEmbedIn):
+async def embed_documents(esindex:str, Data:DocsEmbedIn, createindex:bool=False):
     documents = Data.documents
     uids = Data.uids
     titles = Data.titles
     
-    LOGGER.info(f'ES_URL:{ES_URL}')
+    LOGGER.info(f'/embed/es/ start-----\nES_URL:{ES_URL}, esindex:{esindex}, createindex:{createindex}, uids:{uids}, titles:{titles}')
 
     # 인자 검사
     if len(documents) < 1:
-        raise UnicornException(msg='documents len < 1') # 사용자 정의 에러
+        LOGGER.error(f'/embed/es/ documents len < 1')
+        raise HTTPException(status_code=404, detail="documents len < 1", headers={"X-Error": "documents len < 1"},)
+        #raise UnicornException(msg='documents len < 1') # 사용자 정의 에러
 
     if len(uids) < 1:
+        LOGGER.error(f'/embed/es/ uid not found')
         raise HTTPException(status_code=404, detail="uid not found", headers={"X-Error": "uid is empty"},)
     
     if len(titles) < 1:
+        LOGGER.error(f'/embed/es/ titles not found')
         raise HTTPException(status_code=404, detail="titles not found", headers={"X-Error": "titles is empty"},)
     
     if not esindex:
+        LOGGER.error(f'/embed/es/ esindex not found')
         raise HTTPException(status_code=404, detail="esindex not found", headers={"X-Error": "esindex is empty"},)
     
     # 전역변수로 ES 인덱스명 저장해 둠.
@@ -433,20 +356,26 @@ async def embed(esindex:str, Data:DocsEmbedIn):
 
     # 1. 추출된 문서들 불러와서 df로 만듬
     df_contexts, df_questions = load_docs(documents, titles, uids)
+    LOGGER.info(f'/embed/es/ 1.load_docs success')
     
     # 2. 문장 추출
     doc_sentences = get_sentences(df_contexts, df_questions)
+    LOGGER.info(f'/embed/es/ 2.get_sentences success=>len(doc_sentences):{len(doc_sentences)}')
 
     # 3.elasticsearch 접속
     es = Elasticsearch(ES_URL)
+    LOGGER.info(f'/embed/es/ 3.Elasticsearch connect success')
     #LOGGER.info(f'es.info:{es.info()}')
 
     # 4.ES 인덱스 생성
-    create_index(es, True)
+    create_index(es, ES_INDEX_FILE, ES_INDEX_NAME, createindex)
+    LOGGER.info(f'/embed/es/ 4.create_index success=>index_file:{ES_INDEX_FILE}, index_name:{ES_INDEX_NAME}')
 
     # 5. index 처리
     index_data(es, df_contexts, df_questions, doc_sentences)
-
+    LOGGER.info(f'/embed/es/ 5.index_data success')
+    LOGGER.info(f'/embed/es/ end-----\n')
+            
 #=========================================================
 
 #=========================================================
@@ -460,31 +389,37 @@ class QueryIn(BaseModel):
     search_size: int        # 검색 계수
 
 @app.post("/search/")
-async def embed(esindex:str, Data:QueryIn):
+async def search_documents(esindex:str, Data:QueryIn):
 
-    query = Data.query
+    query = Data.query.strip()
     search_size = Data.search_size
+
+    LOGGER.info(f'/search/ start-----\nquery:{query}, search_size:{search_size}')
 
     # 인자 검사
     if not query:
-        raise UnicornException(msg='query is empty') # 사용자 정의 에러
+        LOGGER.error(f'/search/ query is empty')
+        raise HTTPException(status_code=404, detail="query is empty", headers={"X-Error": "query is empty"},)
+        #raise UnicornException(msg='query is empty') # 사용자 정의 에러
 
     if search_size < 1:
+        LOGGER.error(f'/search/ search_size < 1')
         raise HTTPException(status_code=404, detail="search_size < 1", headers={"X-Error": "search_size < 1"},)
     
     if not esindex:
+        LOGGER.error(f'/search/ esindex not found')
         raise HTTPException(status_code=404, detail="esindex not found", headers={"X-Error": "esindex is empty"},)
     
     # 1.elasticsearch 접속
     es = Elasticsearch(ES_URL)
-    LOGGER.info(f'es.info:{es.info()}')
+    # LOGGER.info(f'es.info:{es.info()}')
 
     # 2. 검색 문장 embedding 후 벡터값 
     # 쿼리들에 대해 임베딩 값 구함
     start_embedding_time = time.time()
     embed_query = embedding([query])
     end_embedding_time = time.time() - start_embedding_time
-    print("embedding time: {:.2f} ms".format(end_embedding_time * 1000)) 
+    print("*embedding time: {:.2f} ms".format(end_embedding_time * 1000)) 
     print(f'*embed_querys.shape:{embed_query.shape}\n')
 
     # 3. 쿼리 만듬
@@ -503,6 +438,7 @@ async def embed(esindex:str, Data:QueryIn):
             "_source":{"includes": ["rfile_name","rfile_text"]}
         }
     )
+    LOGGER.info(f'/search/ response:{response}')
 
     # 5. 결과 리턴
     # - 쿼리 응답 결과값에서 _id, _score, _source 등을 뽑아내고 내림차순 정렬후 결과값 리턴
@@ -528,6 +464,9 @@ async def embed(esindex:str, Data:QueryIn):
         des_rfiletext.append(rfiletext[idx])
         des_bi_scores.append(bi_scores[idx])
 
+    LOGGER.info(f'/search/ rfilename:{des_rfilename}, "rfiletext": {des_rfiletext}, "scores": {des_bi_scores}')
+    LOGGER.info(f'/search/ end-----\n')
+
     # 결과값 리턴
     return {"query":query, "rfilename": des_rfilename, "rfiletext": des_rfiletext, "scores": des_bi_scores}
 #=========================================================
@@ -551,11 +490,7 @@ def main():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('-host', dest='host', help='', default='0.0.0.0')  # FastAPI 서버 바인딩 host
     parser.add_argument('-port', dest='port', help='', default=8000)       # FastAPI 서버 바인딩 port
-    #parser.add_argument('-embedder', dest='embedder', help='embedder model full path', default='bongsoo/kpf-sbert-128d-v1') # 임베딩 모델 경로
-    #parser.add_argument('-pooling', dest='pooling', help='pooling_mode(mean,cls,max)', default='mean')  # 임베딩 pooling_mode
-    #parser.add_argument('-dimension', dest='dimension', help='dimension=128, 768', default=128)       # 모델 차원
-    #parser.add_argument('-floattype', dest='floattype', help='floattype(float32, float16)', default='float16')       # 모델 차원
-    
+      
     args = parser.parse_args()
 
     global OUT_DIMENSION, EMBEDDING_METHOD, FLOAT_TYPE, ES_INDEX_FILE, ES_URL
@@ -565,7 +500,7 @@ def main():
     print()
     HOST = args.host 
     PORT = args.port
-    print(f'*host:{HOST}, port:{PORT}')
+    LOGGER.info(f'*host:{HOST}, port:{PORT}')
 
     # 설정값 settings.yaml 파일 로딩
     settings = get_options(file_path=SETTINGS_FILE)
@@ -577,33 +512,33 @@ def main():
     OUT_DIMENSION = settings['model']['OUT_DIMENSION']
     if OUT_DIMENSION == 768:
         OUT_DIMENSION = 0
-    print(f'*모델 Settings: MODEL_PATH:{MODEL_PATH}, POLLING_MODE:{POLLING_MODE}, OUT_DIMENSION:{OUT_DIMENSION}')
+    LOGGER.info(f'*모델 Settings: MODEL_PATH:{MODEL_PATH}, POLLING_MODE:{POLLING_MODE}, OUT_DIMENSION:{OUT_DIMENSION}')
     
     # 임베딩 정보 로딩
     EMBEDDING_METHOD = settings['embedding']['EMBEDDING_METHOD']
     FLOAT_TYPE = settings['embedding']['FLOAT_TYPE']
-    print(f'*임베딩 Settings: EMBEDDING_METHOD:{EMBEDDING_METHOD}, FLOAT_TYPE:{FLOAT_TYPE}')
+    LOGGER.info(f'*임베딩 Settings: EMBEDDING_METHOD:{EMBEDDING_METHOD}, FLOAT_TYPE:{FLOAT_TYPE}')
 
     # ES 관련 전역 변수
     ES_URL = settings['es']['ES_URL']
     ES_INDEX_FILE = settings['es']['ES_INDEX_FILE']
     BATCH_SIZE = settings['es']['BATCH_SIZE']
-    print(f'*ES Settings: ES_URL:{ES_URL}, ES_INDEX_FILE:{ES_INDEX_FILE}, BATCH_SIZE:{BATCH_SIZE}')
+    LOGGER.info(f'*ES Settings: ES_URL:{ES_URL}, ES_INDEX_FILE:{ES_INDEX_FILE}, BATCH_SIZE:{BATCH_SIZE}')
 
     # 클러스터링 전역 변수
     CLUSTRING_MODE = settings['custring']['CLUSTRING_MODE']
     NUM_CLUSTERS = settings['custring']['NUM_CLUSTERS']
     OUTMODE = settings['custring']['OUTMODE']
-    print(f'*클러스터링 Settings: CLUSTRING_MODE:{CLUSTRING_MODE}, NUM_CLUSTERS:{NUM_CLUSTERS}, OUTMODE:{OUTMODE}')
+    LOGGER.info(f'*클러스터링 Settings: CLUSTRING_MODE:{CLUSTRING_MODE}, NUM_CLUSTERS:{NUM_CLUSTERS}, OUTMODE:{OUTMODE}')
 
     # 문장 전처리
     REMOVE_SENTENCE_LEN = settings['preprocessing']['REMOVE_SENTENCE_LEN']
     REMOVE_DUPLICATION = settings['preprocessing']['REMOVE_DUPLICATION']
-    print(f'*문장전처리 Settings: REMOVE_SENTENCE_LEN:{REMOVE_SENTENCE_LEN}, REMOVE_DUPLICATION:{REMOVE_DUPLICATION}')
+    LOGGER.info(f'*문장전처리 Settings: REMOVE_SENTENCE_LEN:{REMOVE_SENTENCE_LEN}, REMOVE_DUPLICATION:{REMOVE_DUPLICATION}')
 
     # 검색 관련
     VECTOR_MAG = settings['search']['VECTOR_MAG']
-    print(f'*검색 Settings: VECTOR_MAG:{VECTOR_MAG}')
+    LOGGER.info(f'*검색 Settings: VECTOR_MAG:{VECTOR_MAG}')
 
     #---------------------------------------------------------------------------
     # 임베딩 BERT 모델 로딩
@@ -614,11 +549,11 @@ def main():
     WORD_EMBDDING_MODEL1, BI_ENCODER1 = bi_encoder(model_path=MODEL_PATH, max_seq_len=512, do_lower_case=True, 
                                                    pooling_mode=POLLING_MODE, out_dimension=OUT_DIMENSION, device=DEVICE)
     
-    print(f'\n---bi_encoder---------------------------')
-    print(BI_ENCODER1)
-    print(WORD_EMBDDING_MODEL1)
-    print(f'\n----------------------------------------')
-    print()
+    LOGGER.info(f'\n---bi_encoder---------------------------')
+    LOGGER.info(BI_ENCODER1)
+    LOGGER.info(WORD_EMBDDING_MODEL1)
+    LOGGER.info(f'\n----------------------------------------')
+    LOGGER.info(f'\n')
     #---------------------------------------------------------------------------
   
     #---------------------------------------------------------------------------
