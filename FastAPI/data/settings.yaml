@@ -1,6 +1,6 @@
 # 모델 관련 변수
 model:
-  MODEL_PATH: 'bongsoo/kpf-sbert-128d-v1' # 모델 경로
+  MODEL_PATH: '../../data11/model/kpf-sbert-128d-v1' # 모델 경로
   POLLING_MODE: 'mean'  # 폴링모드*(mean, cls, max 중 1나)
   OUT_DIMENSION: 128    # 임베딩 모델 출력 차원(128, 768)
 
@@ -11,7 +11,7 @@ embedding:
 
 # ES 관련 전역 변수
 es:
-  ES_URL: 'http://192.168.0.27:9200/'  # ES 서버 주소
+  ES_URL: 'http://x.x.x.x:9200/'  # ES 서버 주소
   ES_INDEX_FILE: './data/mpower10u_128d_10.json'  # 인덱스 파일 경로
   BATCH_SIZE: 20  # 배치 사이즈 = 20이면 20개씩 ES에 인덱싱함.
 
@@ -34,3 +34,9 @@ search:
   # 예를 들어, 벡터 [1, 2, 3]의 크기는 sqrt(1^2 + 2^2 + 3^2) 즉, 3.7416이 된다.
   # 클수록 -> 스코어는 작아짐, 작을수록 -> 스코어 커짐.
   VECTOR_MAG: 0.8   
+  
+# 환경 관련
+env:
+  LOG_PATH: './log/embed'  # 로그경로
+  SEED: 1111               # seed 값 
+  GPU: 'cpu'              # 'auto'=gpu서버면 gpu, 아니면 cpu, 'cpu'=무조건 CPU로 동작 (소문자)

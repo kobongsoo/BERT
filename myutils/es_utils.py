@@ -21,8 +21,7 @@ def create_index(es, index_file_path:str, index_name:str, create:bool = True):
     assert es is not None, f'error!!=>es is None'
     assert index_file_path is not None, f'error!!=>index_file_path is None'
     assert index_name is not None, f'error!!=>index_name is None'
-    
-    # create==True이면 삭제후 생성, 인덱스명이 없으면 생성, 인덱스가 있으면 pass
+        
     if create == True or not es.indices.exists(index_name):
         es.indices.delete(index=index_name, ignore=[404])
         count = 0
@@ -33,6 +32,8 @@ def create_index(es, index_file_path:str, index_name:str, create:bool = True):
             count += 1
             print(f'{count}:{source}') # 인덱스 구조 출력
             es.indices.create(index=index_name, body=source)
+            
+        print(f'new create index=>index_file:{index_file_path}, index_name:{index_name}')
 #---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------

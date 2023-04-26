@@ -3,6 +3,7 @@ import random
 import numpy as np
 from typing import Dict, List, Optional
 import kss
+#from kss import split_sentences
 from .re_utils import clean_text, is_language
 from tqdm import tqdm
 #---------------------------------------------------------------

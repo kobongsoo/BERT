@@ -149,6 +149,11 @@ def mlogging(
         
     print('logfilepath:{}'.format(logfilepath))
 
+    # 폴더가 없으면 생성
+    dir_path = os.path.dirname(logfilepath)  
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+    
     # 로그 생성
     logger = logging.getLogger(loggername)
 
