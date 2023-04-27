@@ -1,6 +1,7 @@
 import os
 import random
 import numpy as np
+import pandas as pd
 from typing import Dict, List, Optional
 
 #---------------------------------------------------------------
@@ -29,8 +30,6 @@ def divide_arr_avg_exten(embed_arr, divide_arrs = [5,10,15], debug=False):
     embed_arr_len = len(embed_arr)
     arr_count = 0          
     stop = False
-    
- 
     
     # 바운드리 구함. 
     # 예: [1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]

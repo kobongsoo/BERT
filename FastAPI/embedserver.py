@@ -25,9 +25,11 @@ import uvicorn
 from enum import Enum
 from typing import Union, Dict, List, Optional
 from typing_extensions import Annotated
-from fastapi import FastAPI, Query, Cookie, Form, Request, HTTPException
+from fastapi import FastAPI, Query, Cookie, Form, Request, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
+import asyncio
+import threading
     
 # ES 관련
 from elasticsearch import Elasticsearch, helpers
@@ -40,7 +42,7 @@ from myutils import bi_encoder, dense_model, onnx_model, onnx_embed_text
 from myutils import seed_everything, GPU_info, mlogging, getListOfFiles, get_options
 from myutils import remove_reverse, clean_text, make_query_script, create_index, mpower_index_batch
 from myutils import embed_text, clustering_embedding, kmedoids_clustering_embedding
-from myutils import split_sentences, split_sentences1, get_text_chunks 
+from myutils import split_sentences, split_sentences1, make_docs_df, get_sentences
 
 # FutureWarning 제거
 import warnings
@@ -102,78 +104,19 @@ def embedding(paragrphs:list)->list:
     # 한 문단에 대한 40개 문장 배열들을 한꺼번에 임베딩 처리함
     embeddings = embed_text(model=BI_ENCODER1, paragraphs=paragrphs, return_tensor=False).astype(FLOAT_TYPE)  
     return embeddings
-#---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
-# text 추출된 문서파일들을 불러와서 datafframe 형태로 만듬
-# -in: documents = 문서내용, titles=문서제목, myuids=uid
-# -out: df_contexts, df_questions
+# 비동기 임베딩 처리 함수
 #---------------------------------------------------------------------------
-def load_docs(mydocuments:list, mytitles:list, myuids:list):
-
-    contexts = []
-    titles = []
-    contextids = []
-
-    # TEXT 추출된 문서들을 읽어오면서 제목(title), 내용(contexts) 등을 저장해 둠.
-    for document, title, uid in zip(mydocuments, mytitles, myuids):
-
-        #.PAGE:1 패턴을 가지는 문장은 제거함.
-        pattern = r"\.\.PAGE:\d+\s?"
-        document = clean_text(text=document, pattern=pattern)
-        #print(f'[load_docs]titles:{title}, uids:{uid}, document:{document}')
-
-        contexts.append(document)        # 파일 내용 저장 
-        titles.append(title)         # 제목으로 저장(추후 쿼리할 문장이 됨)
-        contextids.append(uid) # contextid 저장 
-
-    # 데이터 프레임으로 만듬.
-    df_contexts = pd.DataFrame((zip(contexts, contextids)), columns = ['context','contextid'])
-    df_questions = pd.DataFrame((zip(titles, contextids)), columns = ['question','contextid'])  
-
-    print(f'*len(contexts): {len(contexts)}')
-    print()
-    
-    return df_contexts, df_questions  
+async def async_embedding(paragraphs: list) -> list:
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, embedding, paragraphs)
 #---------------------------------------------------------------------------
-    
-#----------------------------------------------------------------------------
-# 문장 분리 : kss와 \n(줄바꿈)으로 문장을 분리함.
-# -in: df_contexts, df_question
-# -out: 분리된 문장 2차원 리스트.
-#----------------------------------------------------------------------------
-def get_sentences(df_contexts, df_questions)->List[str]:
-
-    contexts = df_contexts['context'].values.tolist()
-    start = time.time()
-
-    doc_sentences = []
-    
-    doc_sentences = split_sentences1(paragraphs=contexts, 
-                                    remove_line=False, 
-                                    remove_sentence_len=REMOVE_SENTENCE_LEN, 
-                                    remove_duplication=REMOVE_DUPLICATION, 
-                                    check_en_ko=False, # 한국어 혹은 영어문장이외 제거하면, 즉 true 지정하면 1% 성능 저하됨
-                                    sentences_split_num=10000, paragraphs_num=10000000, showprogressbar=True, debug=False)
-
-    LOGGER.info(f'*[get_sentences] 문장처리=>len:{len(doc_sentences[0])}, time:{time.time()-start:.4f}')
-    
-    len_list = []
-    for i, doc_sentence in enumerate(doc_sentences):
-        doc_sentence_len = len(doc_sentence)
-        if i < 301:
-            print(f'[{i}] {doc_sentence_len}/{df_questions["question"][i]}')
-        len_list.append(doc_sentence_len)
-
-    LOGGER.info(f'*[get_sentences] 문장 길이=>평균:{sum(len_list) / len(len_list)} / MAX: {max(len_list)} / MIN: {min(len_list)}\r\n')
-    
-    return doc_sentences
-#----------------------------------------------------------------------------
-  
+      
 #---------------------------------------------------------------------------
 #문단에 문장들의 임베딩을 구하여 각각 클러스터링 처리함.
 #---------------------------------------------------------------------------
-def index_data(es, df_contexts, df_questions, doc_sentences:list):
+def index_data(es, df_contexts, doc_sentences:list):
     #클러스터링 계수는 문단의 계수보다는 커야 함. 
     #assert num_clusters <= len(doc_sentences), f"num_clusters:{num_clusters} > len(doc_sentences):{len(doc_sentences)}"
     #-------------------------------------------------------------
@@ -181,8 +124,8 @@ def index_data(es, df_contexts, df_questions, doc_sentences:list):
     start = time.time()
     cluster_list = []
 
-    rfile_names = df_questions['contextid'].values.tolist()
-    rfile_texts = df_questions['question'].values.tolist()
+    rfile_names = df_contexts['contextid'].values.tolist()
+    rfile_texts = df_contexts['question'].values.tolist()
 
     if OUT_DIMENSION == 0:
         dimension = 768
@@ -264,6 +207,9 @@ def es_embed_query(esindex:str, query:str, search_size:int):
     
     # 1.elasticsearch 접속
     es = Elasticsearch(ES_URL)
+    
+    #time.sleep(20)
+    
     # LOGGER.info(f'es.info:{es.info()}')
 
     # 2. 검색 문장 embedding 후 벡터값 
@@ -318,6 +264,13 @@ def es_embed_query(esindex:str, query:str, search_size:int):
         des_bi_scores.append(bi_scores[idx])
 
     return query, des_rfilename, des_rfiletext, des_bi_scores # 쿼리,  rfilename, rfiletext,  스코어 리턴 
+
+#---------------------------------------------------------------------------
+# 비동기 ES 임베딩 벡터 쿼리 실행 함수
+#---------------------------------------------------------------------------
+async def async_es_embed_query(esindex:str, query:str, search_size:int):
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, es_embed_query, esindex, query, search_size)
 #---------------------------------------------------------------------------
 
 app = FastAPI() #FastAPI 인스턴스 생성
@@ -358,6 +311,20 @@ def embed(Data:EmbedIn):
     # json 전송하기위해, 각 변수에 ,(쉼표) 를 추가해서 문자열로 만듬.
     embeddings_str = [",".join(str(elem) for elem in sublist) for sublist in embeddings]
     return {"uid": uid, "embed": embeddings_str}
+
+#========================================================
+# async def로 지정하면, embedding 비동기 함수도 동기화로 wrapping하여 실행해야 한다.
+@app.post("/embed/async/")
+async def embed(data: EmbedIn, background_tasks: BackgroundTasks):
+    sentences = data.sentences
+    uid = data.uid
+
+    # embedding 함수를 async 함수로 wrapping한 async_embedding 함수를 실행합니다.
+    embeddings = await async_embedding(sentences)
+
+    embeddings_str = [",".join(str(elem) for elem in sublist) for sublist in embeddings]
+    return {"uid": uid, "embed": embeddings_str}
+#========================================================
 
 #=========================================================
 # 입력 문장 리스트에 대한 임베딩값 구하고 ElasticSearch(이하:ES) 추가.
@@ -401,11 +368,11 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, createindex:bool=False):
     ES_INDEX_NAME = esindex
 
     # 1. 추출된 문서들 불러와서 df로 만듬
-    df_contexts, df_questions = load_docs(documents, titles, uids)
+    df_contexts = make_docs_df(documents, titles, uids)
     LOGGER.info(f'/embed/es/ 1.load_docs success')
     
     # 2. 문장 추출
-    doc_sentences = get_sentences(df_contexts, df_questions)
+    doc_sentences = get_sentences(df=df_contexts, remove_sentnece_len=REMOVE_SENTENCE_LEN, remove_duplication=REMOVE_DUPLICATION)
     LOGGER.info(f'/embed/es/ 2.get_sentences success=>len(doc_sentences):{len(doc_sentences)}')
 
     # 3.elasticsearch 접속
@@ -418,9 +385,8 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, createindex:bool=False):
     LOGGER.info(f'/embed/es/ 4.create_index success=>index_file:{ES_INDEX_FILE}, index_name:{ES_INDEX_NAME}')
 
     # 5. index 처리
-    index_data(es, df_contexts, df_questions, doc_sentences)
-    LOGGER.info(f'/embed/es/ 5.index_data success')
-    LOGGER.info(f'/embed/es/ end-----\n')
+    index_data(es, df_contexts, doc_sentences)
+    LOGGER.info(f'/embed/es/ 5.index_data success\nend-----\n')
             
 #=========================================================
 
@@ -458,6 +424,37 @@ def search_documents(esindex:str,
     
     return {"query":q, "rfilename": des_rfilename, "rfiletext": des_rfiletext, "scores": des_bi_scores}
 
+#========================================================
+# 비동기 get searh 함수 
+# => async def 비동기로 쿼리 할때 내부에 함수가 비동기 함수가 아니면, blocking되므로, 비동기 함수를 호출해야 함. 
+@app.get("/search/async/{esindex}")
+async def search_documents(esindex:str, 
+                     query: str = Query(..., min_length=1),     # ... 는 필수 입력 이고, min_length=1은 최소값이 1임. 작으면 422 Unprocessable Entity 응답반환됨
+                     search_size: int = Query(..., gt=0)):      # ... 는 필수 입력 이고, gt=0은 0보다 커야 한다. 작으면 422 Unprocessable Entity 응답반환됨
+       
+    query = query.strip()
+    
+    # 인자 검사
+    if not query:
+        LOGGER.error(f'/search/async/ query is empty')
+        raise HTTPException(status_code=404, detail="query is empty", headers={"X-Error": "query is empty"},)
+  
+    if search_size < 1:
+        LOGGER.error(f'/search/async/ search_size < 1')
+        raise HTTPException(status_code=404, detail="search_size < 1", headers={"X-Error": "search_size < 1"},)
+        
+    if not esindex:
+        LOGGER.error(f'/search/async/ esindex not found')
+        raise HTTPException(status_code=404, detail="esindex not found", headers={"X-Error": "esindex is empty"},)
+        
+    LOGGER.info(f'\nget /search/async/ start-----\nquery:{query}, search_size:{search_size}')
+    
+    # 비동기 es search 함수 호출
+    q, des_rfilename, des_rfiletext, des_bi_scores = await async_es_embed_query(esindex, query, search_size)
+    
+    return {"query":q, "rfilename": des_rfilename, "rfiletext": des_rfiletext, "scores": des_bi_scores}
+#========================================================
+
 #=========================================================
 # ES 검색(POST)
 # => http://127.0.0.1:8000/search/?esindex=test3
@@ -474,7 +471,7 @@ def search_documents(esindex:str, Data:QueryIn):
     query = Data.query.strip()
     search_size = Data.search_size
 
-    # 인자 검사
+    # 인자 검사        
     if not query:
         LOGGER.error(f'/search/ query is empty')
         raise HTTPException(status_code=404, detail="query is empty", headers={"X-Error": "query is empty"},)
@@ -493,6 +490,35 @@ def search_documents(esindex:str, Data:QueryIn):
     q, des_rfilename, des_rfiletext, des_bi_scores = es_embed_query(esindex, query, search_size)
     
     return {"query":q, "rfilename": des_rfilename, "rfiletext": des_rfiletext, "scores": des_bi_scores}
+
+#=========================================================
+# 비동기 put search  
+# => async def 비동기로 쿼리 할때 내부에 함수가 비동기 함수가 아니면, blocking되므로, 비동기 함수를 호출해야 함. 
+@app.post("/search/async/")
+async def search_documents(esindex:str, Data:QueryIn):
+
+    query = Data.query.strip()
+    search_size = Data.search_size
+
+    # 인자 검사
+    if not query:
+        LOGGER.error(f'/search/async/ query is empty')
+        raise HTTPException(status_code=404, detail="query is empty", headers={"X-Error": "query is empty"},)
+  
+    if search_size < 1:
+        LOGGER.error(f'/search/async/ search_size < 1')
+        raise HTTPException(status_code=404, detail="search_size < 1", headers={"X-Error": "search_size < 1"},)
+    
+    if not esindex:
+        LOGGER.error(f'/search/async/ esindex not found')
+        raise HTTPException(status_code=404, detail="esindex not found", headers={"X-Error": "esindex is empty"},)
+
+    LOGGER.info(f'\npost /search/async/ start-----\nquery:{query}, search_size:{search_size}')
+
+     # 비동기 es search 함수 호출
+    q, des_rfilename, des_rfiletext, des_bi_scores = await async_es_embed_query(esindex, query, search_size)
+    
+    return {"query":q, "rfilename": des_rfilename, "rfiletext": des_rfiletext, "scores": des_bi_scores}
   
 #=========================================================
 
@@ -501,9 +527,9 @@ def search_documents(esindex:str, Data:QueryIn):
 # - 인자를 파싱. bi_encoder 모델 로딩. FastAPI서버 실행
 #=========================================================
 def main():
-    #---------------------------------------------------------------------------
+    #------------------------------------
     # args 처리
-    #---------------------------------------------------------------------------    
+    #------------------------------------
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('-host', dest='host', help='', default='0.0.0.0')  # FastAPI 서버 바인딩 host
     parser.add_argument('-port', dest='port', help='', default=9000)       # FastAPI 서버 바인딩 port
@@ -518,9 +544,9 @@ def main():
     settings = get_options(file_path=SETTINGS_FILE)
     assert len(settings) > 2, f'load settings error!!=>len(settigs):{len(settings)}'
     
-    #---------------------------------------------------------------------------
+    #------------------------------------
     # param
-    #---------------------------------------------------------------------------
+    #------------------------------------
     logfilepath = settings['env']['LOG_PATH']
     seed = settings['env']['SEED']
     DEVICE = settings['env']['GPU']
@@ -571,11 +597,11 @@ def main():
     VECTOR_MAG = settings['search']['VECTOR_MAG']
     LOGGER.info(f'*검색 Settings: VECTOR_MAG:{VECTOR_MAG}')
 
-    #---------------------------------------------------------------------------
+    #------------------------------------
     # 임베딩 BERT 모델 로딩
     # => bi_encoder 모델 로딩, polling_mode 설정
     # => bi_encoder1 = SentenceTransformer(bi_encoder_path) # 오히려 성능 떨어짐. 이유는 do_lower_case나, max_seq_len등 세부 설정이 안되므로.
-    #---------------------------------------------------------------------------
+    #------------------------------------
     global BI_ENCODER1, WORD_EMBDDING_MODEL1
     WORD_EMBDDING_MODEL1, BI_ENCODER1 = bi_encoder(model_path=MODEL_PATH, max_seq_len=512, do_lower_case=True, 
                                                    pooling_mode=POLLING_MODE, out_dimension=OUT_DIMENSION, device=DEVICE)
@@ -584,15 +610,15 @@ def main():
     LOGGER.info(BI_ENCODER1)
     LOGGER.info(WORD_EMBDDING_MODEL1)
     LOGGER.info(f'\n----------------------------------------')
-    #---------------------------------------------------------------------------
+    #------------------------------------
   
     # 모델 저장
     #output_path = "../../data11/model/kpf-sbert-128d-v1"
     #BI_ENCODER1.save(output_path)
 
-    #---------------------------------------------------------------------------
+    #------------------------------------
     # FastAPI 서버 실행 - uvicorn으로 실행.
-    #---------------------------------------------------------------------------
+    #------------------------------------
     print(f'embedding server start')
     print()
     uvicorn.run(app, host=HOST, port=PORT)

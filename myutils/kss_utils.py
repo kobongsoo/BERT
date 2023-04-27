@@ -1,11 +1,77 @@
 import os
 import random
 import numpy as np
+import pandas as pd
 from typing import Dict, List, Optional
 import kss
 #from kss import split_sentences
 from .re_utils import clean_text, is_language
 from tqdm import tqdm
+import time
+
+#---------------------------------------------------------------------------
+# text 추출된 문서파일들을 불러와서 datafframe 형태로 만듬
+# -in: documents = 문서내용, titles=문서제목, myuids=uid
+# -out: df_contexts
+#---------------------------------------------------------------------------
+def make_docs_df(mydocuments:list, mytitles:list, myuids:list):
+
+    contexts = []
+    titles = []
+    contextids = []
+
+    # TEXT 추출된 문서들을 읽어오면서 제목(title), 내용(contexts) 등을 저장해 둠.
+    for document, title, uid in zip(mydocuments, mytitles, myuids):
+
+        #.PAGE:1 패턴을 가지는 문장은 제거함.
+        pattern = r"\.\.PAGE:\d+\s?"
+        document = clean_text(text=document, pattern=pattern)
+        #print(f'[load_docs]titles:{title}, uids:{uid}, document:{document}')
+
+        contexts.append(document)        # 파일 내용 저장 
+        titles.append(title)         # 제목으로 저장(추후 쿼리할 문장이 됨)
+        contextids.append(uid) # contextid 저장 
+
+    # 데이터 프레임으로 만듬.
+    df_contexts = pd.DataFrame((zip(contexts, titles, contextids)), columns = ['context','question', 'contextid'])
+
+    print(f'*len(contexts): {len(contexts)}')
+    print()
+    
+    return df_contexts
+#---------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------
+# 문장 분리 : kss와 \n(줄바꿈)으로 문장을 분리함.
+# -in: df_contexts(데이터프레임), remove_sentence_len=문장삭제, remove_duplication=중복문장삭제
+# -out: 분리된 문장 2차원 리스트.
+#----------------------------------------------------------------------------
+def get_sentences(df, remove_sentnece_len:int=8, remove_duplication:bool=False)->List[str]:
+
+    contexts = df['context'].values.tolist()
+    start = time.time()
+
+    doc_sentences = []
+    
+    doc_sentences = split_sentences1(paragraphs=contexts, 
+                                    remove_line=False, 
+                                    remove_sentence_len=remove_sentnece_len, 
+                                    remove_duplication=remove_duplication, 
+                                    check_en_ko=False, # 한국어 혹은 영어문장이외 제거하면, 즉 true 지정하면 1% 성능 저하됨
+                                    sentences_split_num=10000, paragraphs_num=10000000, showprogressbar=True, debug=False)
+
+    print(f'*[get_sentences] 문장처리=>len:{len(doc_sentences[0])}, time:{time.time()-start:.4f}')
+    
+    len_list = []
+    for i, doc_sentence in enumerate(doc_sentences):
+        doc_sentence_len = len(doc_sentence)
+        len_list.append(doc_sentence_len)
+
+    print(f'*[get_sentences] 문장 길이=>평균:{sum(len_list) / len(len_list)} / MAX: {max(len_list)} / MIN: {min(len_list)}\r\n')
+    
+    return doc_sentences
+#----------------------------------------------------------------------------
+
 #---------------------------------------------------------------
 # 입력 문단들(1차원리스트) 를 문장으로 분리해서 2차원 리스트를 리턴함함. 
 #  => kss로 분리 후 줄바꿈('\n')으로 문장 분리함.(문장이 길수록 kss로 분리하는것은 시간이 오래 걸림=>따라서 split_sentences1 사용 권장함)
