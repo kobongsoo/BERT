@@ -86,7 +86,7 @@ def get_sentences(df, remove_sentnece_len:int=8, remove_duplication:bool=False)-
 # - out: 분리된 문장들 목록 (2차원 리스트) (예: [['오늘은 날씨가 좋다','날씨가 좋다','비가온다'],[...],[...]])
 #---------------------------------------------------------------
 def split_sentences(paragraphs:list, 
-                    sentences_split_num:int=10, 
+                    sentences_split_num:int=100, 
                     paragraphs_num:int = 999,
                     remove_line:bool=True,
                     remove_sentence_len:int = 10,
@@ -183,7 +183,7 @@ def split_sentences(paragraphs:list,
 # - out: 분리된 문장들 목록 (2차원 리스트) (예: [['오늘은 날씨가 좋다','날씨가 좋다','비가온다'],[...],[...]])
 #---------------------------------------------------------------
 def split_sentences1(paragraphs:list, 
-                    sentences_split_num:int=10, 
+                    sentences_split_num:int=100, 
                     paragraphs_num:int = 999,
                     remove_line:bool=True,
                     remove_sentence_len:int = 10,

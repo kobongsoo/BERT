@@ -75,7 +75,7 @@ remove_sentence_len = 8    # 문장 길이가 10이하면 제거
 remove_duplication = False  # 중복된 문장 제거(*중복된 문장 제거 안할때 1%정도 정확도 좋음)
 
 # ES 관련 Param
-INDEX_NAME = 'mpower_128d_10_float16'  # ES 인덱스 명 (*소문자로만 지정해야 함)
+INDEX_NAME = 'mpower-kpf-128d-f16-2'  # ES 인덱스 명 (*소문자로만 지정해야 함)
 INDEX_FILE = './data/mpower10u_128d_10.json'                 # 인덱스 구조 파일
 BATCH_SIZE = 20  # 배치 사이즈 = 20이면 20개씩 ES에 인덱싱함.
 #------------------------------------------------------------------------------------
@@ -97,7 +97,7 @@ from myutils import bi_encoder, dense_model, onnx_model, onnx_embed_text
 from sentence_transformers import SentenceTransformer
 
 #bi_encoder_path = "../../data11/model/bert/moco-sentencebertV2.0-nli_128d-sts" 
-bi_encoder_path = "bongsoo/kpf-sbert-128d-v1" #"bongsoo/kpf-sbert-v1.1" # kpf-sbert-v1.1 # klue-sbert-v1 # albert-small-kor-sbert-v1.1
+bi_encoder_path = "../../data11/model/kpf-sbert-128d-v1" #"bongsoo/kpf-sbert-v1.1" # kpf-sbert-v1.1 # klue-sbert-v1 # albert-small-kor-sbert-v1.1
 pooling_mode = 'mean' # bert면=mean, albert면 = cls
 
 

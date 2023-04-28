@@ -54,45 +54,46 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # FastAPI 서버 관련 
 SETTINGS_FILE = './data/settings.yaml'  # 설정파일 경로 (yaml 파일)
 HOST = '0.0.0.0'
-PORT = '9200'
+PORT = '0'
 
 # 모델 관련
-MODEL_PATH = 'bongsoo/kpf-sbert-128d-v1'
+MODEL_PATH = None
 BI_ENCODER1 = 0          # bi_encoder 모델 인스턴스 
 WORD_EMBDDING_MODEL1 = 0 # bi_encoder 워드임베딩모델 인스턴스
-OUT_DIMENSION = 128      # 임베딩 모델 차원 수 (128, 0=768)
+OUT_DIMENSION = 0      # 임베딩 모델 차원 수 (128, 0=768)
 
 # 임베딩 방식 (0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)
 EMBEDDING_METHOD = 0   
-FLOAT_TYPE = 'float16'   # 임베딩 벡터 float 타입('float32', 'float16')
+FLOAT_TYPE = None   # 임베딩 벡터 float 타입('float32', 'float16')
 
 LOGGER = 0               # 로그 인스턴스
-DEVICE = 'cpu'           # 디바이스 (예: 'cpu', 'cuda:0') 
-SEED = 111
+DEVICE = None           # 디바이스 (예: 'cpu', 'cuda:0') 
+SEED = 0
 
 # ES 관련 전역 변수
-ES_URL = "http://localhost:9200/"
-ES_INDEX_NAME = 'test_index'
-ES_INDEX_FILE = './data/mpower10u_128d_10.json'  # 인덱스 파일 경로
-BATCH_SIZE = 10  # 배치 사이즈 = 20이면 20개씩 ES에 인덱싱함.
+ES_URL = None
+ES_INDEX_NAME = None
+ES_INDEX_FILE = None  # 인덱스 파일 경로
+BATCH_SIZE = 0  # 배치 사이즈 = 20이면 20개씩 ES에 인덱싱함.
 
 # 클러스터링 전역 변수
 # 클러스트링 param
-CLUSTRING_MODE = "kmeans"  # "kmeans" = k-평균 군집 분석, kmedoids =  k-대표값 군집 분석
-NUM_CLUSTERS = 10          # 클러스터링 계수 
-OUTMODE = "mean"           # 클러스터링후 출력벡터 정의(kmeans 일때 => mean=평균벡터 출력, max=최대값벡터출력 / kmedoids 일때=>mean=평균벡터, medoid=대표값벡터)
+CLUSTRING_MODE = None         # "kmeans" = k-평균 군집 분석, kmedoids =  k-대표값 군집 분석
+NUM_CLUSTERS = 0              # 클러스터링 계수 
+NUM_CLUSTERS_VARIABLE = False # True이면 문장길이에 따라 클러스터링수를 다르게 함, False이면 클러스터링 계수가 고정.
+OUTMODE = None                # 클러스터링후 출력벡터 정의(kmeans 일때 => mean=평균벡터 출력, max=최대값벡터출력 / kmedoids 일때=>mean=평균벡터, medoid=대표값벡터)
 
 # 문장 전처리
-REMOVE_SENTENCE_LEN = 8     # 문장 길이가 8이하면 제거 
+REMOVE_SENTENCE_LEN = 0     # 문장 길이가 8이하면 제거 
 REMOVE_DUPLICATION = False  # 중복된 문장 제거(*중복된 문장 제거 안할때 1%정도 정확도 좋음)
 
 # 검색 관련
-SEARCH_SIZE = 5             # 검색 계수
+SEARCH_SIZE = 0             # 검색 계수
 
 # ES 벡터 크기 값(임의이 값지정) =>벡터의 크기는 각 구성 요소의 제곱 합의 제곱근으로 정의된다.. 
 # 예를 들어, 벡터 [1, 2, 3]의 크기는 sqrt(1^2 + 2^2 + 3^2) 즉, 3.7416이 된다.
 # 클수록 -> 스코어는 작아짐, 작을수록 -> 스코어 커짐.
-VECTOR_MAG = 0.8   
+VECTOR_MAG = 0   
 #---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
@@ -100,9 +101,9 @@ VECTOR_MAG = 0.8
 # -in : paragrphs 문단 리스트
 #---------------------------------------------------------------------------
 # 조건에 맞게 임베딩 처리하는 함수 
-def embedding(paragrphs:list)->list:
+def embedding(paragraphs:list)->list:
     # 한 문단에 대한 40개 문장 배열들을 한꺼번에 임베딩 처리함
-    embeddings = embed_text(model=BI_ENCODER1, paragraphs=paragrphs, return_tensor=False).astype(FLOAT_TYPE)  
+    embeddings = embed_text(model=BI_ENCODER1, paragraphs=paragraphs, return_tensor=False).astype(FLOAT_TYPE)    
     return embeddings
 
 #---------------------------------------------------------------------------
@@ -138,22 +139,40 @@ def index_data(es, df_contexts, doc_sentences:list):
         embeddings = embedding(sentences)
         if i < 3:
             print(f'[{i}] sentences-------------------')
-            if len(sentences) > 10:
-                print(sentences[:10])
+            if len(sentences) > 5:
+                print(sentences[:5])
             else:
                 print(sentences)
                 
         LOGGER.info(f'*[index_data] embeddings.shape: {embeddings.shape}')
         print()
+        
+        #----------------------------------------------------------------
+        multiple = 1
+        
+        # [bong][2023-04-28] 임베딩 출력 계수에 따라 클러스터링 계수를 달리함.
+        if NUM_CLUSTERS_VARIABLE == True:
+            embeddings_len = embeddings.shape[0]
+            if embeddings_len > 2000:
+                multiple = 6
+            elif embeddings_len > 1000:
+                multiple = 5 # 5배
+            elif embeddings_len > 600:
+                multiple = 4 # 4배
+            elif embeddings_len > 300:
+                multiple = 3 # 3배
+            elif embeddings_len > 100:
+                multiple = 2 # 2배
+        #----------------------------------------------------------------
 
         # 0=문장클러스터링 임베딩
         if EMBEDDING_METHOD == 0:
             if CLUSTRING_MODE == "kmeans":
                 # 각 문단에 분할한 문장들의 임베딩 값을 입력해서 클러스터링 하고 평균값을 구함.
-                #emb1 = clustering_embedding(embeddings = embeddings, outmode=outmode, num_clusters= 50, seed=seed)
-                emb = clustering_embedding(embeddings = embeddings, outmode=OUTMODE, num_clusters= NUM_CLUSTERS, seed=SEED).astype(FLOAT_TYPE) 
+                # [bong][2023-04-28] 문장이 많은 경우에는 클러스터링 계수를 2,3배수로 함
+                emb = clustering_embedding(embeddings = embeddings, outmode=OUTMODE, num_clusters=(NUM_CLUSTERS*multiple), seed=SEED).astype(FLOAT_TYPE) 
             else:
-                emb = kmedoids_clustering_embedding(embeddings = embeddings, outmode=OUTMODE, num_clusters= NUM_CLUSTERS, seed=SEED).astype(FLOAT_TYPE) 
+                emb = kmedoids_clustering_embedding(embeddings = embeddings, outmode=OUTMODE, num_clusters=(NUM_CLUSTERS*multiple), seed=SEED).astype(FLOAT_TYPE) 
         # 1= 문장평균임베딩
         elif EMBEDDING_METHOD == 1:
             # 문장들에 대해 임베딩 값을 구하고 평균 구함.
@@ -164,24 +183,25 @@ def index_data(es, df_contexts, doc_sentences:list):
             emb = embeddings
 
         #--------------------------------------------------- 
-        count += 1
-        doc = {} #dict 선언
-
-        doc['rfile_name'] = rfile_names[i]      # contextid 담음
-        doc['rfile_text'] = rfile_texts[i]      # text 담음.
-        doc['dense_vectors'] = emb
-
-        docs.append(doc)
+        # docs에 저장 
+        #  [bong][2023-04-28] 여러개 벡터인 경우에는 벡터를 10개씩 분리해서 여러개 docs를 만듬.
+        for j in range(multiple):
+            count += 1
+            doc = {}                                #dict 선언
+            doc['rfile_name'] = rfile_names[i]      # contextid 담음
+            doc['rfile_text'] = rfile_texts[i]      # text 담음.
+            doc['dense_vectors'] = emb[j * NUM_CLUSTERS : (j+1) * NUM_CLUSTERS] # emb 담음.
+            docs.append(doc)
         #---------------------------------------------------    
 
-        if count % BATCH_SIZE == 0:
-            mpower_index_batch(es, ES_INDEX_NAME, docs, vector_len=NUM_CLUSTERS, dim_size=dimension)
-            docs = []
-            LOGGER.info("[index_data] Indexed {} documents.".format(count))
+            if count % BATCH_SIZE == 0:
+                mpower_index_batch(es, ES_INDEX_NAME, docs, vector_len=NUM_CLUSTERS, dim_size=dimension)
+                docs = []
+                LOGGER.info("[index_data](1) Indexed {} documents.".format(count))
 
     if docs:
         mpower_index_batch(es, ES_INDEX_NAME, docs, vector_len=NUM_CLUSTERS, dim_size=dimension)
-        LOGGER.info("[index_data] Indexed {} documents.".format(count))   
+        LOGGER.info("[index_data](2) Indexed {} documents.".format(count))   
 
     es.indices.refresh(index=ES_INDEX_NAME)
 
@@ -231,39 +251,40 @@ def es_embed_query(esindex:str, query:str, search_size:int):
     response = es.search(
         index=esindex,
         body={
-            "size": search_size,
+            "size": search_size * 3, # 3배 정도 얻어옴
             "query": script_query,
             "_source":{"includes": ["rfile_name","rfile_text"]}
         }
     )
     
-    LOGGER.info(f'[es_embed_query] response:{response}')
+    #LOGGER.info(f'[es_embed_query] response:{response}')
 
     # 5. 결과 리턴
     # - 쿼리 응답 결과값에서 _id, _score, _source 등을 뽑아내고 내림차순 정렬후 결과값 리턴
     #print(response)
     
     rfilename = []
-    rfiletext = [] 
-    bi_scores = []
+    count = 0
+    docs = []
     for hit in response["hits"]["hits"]: 
-        # 리스트에 저장해둠
-        rfilename.append(hit["_source"]["rfile_name"])
-        rfiletext.append(hit["_source"]["rfile_text"])
-        bi_scores.append(hit["_score"])
+        tmp = hit["_source"]["rfile_name"]
+        
+        # 중복 제거
+        if tmp and tmp not in rfilename:
+            rfilename.append(tmp)
+            doc = {}  #dict 선언
+            doc['rfile_name'] = hit["_source"]["rfile_name"]      # contextid 담음
+            doc['rfile_text'] = hit["_source"]["rfile_text"]      # text 담음.
+            doc['score'] = hit["_score"]
+            docs.append(doc)
+            
+            count += 1
+            if count >= search_size:
+                break
+                
+    LOGGER.info(f'[es_embed_query] query:{query} docs:{docs}')
 
-    # 내림 차순으로 정렬 
-    dec_bi_scores = reversed(np.argsort(bi_scores))
-
-    des_rfilename=[]
-    des_rfiletext=[]
-    des_bi_scores=[]
-    for idx in dec_bi_scores:
-        des_rfilename.append(rfilename[idx])
-        des_rfiletext.append(rfiletext[idx])
-        des_bi_scores.append(bi_scores[idx])
-
-    return query, des_rfilename, des_rfiletext, des_bi_scores # 쿼리,  rfilename, rfiletext,  스코어 리턴 
+    return query, docs # 쿼리,  rfilename, rfiletext, 스코어 리턴 
 
 #---------------------------------------------------------------------------
 # 비동기 ES 임베딩 벡터 쿼리 실행 함수
@@ -272,8 +293,9 @@ async def async_es_embed_query(esindex:str, query:str, search_size:int):
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, es_embed_query, esindex, query, search_size)
 #---------------------------------------------------------------------------
-
-app = FastAPI() #FastAPI 인스턴스 생성
+# http://10.10.4.10:9000/docs=>swagger UI, http://10.10.4.10:9000/redoc=>ReDoc UI 각각 비활성화 하려면
+# => docs_url=None, redoc_url=None 하면 된다.
+app = FastAPI(redoc_url=None) #FastAPI 인스턴스 생성(*redoc UI 비활성화)
 
 #=========================================================
 # 루트=>정보 출력
@@ -297,7 +319,7 @@ async def root():
 # - in : 문장 리스트 (예: ['오늘 날씨가 좋다', '내일은 비가 온다'] )
 # - out: 문장 리스트에 대한 임베딩 벡터
 #=========================================================
-@app.get("/vectors")
+@app.get("/vectors", status_code=200)
 async def get_vector(sentences: List[str] = Query(..., description="sentences", min_length=1, max_length=255, alias="sentence")):
 
     # embedding 함수를 async 함수로 wrapping한 async_embedding 함수를 실행합니다.
@@ -399,9 +421,9 @@ async def search_documents(esindex:str,
     LOGGER.info(f'\nget /search/ start-----\nquery:{query}, search_size:{search_size}')
     
     # es로 임베딩 쿼리 실행
-    q, des_rfilename, des_rfiletext, des_bi_scores = await async_es_embed_query(esindex, query, search_size)
+    q, docs = await async_es_embed_query(esindex, query, search_size)
     
-    return {"query":q, "rfilename": des_rfilename, "rfiletext": des_rfiletext, "scores": des_bi_scores}
+    return {"query":q, "docs": docs}
 #=========================================================
 
 #=========================================================
@@ -420,7 +442,7 @@ def main():
 
     global OUT_DIMENSION, EMBEDDING_METHOD, FLOAT_TYPE, ES_INDEX_FILE, ES_URL
     global BATCH_SIZE, CLUSTRING_MODE, NUM_CLUSTERS, OUTMODE, REMOVE_SENTENCE_LEN
-    global LOGGER, DEVICE, REMOVE_DUPLICATION, VECTOR_MAG, HOST, PORT, MODEL_PATH
+    global LOGGER, DEVICE, REMOVE_DUPLICATION, VECTOR_MAG, HOST, PORT, MODEL_PATH, NUM_CLUSTERS_VARIABLE
 
     # 설정값 settings.yaml 파일 로딩
     settings = get_options(file_path=SETTINGS_FILE)
@@ -468,7 +490,8 @@ def main():
     CLUSTRING_MODE = settings['custring']['CLUSTRING_MODE']
     NUM_CLUSTERS = settings['custring']['NUM_CLUSTERS']
     OUTMODE = settings['custring']['OUTMODE']
-    LOGGER.info(f'*클러스터링 Settings: CLUSTRING_MODE:{CLUSTRING_MODE}, NUM_CLUSTERS:{NUM_CLUSTERS}, OUTMODE:{OUTMODE}')
+    NUM_CLUSTERS_VARIABLE = settings['custring']['NUM_CLUSTERS_VARIABLE']
+    LOGGER.info(f'*클러스터링 Settings: CLUSTRING_MODE:{CLUSTRING_MODE}, NUM_CLUSTERS:{NUM_CLUSTERS}, NUM_CLUSTERS_VARIABLE:{NUM_CLUSTERS_VARIABLE}, OUTMODE:{OUTMODE}')
 
     # 문장 전처리
     REMOVE_SENTENCE_LEN = settings['preprocessing']['REMOVE_SENTENCE_LEN']
