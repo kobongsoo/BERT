@@ -57,7 +57,7 @@ async def read_file(file_path: str):
 # 쿼리 매개변수 설정
 #-> ?뒤에 &로 구분하여 쿼리=값 쌍으로 함..
 # http://127.0.0.1:8000/items/?skip=0&limit=10
-@app.get("/items/")
+@app.get("/items")
 async def read_item(skip:int=0, limit:int=10):
 	return fake_items_db[skip:skip+limit]
 
@@ -89,7 +89,7 @@ async def read_user_item(user_id:str, item_id:str, q:Union[str, None]=None, shor
 # 쿼리 매개변수: 길이 제한하기(q입력값=3이상 10이하)
 # - http://127.0.0.1:8000/max/?q=fffffffffffffffffffffffffffff
 # - Annotated 이용
-@app.get("/max/")
+@app.get("/max")
 async def read_items_max(q: Annotated[Union[str, None], Query(min_length=3, max_length=10)]=None):
 	results = {"items": [{"item_id": "Foo"},{"item_id": "Bar"}]}
 
@@ -112,7 +112,7 @@ async def read_items_max(q: Annotated[str, Query(min_length=3, max_length=10)]=.
 # - http://127.0.0.1:8000/query/?q=1&q=2&q=5
 # - {"query": ["1", "2", "5"]}
 #
-@app.get("/query/")
+@app.get("/query")
 async def read_items(q: Annotated[list, Query()]=[]):
 	query_items = {"query": q}
 	return query_items
@@ -135,6 +135,6 @@ async def read_items(
     return results
 
 #Form 매개변수 
-@app.post("/login/")
+@app.post("/login")
 async def login(username: Annotated[str, Form()], password: Annotated[str, Form()]):
     return {"username": username}

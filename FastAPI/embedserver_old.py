@@ -281,7 +281,7 @@ app = FastAPI() #FastAPI 인스턴스 생성
 #=========================================================
 @app.get("/")
 async def root():
-    return {"서버": "문서임베딩AI API 서버", 
+    return {"서버": "문장 임베딩 AI 모델", 
             "*host":HOST, 
             "*port":PORT, 
             "*임베딩모델":{"모델경로": MODEL_PATH, "출력차원": OUT_DIMENSION,"임베딩방식": EMBEDDING_METHOD, "출력벡터타입": FLOAT_TYPE},
@@ -292,23 +292,43 @@ async def root():
             }
 
 #=========================================================
-# GET : 입력 문장 리스트에 대한 임베딩값 리턴(비동기)
-# => http://127.0.0.1:9000/vectors?sentence="오늘은 비가 온다"&sentence="오늘은 날씨가 좋다"
-# - in : 문장 리스트 (예: ['오늘 날씨가 좋다', '내일은 비가 온다'] )
+# 입력 문장 리스트에 대한 임베딩값 리턴
+# => http://127.0.0.1:9000/embed/
+# - in : 문장 리스트 (예: ['오늘 날씨가 좋다', '내일은 비가 온다'] ), uid(문서 고유id)
 # - out: 문장 리스트에 대한 임베딩 벡터
 #=========================================================
-@app.get("/vectors")
-async def get_vector(sentences: List[str] = Query(..., description="sentences", min_length=1, max_length=255, alias="sentence")):
+class EmbedIn(BaseModel):
+    uid: str            # uid(문서 고유id)->rfilename
+    sentences: list      # 문장리스트  
+
+@app.post("/embed")
+def embed(Data:EmbedIn):
+    sentences = Data.sentences
+    uid = Data.uid
+    #return {"uid":uid, "sentences":sentences}
+    embeddings = embedding(sentences)
+
+    # json 전송하기위해, 각 변수에 ,(쉼표) 를 추가해서 문자열로 만듬.
+    embeddings_str = [",".join(str(elem) for elem in sublist) for sublist in embeddings]
+    return {"uid": uid, "embed": embeddings_str}
+
+#========================================================
+# async def로 지정하면, embedding 비동기 함수도 동기화로 wrapping하여 실행해야 한다.
+@app.post("/async-embed")
+async def embed(data: EmbedIn, background_tasks: BackgroundTasks):
+    sentences = data.sentences
+    uid = data.uid
 
     # embedding 함수를 async 함수로 wrapping한 async_embedding 함수를 실행합니다.
     embeddings = await async_embedding(sentences)
 
     embeddings_str = [",".join(str(elem) for elem in sublist) for sublist in embeddings]
-    return {"vectors": embeddings_str}
+    return {"uid": uid, "embed": embeddings_str}
+#========================================================
 
 #=========================================================
-# POST: 입력 문장 리스트에 대한 임베딩값 구하고 ElasticSearch(이하:ES) 추가.(동기)
-# => http://127.0.0.1:9000/embed/{인덱스명}
+# 입력 문장 리스트에 대한 임베딩값 구하고 ElasticSearch(이하:ES) 추가.
+# => http://127.0.0.1:9000/embed/es?esindex=myindex
 # - in : docs: 문서 (예: ['오늘 날씨가 좋다', '내일은 비가 온다'] ), titles: 문서제목, uids(문서 고유id)
 # - in : esindexname : ES 인덱스명, createindex=True(True=무조건 인덱스생성. 만약 있으면 삭제후 생성/ Flase=있으면 추가, 없으면 생성)
 # - out: ES 성공 실패??
@@ -318,7 +338,7 @@ class DocsEmbedIn(BaseModel):
     titles: list     # 제목->rfiletext
     documents: list  # 문서내용  
 
-@app.post("/es/{esindex}/docs")
+@app.post("/embed/es")
 def embed_documents(esindex:str, Data:DocsEmbedIn, createindex:bool=False):
     documents = Data.documents
     uids = Data.uids
@@ -367,17 +387,18 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, createindex:bool=False):
     # 5. index 처리
     index_data(es, df_contexts, doc_sentences)
     LOGGER.info(f'/embed/es 5.index_data success\nend-----\n')
+            
 #=========================================================
 
 #=========================================================
-# GET : ES/{인덱스명}/docs 검색(비동기)
-# => http://127.0.0.1:9000/es/{인덱스}/docs?query=쿼리문장&search_size=5
+# ES 검색(GET)
+# => http://127.0.0.1:9000/search/test3?query=쿼리문장&search_size=5
 # - in : query=쿼리할 문장, search_size=검색계수(몇개까지 검색 출력 할지)
 # - out: 검색 결과(스코어, rfile_name, rfile_text)
 #=========================================================
 
-@app.get("/es/{esindex}/docs")
-async def search_documents(esindex:str, 
+@app.get("/search/{esindex}")
+def search_documents(esindex:str, 
                      query: str = Query(..., min_length=1),     # ... 는 필수 입력 이고, min_length=1은 최소값이 1임. 작으면 422 Unprocessable Entity 응답반환됨
                      search_size: int = Query(..., gt=0)):      # ... 는 필수 입력 이고, gt=0은 0보다 커야 한다. 작으면 422 Unprocessable Entity 응답반환됨
        
@@ -399,9 +420,106 @@ async def search_documents(esindex:str,
     LOGGER.info(f'\nget /search/ start-----\nquery:{query}, search_size:{search_size}')
     
     # es로 임베딩 쿼리 실행
+    q, des_rfilename, des_rfiletext, des_bi_scores = es_embed_query(esindex, query, search_size)
+    
+    return {"query":q, "rfilename": des_rfilename, "rfiletext": des_rfiletext, "scores": des_bi_scores}
+
+#========================================================
+# 비동기 get searh 함수 
+# => async def 비동기로 쿼리 할때 내부에 함수가 비동기 함수가 아니면, blocking되므로, 비동기 함수를 호출해야 함. 
+@app.get("/async-search/{esindex}")
+async def search_documents(esindex:str, 
+                     query: str = Query(..., min_length=1),     # ... 는 필수 입력 이고, min_length=1은 최소값이 1임. 작으면 422 Unprocessable Entity 응답반환됨
+                     search_size: int = Query(..., gt=0)):      # ... 는 필수 입력 이고, gt=0은 0보다 커야 한다. 작으면 422 Unprocessable Entity 응답반환됨
+       
+    query = query.strip()
+    
+    # 인자 검사
+    if not query:
+        LOGGER.error(f'/async-search query is empty')
+        raise HTTPException(status_code=404, detail="query is empty", headers={"X-Error": "query is empty"},)
+  
+    if search_size < 1:
+        LOGGER.error(f'/sasync-search search_size < 1')
+        raise HTTPException(status_code=404, detail="search_size < 1", headers={"X-Error": "search_size < 1"},)
+        
+    if not esindex:
+        LOGGER.error(f'/async-search esindex not found')
+        raise HTTPException(status_code=404, detail="esindex not found", headers={"X-Error": "esindex is empty"},)
+        
+    LOGGER.info(f'\nget /async-search start-----\nquery:{query}, search_size:{search_size}')
+    
+    # 비동기 es search 함수 호출
     q, des_rfilename, des_rfiletext, des_bi_scores = await async_es_embed_query(esindex, query, search_size)
     
     return {"query":q, "rfilename": des_rfilename, "rfiletext": des_rfiletext, "scores": des_bi_scores}
+#========================================================
+
+#=========================================================
+# ES 검색(POST)
+# => http://127.0.0.1:9000/search/?esindex=test3
+# - in : query=쿼리할 문장, search_size=검색계수(몇개까지 검색 출력 할지)
+# - out: 검색 결과(스코어, rfile_name, rfile_text)
+#=========================================================
+class QueryIn(BaseModel):
+    query: str              # 쿼리 문장  
+    search_size: int        # 검색 계수
+
+@app.post("/search")
+def search_documents(esindex:str, Data:QueryIn):
+
+    query = Data.query.strip()
+    search_size = Data.search_size
+
+    # 인자 검사        
+    if not query:
+        LOGGER.error(f'/search query is empty')
+        raise HTTPException(status_code=404, detail="query is empty", headers={"X-Error": "query is empty"},)
+  
+    if search_size < 1:
+        LOGGER.error(f'/search search_size < 1')
+        raise HTTPException(status_code=404, detail="search_size < 1", headers={"X-Error": "search_size < 1"},)
+    
+    if not esindex:
+        LOGGER.error(f'/search esindex not found')
+        raise HTTPException(status_code=404, detail="esindex not found", headers={"X-Error": "esindex is empty"},)
+
+    LOGGER.info(f'\npost /search start-----\nquery:{query}, search_size:{search_size}')
+
+    # es로 임베딩 쿼리 실행
+    q, des_rfilename, des_rfiletext, des_bi_scores = es_embed_query(esindex, query, search_size)
+    
+    return {"query":q, "rfilename": des_rfilename, "rfiletext": des_rfiletext, "scores": des_bi_scores}
+
+#=========================================================
+# 비동기 put search  
+# => async def 비동기로 쿼리 할때 내부에 함수가 비동기 함수가 아니면, blocking되므로, 비동기 함수를 호출해야 함. 
+@app.post("/async-search")
+async def search_documents(esindex:str, Data:QueryIn):
+
+    query = Data.query.strip()
+    search_size = Data.search_size
+
+    # 인자 검사
+    if not query:
+        LOGGER.error(f'/search/async/ query is empty')
+        raise HTTPException(status_code=404, detail="query is empty", headers={"X-Error": "query is empty"},)
+  
+    if search_size < 1:
+        LOGGER.error(f'/search/async/ search_size < 1')
+        raise HTTPException(status_code=404, detail="search_size < 1", headers={"X-Error": "search_size < 1"},)
+    
+    if not esindex:
+        LOGGER.error(f'/search/async/ esindex not found')
+        raise HTTPException(status_code=404, detail="esindex not found", headers={"X-Error": "esindex is empty"},)
+
+    LOGGER.info(f'\npost /search/async/ start-----\nquery:{query}, search_size:{search_size}')
+
+     # 비동기 es search 함수 호출
+    q, des_rfilename, des_rfiletext, des_bi_scores = await async_es_embed_query(esindex, query, search_size)
+    
+    return {"query":q, "rfilename": des_rfilename, "rfiletext": des_rfiletext, "scores": des_bi_scores}
+  
 #=========================================================
 
 #=========================================================
