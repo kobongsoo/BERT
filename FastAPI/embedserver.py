@@ -42,7 +42,7 @@ from myutils import bi_encoder, dense_model, onnx_model, onnx_embed_text
 from myutils import seed_everything, GPU_info, mlogging, getListOfFiles, get_options
 from myutils import remove_reverse, clean_text, make_query_script, create_index, mpower_index_batch
 from myutils import embed_text, clustering_embedding, kmedoids_clustering_embedding
-from myutils import split_sentences, split_sentences1, make_docs_df, get_sentences
+from myutils import split_sentences1, make_docs_df, get_sentences
 
 # FutureWarning 제거
 import warnings
@@ -220,6 +220,8 @@ def es_embed_query(esindex:str, query:str, search_size:int):
     
     query = query.strip()
     
+    #print(f'search_size: {search_size}')
+    
     # 1.elasticsearch 접속
     es = Elasticsearch(ES_URL)   
     
@@ -233,7 +235,7 @@ def es_embed_query(esindex:str, query:str, search_size:int):
     if error != 'success':
         LOGGER.error(f'[es_embed_query] {error}')
         return error, None
-    
+        
     #time.sleep(20)
     
     # LOGGER.info(f'es.info:{es.info()}')
@@ -364,7 +366,7 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, createindex:bool=False):
     global ES_INDEX_NAME
     ES_INDEX_NAME = esindex
     
-    LOGGER.info(f'/embed/es start-----\nES_URL:{ES_URL}, esindex:{esindex}, createindex:{createindex}, uids:{uids}, titles:{titles}')
+    LOGGER.info(f'/es/{esindex}/docs start-----\nES_URL:{ES_URL}, esindex:{esindex}, createindex:{createindex}, uids:{uids}, titles:{titles}')
 
     # 인자 검사
     if len(documents) < 1:
