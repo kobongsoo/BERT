@@ -53,8 +53,8 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # FastAPI 서버 관련 
 SETTINGS_FILE = './data/settings.yaml'  # 설정파일 경로 (yaml 파일)
-HOST = '0.0.0.0'
-PORT = '0'
+HOST = None
+PORT = None
 
 # 모델 관련
 MODEL_PATH = None
@@ -178,6 +178,7 @@ def index_data(es, df_contexts, doc_sentences:list):
             # 문장들에 대해 임베딩 값을 구하고 평균 구함.
             arr = np.array(embeddings).astype(FLOAT_TYPE)
             emb = arr.mean(axis=0).reshape(1,-1) #(128,) 배열을 (1,128) 형태로 만들기 위해 reshape 해줌
+            NUM_CLUSTERS = 1  # 평균값일때는 NUM_CLUSTERS=1로 해줌.
         # 2=문장임베딩
         else:
             emb = embeddings
@@ -215,18 +216,23 @@ def index_data(es, df_contexts, doc_sentences:list):
 #---------------------------------------------------------------------------
 def es_embed_query(esindex:str, query:str, search_size:int):
     
+    error: str = 'success'
+    
     query = query.strip()
     
-    if not query:
-        LOGGER.error(f'[es_embed_query] query is empty')
-        return
-    
-    if search_size < 1:
-        LOGGER.error(f'[es_embed_query] search_size < 1')
-        return
-    
     # 1.elasticsearch 접속
-    es = Elasticsearch(ES_URL)
+    es = Elasticsearch(ES_URL)   
+    
+    if not query:
+        error = 'query is empty'
+    elif search_size < 1:
+        error = 'search_size < 1'
+    elif not es.indices.exists(esindex):
+         error = 'esindex is not exist'
+    
+    if error != 'success':
+        LOGGER.error(f'[es_embed_query] {error}')
+        return error, None
     
     #time.sleep(20)
     
@@ -284,7 +290,7 @@ def es_embed_query(esindex:str, query:str, search_size:int):
                 
     LOGGER.info(f'[es_embed_query] query:{query} docs:{docs}')
 
-    return query, docs # 쿼리,  rfilename, rfiletext, 스코어 리턴 
+    return error, docs # 쿼리,  rfilename, rfiletext, 스코어 리턴 
 
 #---------------------------------------------------------------------------
 # 비동기 ES 임베딩 벡터 쿼리 실행 함수
@@ -308,7 +314,7 @@ async def root():
             "*port":PORT, 
             "*임베딩모델":{"모델경로": MODEL_PATH, "출력차원": OUT_DIMENSION,"임베딩방식": EMBEDDING_METHOD, "출력벡터타입": FLOAT_TYPE},
             "*ES서버":{"URL":ES_URL, "인덱스파일": ES_INDEX_FILE, "인덱스명": ES_INDEX_NAME, "배치크기": BATCH_SIZE},
-            "*클러스터링":{"방식": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력": OUTMODE},
+            "*클러스터링":{"클러스터링 가변": NUM_CLUSTERS_VARIABLE, "방식": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력": OUTMODE},
             "*문장전처리":{"제거문장길이": REMOVE_SENTENCE_LEN, "중복제거": REMOVE_DUPLICATION},
             "*검색":{"검색수": SEARCH_SIZE, "*검색비교벡터값": VECTOR_MAG}
             }
@@ -323,8 +329,14 @@ async def root():
 async def get_vector(sentences: List[str] = Query(..., description="sentences", min_length=1, max_length=255, alias="sentence")):
 
     # embedding 함수를 async 함수로 wrapping한 async_embedding 함수를 실행합니다.
-    embeddings = await async_embedding(sentences)
-
+    try:
+        embeddings = await async_embedding(sentences)
+    except Exception as e:
+        error = f'async_embedding fail({ES_URL})'
+        msg = f'{error}=>{e}'
+        LOGGER.error(f'/vectors {msg}')
+        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
+        
     embeddings_str = [",".join(str(elem) for elem in sublist) for sublist in embeddings]
     return {"vectors": embeddings_str}
 
@@ -342,53 +354,83 @@ class DocsEmbedIn(BaseModel):
 
 @app.post("/es/{esindex}/docs")
 def embed_documents(esindex:str, Data:DocsEmbedIn, createindex:bool=False):
+    error:str = 'success'
+        
     documents = Data.documents
     uids = Data.uids
     titles = Data.titles
+    
+    # 전역변수로 ES 인덱스명 저장해 둠.
+    global ES_INDEX_NAME
+    ES_INDEX_NAME = esindex
     
     LOGGER.info(f'/embed/es start-----\nES_URL:{ES_URL}, esindex:{esindex}, createindex:{createindex}, uids:{uids}, titles:{titles}')
 
     # 인자 검사
     if len(documents) < 1:
-        LOGGER.error(f'/embed/es documents len < 1')
-        raise HTTPException(status_code=404, detail="documents len < 1", headers={"X-Error": "documents len < 1"},)
-
-    if len(uids) < 1:
-        LOGGER.error(f'/embed/es uid not found')
-        raise HTTPException(status_code=404, detail="uid not found", headers={"X-Error": "uid is empty"},)
+        error = 'documents len < 1'
+    elif len(uids) < 1:
+        error = 'uid not found'
+    elif len(titles) < 1:
+        error = 'titles not found'
+    elif not esindex:
+        error = 'esindex not found'
+     
+    if error != 'success':
+        LOGGER.error(f'/embed/es {error}')
+        raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
     
-    if len(titles) < 1:
-        LOGGER.error(f'/embed/es titles not found')
-        raise HTTPException(status_code=404, detail="titles not found", headers={"X-Error": "titles is empty"},)
-    
-    if not esindex:
-        LOGGER.error(f'/embed/es esindex not found')
-        raise HTTPException(status_code=404, detail="esindex not found", headers={"X-Error": "esindex is empty"},)
-    
-    # 전역변수로 ES 인덱스명 저장해 둠.
-    global ES_INDEX_NAME
-    ES_INDEX_NAME = esindex
-
-    # 1. 추출된 문서들 불러와서 df로 만듬
-    df_contexts = make_docs_df(documents, titles, uids)
-    LOGGER.info(f'/embed/es 1.load_docs success')
-    
-    # 2. 문장 추출
-    doc_sentences = get_sentences(df=df_contexts, remove_sentnece_len=REMOVE_SENTENCE_LEN, remove_duplication=REMOVE_DUPLICATION)
-    LOGGER.info(f'/embed/es 2.get_sentences success=>len(doc_sentences):{len(doc_sentences)}')
-
-    # 3.elasticsearch 접속
-    es = Elasticsearch(ES_URL)
-    LOGGER.info(f'/embed/es 3.Elasticsearch connect success')
+    # 1.elasticsearch 접속
+    try:
+        es = Elasticsearch(ES_URL)
+        LOGGER.info(f'/embed/es 1.Elasticsearch connect success=>{ES_URL}')
+    except Exception as e:
+        error = f'Elasticsearch connect fail({ES_URL})'
+        msg = f'{error}=>{e}'
+        LOGGER.error(f'/embed/es {msg}')
+        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
+        
     #LOGGER.info(f'es.info:{es.info()}')
 
+    # 2. 추출된 문서들 불러와서 df로 만듬
+    try:                                                                
+        df_contexts = make_docs_df(documents, titles, uids)
+        LOGGER.info(f'/embed/es 2.load_docs success')
+    except Exception as e:
+        error = f'load docs fail'
+        msg = f'{error}=>{e}'
+        LOGGER.error(f'/embed/es {msg}')
+        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
+                                                                    
+    # 3. 문장 추출
+    try:
+        doc_sentences = get_sentences(df=df_contexts, remove_sentnece_len=REMOVE_SENTENCE_LEN, remove_duplication=REMOVE_DUPLICATION)
+        LOGGER.info(f'/embed/es 3.get_sentences success=>len(doc_sentences):{len(doc_sentences)}')
+    except Exception as e:
+        error = f'get_sentences fail'
+        msg = f'{error}=>{e}'
+        LOGGER.error(f'/embed/es {msg}')
+        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
+   
     # 4.ES 인덱스 생성
-    create_index(es, ES_INDEX_FILE, ES_INDEX_NAME, createindex)
-    LOGGER.info(f'/embed/es 4.create_index success=>index_file:{ES_INDEX_FILE}, index_name:{ES_INDEX_NAME}')
+    try:
+        create_index(es, ES_INDEX_FILE, ES_INDEX_NAME, createindex)
+        LOGGER.info(f'/embed/es 4.create_index success=>index_file:{ES_INDEX_FILE}, index_name:{ES_INDEX_NAME}')
+    except Exception as e:
+        error = f'create_index fail'
+        msg = f'{error}=>{e}'
+        LOGGER.error(f'/embed/es {msg}')
+        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
 
     # 5. index 처리
-    index_data(es, df_contexts, doc_sentences)
-    LOGGER.info(f'/embed/es 5.index_data success\nend-----\n')
+    try:
+        index_data(es, df_contexts, doc_sentences)
+        LOGGER.info(f'/embed/es 5.index_data success\nend-----\n')
+    except Exception as e:
+        error = f'index_data fail'
+        msg = f'{error}=>{e}'
+        LOGGER.error(f'/embed/es {msg}')
+        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
 #=========================================================
 
 #=========================================================
@@ -402,28 +444,24 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, createindex:bool=False):
 async def search_documents(esindex:str, 
                      query: str = Query(..., min_length=1),     # ... 는 필수 입력 이고, min_length=1은 최소값이 1임. 작으면 422 Unprocessable Entity 응답반환됨
                      search_size: int = Query(..., gt=0)):      # ... 는 필수 입력 이고, gt=0은 0보다 커야 한다. 작으면 422 Unprocessable Entity 응답반환됨
-       
+      
+    error:str = 'success'
     query = query.strip()
+    LOGGER.info(f'\nget /es/{esindex}/docs start-----\nquery:{query}, search_size:{search_size}')
     
-    # 인자 검사
-    if not query:
-        LOGGER.error(f'/search/ query is empty')
-        raise HTTPException(status_code=404, detail="query is empty", headers={"X-Error": "query is empty"},)
-  
-    if search_size < 1:
-        LOGGER.error(f'/search/ search_size < 1')
-        raise HTTPException(status_code=404, detail="search_size < 1", headers={"X-Error": "search_size < 1"},)
-        
-    if not esindex:
-        LOGGER.error(f'/search/ esindex not found')
-        raise HTTPException(status_code=404, detail="esindex not found", headers={"X-Error": "esindex is empty"},)
-        
-    LOGGER.info(f'\nget /search/ start-----\nquery:{query}, search_size:{search_size}')
+    try:
+        # es로 임베딩 쿼리 실행
+        error, docs = await async_es_embed_query(esindex, query, search_size)
+    except Exception as e:
+        error = f'async_es_embed_query fail'
+        msg = f'{error}=>{e}'
+        LOGGER.error(f'/es/{esindex}/docs {msg}')
+        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
     
-    # es로 임베딩 쿼리 실행
-    q, docs = await async_es_embed_query(esindex, query, search_size)
-    
-    return {"query":q, "docs": docs}
+    if error != 'success':
+        raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
+            
+    return {"query":query, "docs": docs}
 #=========================================================
 
 #=========================================================
@@ -508,8 +546,13 @@ def main():
     # => bi_encoder1 = SentenceTransformer(bi_encoder_path) # 오히려 성능 떨어짐. 이유는 do_lower_case나, max_seq_len등 세부 설정이 안되므로.
     #------------------------------------
     global BI_ENCODER1, WORD_EMBDDING_MODEL1
-    WORD_EMBDDING_MODEL1, BI_ENCODER1 = bi_encoder(model_path=MODEL_PATH, max_seq_len=512, do_lower_case=True, 
-                                                   pooling_mode=POLLING_MODE, out_dimension=OUT_DIMENSION, device=DEVICE)
+    
+    try:
+        WORD_EMBDDING_MODEL1, BI_ENCODER1 = bi_encoder(model_path=MODEL_PATH, max_seq_len=512, do_lower_case=True, 
+                                                       pooling_mode=POLLING_MODE, out_dimension=OUT_DIMENSION, device=DEVICE)
+    except Exception as e:
+        LOGGER.error(f'bi_encoder load fail({MODEL_PATH})=>{e}')
+        return
     
     LOGGER.info(f'\n---bi_encoder---------------------------')
     LOGGER.info(BI_ENCODER1)
