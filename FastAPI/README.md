@@ -55,5 +55,6 @@ uvicorn src.app:app --port 8000 --workers 3
 |[model_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/model_test.ipynb)|ES 검색 테스트 예제||
 |[yaml_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/yaml_test.py)|yaml 파일 로딩 예제||
 |[embedserver](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver.py)| **ES 연동한 문서클러스터링 임베딩 및 검색 예제**|설정값(환경에 맞게 수정 필요): data/settings.yaml<br>sh 실행스크립트: embedserver.sh|
+|[embedserver_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver_test.ipynb)| 위서버와 RESTFul API를 이용한 Client 검색 및 임베딩 예제|embedserver 실행 필요|
 
 
