@@ -11,17 +11,30 @@ import time
 
 #---------------------------------------------------------------------------
 # text 추출된 문서파일들을 불러와서 datafframe 형태로 만듬
-# -in: documents = 문서내용, titles=문서제목, myuids=uid
+# -in: documents = 문서내용 혹은 파일경로(infilepath==True), titles=문서제목, myuids=uid ,infilepath=True이면, documnets에는 filepath가 입력됨.
 # -out: df_contexts
 #---------------------------------------------------------------------------
-def make_docs_df(mydocuments:list, mytitles:list, myuids:list):
+def make_docs_df(mydocuments:list, mytitles:list, myuids:list, infilepath:bool=False):
 
     contexts = []
     titles = []
     contextids = []
-
+    documents = []
+    
+    # 파일경로가 입력되면 파일을 읽어옴.
+    if infilepath == True:
+        file_paths = mydocuments
+        for idx, file_path in enumerate(file_paths):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = f.read()
+                documents.append(data)
+    else:
+        documents = mydocuments
+        
+    assert len(documents) == len(mytitles) and len(mytitles) == len(myuids), f"not match documents, mytitles, myuids=>documents:{len(documents)}, title:{len(mytitles)}, myuids:{len(myuids)}"
+        
     # TEXT 추출된 문서들을 읽어오면서 제목(title), 내용(contexts) 등을 저장해 둠.
-    for document, title, uid in zip(mydocuments, mytitles, myuids):
+    for document, title, uid in zip(documents, mytitles, myuids):
 
         #.PAGE:1 패턴을 가지는 문장은 제거함.
         pattern = r"\.\.PAGE:\d+\s?"

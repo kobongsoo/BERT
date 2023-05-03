@@ -133,6 +133,8 @@ def index_data(es, df_contexts, doc_sentences:list):
     else:
         dimension = 128
 
+    clustering_num = NUM_CLUSTERS
+        
     docs = []
     count = 0
     for i, sentences in enumerate(tqdm(doc_sentences)):
@@ -164,25 +166,29 @@ def index_data(es, df_contexts, doc_sentences:list):
             elif embeddings_len > 100:
                 multiple = 2 # 2배
         #----------------------------------------------------------------
-
+        
         # 0=문장클러스터링 임베딩
         if EMBEDDING_METHOD == 0:
             if CLUSTRING_MODE == "kmeans":
                 # 각 문단에 분할한 문장들의 임베딩 값을 입력해서 클러스터링 하고 평균값을 구함.
                 # [bong][2023-04-28] 문장이 많은 경우에는 클러스터링 계수를 2,3배수로 함
-                emb = clustering_embedding(embeddings = embeddings, outmode=OUTMODE, num_clusters=(NUM_CLUSTERS*multiple), seed=SEED).astype(FLOAT_TYPE) 
+                emb = clustering_embedding(embeddings = embeddings, outmode=OUTMODE, num_clusters=(clustering_num*multiple), seed=SEED).astype(FLOAT_TYPE) 
             else:
-                emb = kmedoids_clustering_embedding(embeddings = embeddings, outmode=OUTMODE, num_clusters=(NUM_CLUSTERS*multiple), seed=SEED).astype(FLOAT_TYPE) 
+                emb = kmedoids_clustering_embedding(embeddings = embeddings, outmode=OUTMODE, num_clusters=(clustering_num*multiple), seed=SEED).astype(FLOAT_TYPE) 
+            
         # 1= 문장평균임베딩
         elif EMBEDDING_METHOD == 1:
             # 문장들에 대해 임베딩 값을 구하고 평균 구함.
             arr = np.array(embeddings).astype(FLOAT_TYPE)
             emb = arr.mean(axis=0).reshape(1,-1) #(128,) 배열을 (1,128) 형태로 만들기 위해 reshape 해줌
-            NUM_CLUSTERS = 1  # 평균값일때는 NUM_CLUSTERS=1로 해줌.
+            clustering_num = 1  # 평균값일때는 NUM_CLUSTERS=1로 해줌.
         # 2=문장임베딩
         else:
             emb = embeddings
 
+        LOGGER.info(f'*[index_data] cluster emb.shape: {emb.shape}')
+        print()
+        
         #--------------------------------------------------- 
         # docs에 저장 
         #  [bong][2023-04-28] 여러개 벡터인 경우에는 벡터를 10개씩 분리해서 여러개 docs를 만듬.
@@ -191,17 +197,17 @@ def index_data(es, df_contexts, doc_sentences:list):
             doc = {}                                #dict 선언
             doc['rfile_name'] = rfile_names[i]      # contextid 담음
             doc['rfile_text'] = rfile_texts[i]      # text 담음.
-            doc['dense_vectors'] = emb[j * NUM_CLUSTERS : (j+1) * NUM_CLUSTERS] # emb 담음.
+            doc['dense_vectors'] = emb[j * clustering_num : (j+1) * clustering_num] # emb 담음.
             docs.append(doc)
         #---------------------------------------------------    
 
             if count % BATCH_SIZE == 0:
-                mpower_index_batch(es, ES_INDEX_NAME, docs, vector_len=NUM_CLUSTERS, dim_size=dimension)
+                mpower_index_batch(es, ES_INDEX_NAME, docs, vector_len=clustering_num, dim_size=dimension)
                 docs = []
                 LOGGER.info("[index_data](1) Indexed {} documents.".format(count))
 
     if docs:
-        mpower_index_batch(es, ES_INDEX_NAME, docs, vector_len=NUM_CLUSTERS, dim_size=dimension)
+        mpower_index_batch(es, ES_INDEX_NAME, docs, vector_len=clustering_num, dim_size=dimension)
         LOGGER.info("[index_data](2) Indexed {} documents.".format(count))   
 
     es.indices.refresh(index=ES_INDEX_NAME)
@@ -314,11 +320,11 @@ async def root():
     return {"서버": "문서임베딩AI API 서버", 
             "*host":HOST, 
             "*port":PORT, 
-            "*임베딩모델":{"모델경로": MODEL_PATH, "출력차원": OUT_DIMENSION,"임베딩방식": EMBEDDING_METHOD, "출력벡터타입": FLOAT_TYPE},
-            "*ES서버":{"URL":ES_URL, "인덱스파일": ES_INDEX_FILE, "인덱스명": ES_INDEX_NAME, "배치크기": BATCH_SIZE},
-            "*클러스터링":{"클러스터링 가변": NUM_CLUSTERS_VARIABLE, "방식": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력": OUTMODE},
-            "*문장전처리":{"제거문장길이": REMOVE_SENTENCE_LEN, "중복제거": REMOVE_DUPLICATION},
-            "*검색":{"검색수": SEARCH_SIZE, "*검색비교벡터값": VECTOR_MAG}
+            "*임베딩모델":{"모델경로": MODEL_PATH, "폴링방식((mean=평균값, cls=문장대표값, max=최대값)": POLLING_MODE, "출력차원(128, 0=768)": OUT_DIMENSION,"임베딩방식(0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)": EMBEDDING_METHOD, "출력벡터타입('float32', 'float16')": FLOAT_TYPE},
+            "*ES서버":{"URL":ES_URL, "인덱스파일경로": ES_INDEX_FILE, "배치크기": BATCH_SIZE},
+            "*클러스터링":{"클러스터링 가변(True=문장계수에 따라 클러스터링계수를 다르게함)": NUM_CLUSTERS_VARIABLE, "방식(kmeans=k-평균 군집 분석, kmedoids=k-대표값 군집 분석)": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력(mean=평균벡터 출력, max=최대값벡터출력)": OUTMODE},
+            "*문장전처리":{"제거문장길이(설정길이보다 작은 문장은 제거됨)": REMOVE_SENTENCE_LEN, "중복문장제거(True=중복된문장은 제거됨)": REMOVE_DUPLICATION},
+            "*검색":{"*검색비교벡터값": VECTOR_MAG}
             }
 
 #=========================================================
@@ -343,19 +349,20 @@ async def get_vector(sentences: List[str] = Query(..., description="sentences", 
     return {"vectors": embeddings_str}
 
 #=========================================================
-# POST: 입력 문장 리스트에 대한 임베딩값 구하고 ElasticSearch(이하:ES) 추가.(동기)
-# => http://127.0.0.1:9000/embed/{인덱스명}
+# POST: 입력 docs(문서)에 대한 임베딩값 구하고 ElasticSearch(이하:ES) 추가.(동기)
+# => http://127.0.0.1:9000/embed/{인덱스명}/docs
 # - in : docs: 문서 (예: ['오늘 날씨가 좋다', '내일은 비가 온다'] ), titles: 문서제목, uids(문서 고유id)
 # - in : esindexname : ES 인덱스명, createindex=True(True=무조건 인덱스생성. 만약 있으면 삭제후 생성/ Flase=있으면 추가, 없으면 생성)
+# - in : infilepath : True이면 documnets에 filepath 입력되고, 이때는 file를 로딩함. False이면 documents로는 문서내용이 들어옴.
 # - out: ES 성공 실패??
 #=========================================================
 class DocsEmbedIn(BaseModel):
     uids: list       # uid(문서 고유id)->rfilename
     titles: list     # 제목->rfiletext
-    documents: list  # 문서내용  
+    documents: list  # 문서내용 혹은 file 경로 (infilepath=True이면, filepath 입력됨)
 
 @app.post("/es/{esindex}/docs")
-def embed_documents(esindex:str, Data:DocsEmbedIn, createindex:bool=False):
+def embed_documents(esindex:str, Data:DocsEmbedIn, infilepath:bool=False, createindex:bool=False):
     error:str = 'success'
         
     documents = Data.documents
@@ -396,7 +403,7 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, createindex:bool=False):
 
     # 2. 추출된 문서들 불러와서 df로 만듬
     try:                                                                
-        df_contexts = make_docs_df(documents, titles, uids)
+        df_contexts = make_docs_df(documents, titles, uids, infilepath)
         LOGGER.info(f'/embed/es 2.load_docs success')
     except Exception as e:
         error = f'load docs fail'
@@ -480,7 +487,7 @@ def main():
       
     args = parser.parse_args()
 
-    global OUT_DIMENSION, EMBEDDING_METHOD, FLOAT_TYPE, ES_INDEX_FILE, ES_URL
+    global OUT_DIMENSION, EMBEDDING_METHOD, FLOAT_TYPE, ES_INDEX_FILE, ES_URL, POLLING_MODE
     global BATCH_SIZE, CLUSTRING_MODE, NUM_CLUSTERS, OUTMODE, REMOVE_SENTENCE_LEN
     global LOGGER, DEVICE, REMOVE_DUPLICATION, VECTOR_MAG, HOST, PORT, MODEL_PATH, NUM_CLUSTERS_VARIABLE
 
