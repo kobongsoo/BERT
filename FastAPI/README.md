@@ -1,6 +1,11 @@
 # FastAPI
 FastAPI는 현대적이고, 빠르며(고성능), 파이썬 표준 타입 힌트에 기초한 Python3.6+의 API를 빌드하기 위한 웹 프레임워크입니다.
+<br>**ASGI(Ansynchronous Server Gateway Interface: 비동기 서버 게이트웨이 인터페이스)** 지원
 <br>출처 : https://fastapi.tiangolo.com/ko/
+
+- CGI : Common Gateway Interface , 서버<->클라이언트간 요청을 처리하는 공통의 표준 인터페이스, 단점은 프로세스를 다시 실행해야 함.
+- WCGI : Web Server Gateway Interface, CGI 단점을 보안하기 위해 요청을 Callable object, 함수, 객체등으로 처리함, 단 비동기 처리에 단점이 있음.
+- ASGI : Asynchronous Server Gateway Interface, 비동기식으로 요청을 처리하는 CGI, 대규모 웹 에플리케이션 개발에 적함
 
 <br>
 
