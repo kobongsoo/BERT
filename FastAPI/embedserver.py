@@ -53,49 +53,100 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # FastAPI 서버 관련 
 SETTINGS_FILE = './data/settings.yaml'  # 설정파일 경로 (yaml 파일)
-HOST = None
-PORT = None
+#------------------------------------
+# args 처리
+#------------------------------------
+parser = argparse.ArgumentParser(description='')
+parser.add_argument('-host', dest='host', help='', default='0.0.0.0')  # FastAPI 서버 바인딩 host
+parser.add_argument('-port', dest='port', help='', default=9000)       # FastAPI 서버 바인딩 port
+      
+args = parser.parse_args()
 
-# 모델 관련
-MODEL_PATH = None
-BI_ENCODER1 = 0          # bi_encoder 모델 인스턴스 
-WORD_EMBDDING_MODEL1 = 0 # bi_encoder 워드임베딩모델 인스턴스
-OUT_DIMENSION = 0      # 임베딩 모델 차원 수 (128, 0=768)
+# 설정값 settings.yaml 파일 로딩
+settings = get_options(file_path=SETTINGS_FILE)
+assert len(settings) > 2, f'load settings error!!=>len(settigs):{len(settings)}'
+    
+#------------------------------------
+# param
+#------------------------------------
+logfilepath = settings['env']['LOG_PATH']
+SEED = settings['env']['SEED']
+DEVICE = settings['env']['GPU']
+assert DEVICE=='auto' or DEVICE=='cpu', f'DEVICE setting error!!. DEVICE is auto or cpu=>DEVICE:{DEVICE}'
+    
+LOGGER = mlogging(loggername="embed-server", logfilename=logfilepath) # 로그
+seed_everything(SEED)
+if DEVICE == 'auto':
+    DEVICE = GPU_info() # GPU 혹은 CPU
+    
+LOGGER.info(f'*환경 Settings: LOG_PATH:{logfilepath}, SEED:{SEED}, DEVICE:{DEVICE}')
 
-# 임베딩 방식 (0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)
-EMBEDDING_METHOD = 0   
-FLOAT_TYPE = None   # 임베딩 벡터 float 타입('float32', 'float16')
-
-LOGGER = 0               # 로그 인스턴스
-DEVICE = None           # 디바이스 (예: 'cpu', 'cuda:0') 
-SEED = 0
+HOST = args.host 
+PORT = args.port
+LOGGER.info(f'*host:{HOST}, port:{PORT}')
+    
+# 모델 정보 로딩
+MODEL_PATH = settings['model']['MODEL_PATH']  
+POLLING_MODE = settings['model']['POLLING_MODE']   # 폴링모드*(mean, cls, max 중 1나)
+OUT_DIMENSION = settings['model']['OUT_DIMENSION'] # 임베딩 모델 차원 수 (128, 0=768)
+if OUT_DIMENSION == 768:
+    OUT_DIMENSION = 0
+LOGGER.info(f'*모델 Settings: MODEL_PATH:{MODEL_PATH}, POLLING_MODE:{POLLING_MODE}, OUT_DIMENSION:{OUT_DIMENSION}')
+    
+# 임베딩 정보 로딩
+EMBEDDING_METHOD = settings['embedding']['EMBEDDING_METHOD'] # 임베딩 방식 (0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)
+FLOAT_TYPE = settings['embedding']['FLOAT_TYPE'] # 임베딩 벡터 float 타입('float32', 'float16')
+LOGGER.info(f'*임베딩 Settings: EMBEDDING_METHOD:{EMBEDDING_METHOD}, FLOAT_TYPE:{FLOAT_TYPE}')
 
 # ES 관련 전역 변수
-ES_URL = None
-ES_INDEX_NAME = None
-ES_INDEX_FILE = None  # 인덱스 파일 경로
-BATCH_SIZE = 0  # 배치 사이즈 = 20이면 20개씩 ES에 인덱싱함.
+ES_URL = settings['es']['ES_URL']
+ES_INDEX_FILE = settings['es']['ES_INDEX_FILE'] # 인덱스 파일 경로
+BATCH_SIZE = settings['es']['BATCH_SIZE'] # 배치 사이즈 = 20이면 20개씩 ES에 인덱싱함.
+LOGGER.info(f'*ES Settings: ES_URL:{ES_URL}, ES_INDEX_FILE:{ES_INDEX_FILE}, BATCH_SIZE:{BATCH_SIZE}')
 
 # 클러스터링 전역 변수
-# 클러스트링 param
-CLUSTRING_MODE = None         # "kmeans" = k-평균 군집 분석, kmedoids =  k-대표값 군집 분석
-NUM_CLUSTERS = 0              # 클러스터링 계수 
-NUM_CLUSTERS_VARIABLE = False # True이면 문장길이에 따라 클러스터링수를 다르게 함, False이면 클러스터링 계수가 고정.
-OUTMODE = None                # 클러스터링후 출력벡터 정의(kmeans 일때 => mean=평균벡터 출력, max=최대값벡터출력 / kmedoids 일때=>mean=평균벡터, medoid=대표값벡터)
+CLUSTRING_MODE = settings['custring']['CLUSTRING_MODE'] # "kmeans" = k-평균 군집 분석, kmedoids =  k-대표값 군집 분석
+NUM_CLUSTERS = settings['custring']['NUM_CLUSTERS'] # 클러스터링 계수 
+OUTMODE = settings['custring']['OUTMODE']# 클러스터링후 출력벡터 정의(kmeans 일때 => mean=평균벡터 출력, max=최대값벡터출력 / kmedoids 일때=>mean=평균벡터, medoid=대표값벡터)
+NUM_CLUSTERS_VARIABLE = settings['custring']['NUM_CLUSTERS_VARIABLE']# True이면 문장길이에 따라 클러스터링수를 다르게 함, False이면 클러스터링 계수가 고정.
+LOGGER.info(f'*클러스터링 Settings: CLUSTRING_MODE:{CLUSTRING_MODE}, NUM_CLUSTERS:{NUM_CLUSTERS}, NUM_CLUSTERS_VARIABLE:{NUM_CLUSTERS_VARIABLE}, OUTMODE:{OUTMODE}')
 
 # 문장 전처리
-REMOVE_SENTENCE_LEN = 0     # 문장 길이가 8이하면 제거 
-REMOVE_DUPLICATION = False  # 중복된 문장 제거(*중복된 문장 제거 안할때 1%정도 정확도 좋음)
+REMOVE_SENTENCE_LEN = settings['preprocessing']['REMOVE_SENTENCE_LEN'] # 문장 길이가 8이하면 제거 
+REMOVE_DUPLICATION = settings['preprocessing']['REMOVE_DUPLICATION']# 중복된 문장 제거(*중복된 문장 제거 안할때 1%정도 정확도 좋음)
+LOGGER.info(f'*문장전처리 Settings: REMOVE_SENTENCE_LEN:{REMOVE_SENTENCE_LEN}, REMOVE_DUPLICATION:{REMOVE_DUPLICATION}')
 
 # 검색 관련
-SEARCH_SIZE = 0             # 검색 계수
-
-# ES 벡터 크기 값(임의이 값지정) =>벡터의 크기는 각 구성 요소의 제곱 합의 제곱근으로 정의된다.. 
-# 예를 들어, 벡터 [1, 2, 3]의 크기는 sqrt(1^2 + 2^2 + 3^2) 즉, 3.7416이 된다.
-# 클수록 -> 스코어는 작아짐, 작을수록 -> 스코어 커짐.
-VECTOR_MAG = 0   
+# VECTOR_MAG = ES 벡터 크기 값(임의이 값지정) =>벡터의 크기는 각 구성 요소의 제곱 합의 제곱근으로 정의된다.. 
+# 예를 들어, 벡터 [1, 2, 3]의 크기는 sqrt(1^2 + 2^2 + 3^2) 즉, 3.7416이 된다.클수록 -> 스코어는 작아짐, 작을수록 -> 스코어 커짐.
+VECTOR_MAG = settings['search']['VECTOR_MAG']
+LOGGER.info(f'*검색 Settings: VECTOR_MAG:{VECTOR_MAG}')
 #---------------------------------------------------------------------------
 
+#---------------------------------------------------------------------------
+# 임베딩 BERT 모델 로딩
+# => bi_encoder 모델 로딩, polling_mode 설정
+# => bi_encoder1 = SentenceTransformer(bi_encoder_path) # 오히려 성능 떨어짐. 이유는 do_lower_case나, max_seq_len등 세부 설정이 안되므로.
+#------------------------------------    
+#BI_ENCODER1 = 0          # bi_encoder 모델 인스턴스 
+#WORD_EMBDDING_MODEL1 = 0 # bi_encoder 워드임베딩모델 인스턴스
+
+try:
+    WORD_EMBDDING_MODEL1, BI_ENCODER1 = bi_encoder(model_path=MODEL_PATH, max_seq_len=512, do_lower_case=True, 
+                                                   pooling_mode=POLLING_MODE, out_dimension=OUT_DIMENSION, device=DEVICE)
+except Exception as e:
+    LOGGER.error(f'bi_encoder load fail({MODEL_PATH})=>{e}')
+    assert False, f'bi_encoder load fail({MODEL_PATH})=>{e}'
+    
+LOGGER.info(f'\n---bi_encoder---------------------------')
+LOGGER.info(BI_ENCODER1)
+LOGGER.info(WORD_EMBDDING_MODEL1)
+LOGGER.info(f'\n----------------------------------------')
+  
+# 모델 저장
+#output_path = "../../data11/model/kpf-sbert-128d-v1"
+#BI_ENCODER1.save(output_path)
+#---------------------------------------------------------------------------
 #---------------------------------------------------------------------------
 # 임베딩 처리 함수 
 # -in : paragrphs 문단 리스트
@@ -478,106 +529,14 @@ async def search_documents(esindex:str,
 # - 인자를 파싱. bi_encoder 모델 로딩. FastAPI서버 실행
 #=========================================================
 def main():
-    #------------------------------------
-    # args 처리
-    #------------------------------------
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('-host', dest='host', help='', default='0.0.0.0')  # FastAPI 서버 바인딩 host
-    parser.add_argument('-port', dest='port', help='', default=9000)       # FastAPI 서버 바인딩 port
-      
-    args = parser.parse_args()
-
-    global OUT_DIMENSION, EMBEDDING_METHOD, FLOAT_TYPE, ES_INDEX_FILE, ES_URL, POLLING_MODE
-    global BATCH_SIZE, CLUSTRING_MODE, NUM_CLUSTERS, OUTMODE, REMOVE_SENTENCE_LEN
-    global LOGGER, DEVICE, REMOVE_DUPLICATION, VECTOR_MAG, HOST, PORT, MODEL_PATH, NUM_CLUSTERS_VARIABLE
-
-    # 설정값 settings.yaml 파일 로딩
-    settings = get_options(file_path=SETTINGS_FILE)
-    assert len(settings) > 2, f'load settings error!!=>len(settigs):{len(settings)}'
-    
-    #------------------------------------
-    # param
-    #------------------------------------
-    logfilepath = settings['env']['LOG_PATH']
-    seed = settings['env']['SEED']
-    DEVICE = settings['env']['GPU']
-    assert DEVICE=='auto' or DEVICE=='cpu', f'DEVICE setting error!!. DEVICE is auto or cpu=>DEVICE:{DEVICE}'
-    
-    LOGGER = mlogging(loggername="embed-server", logfilename=logfilepath) # 로그
-    seed_everything(seed)
-    if DEVICE == 'auto':
-        DEVICE = GPU_info() # GPU 혹은 CPU
-    
-    LOGGER.info(f'*환경 Settings: LOG_PATH:{logfilepath}, SEED:{seed}, DEVICE:{DEVICE}')
-
-    HOST = args.host 
-    PORT = args.port
-    LOGGER.info(f'*host:{HOST}, port:{PORT}')
-    
-    # 모델 정보 로딩
-    MODEL_PATH = settings['model']['MODEL_PATH']  
-    POLLING_MODE = settings['model']['POLLING_MODE']
-    OUT_DIMENSION = settings['model']['OUT_DIMENSION']
-    if OUT_DIMENSION == 768:
-        OUT_DIMENSION = 0
-    LOGGER.info(f'*모델 Settings: MODEL_PATH:{MODEL_PATH}, POLLING_MODE:{POLLING_MODE}, OUT_DIMENSION:{OUT_DIMENSION}')
-    
-    # 임베딩 정보 로딩
-    EMBEDDING_METHOD = settings['embedding']['EMBEDDING_METHOD']
-    FLOAT_TYPE = settings['embedding']['FLOAT_TYPE']
-    LOGGER.info(f'*임베딩 Settings: EMBEDDING_METHOD:{EMBEDDING_METHOD}, FLOAT_TYPE:{FLOAT_TYPE}')
-
-    # ES 관련 전역 변수
-    ES_URL = settings['es']['ES_URL']
-    ES_INDEX_FILE = settings['es']['ES_INDEX_FILE']
-    BATCH_SIZE = settings['es']['BATCH_SIZE']
-    LOGGER.info(f'*ES Settings: ES_URL:{ES_URL}, ES_INDEX_FILE:{ES_INDEX_FILE}, BATCH_SIZE:{BATCH_SIZE}')
-
-    # 클러스터링 전역 변수
-    CLUSTRING_MODE = settings['custring']['CLUSTRING_MODE']
-    NUM_CLUSTERS = settings['custring']['NUM_CLUSTERS']
-    OUTMODE = settings['custring']['OUTMODE']
-    NUM_CLUSTERS_VARIABLE = settings['custring']['NUM_CLUSTERS_VARIABLE']
-    LOGGER.info(f'*클러스터링 Settings: CLUSTRING_MODE:{CLUSTRING_MODE}, NUM_CLUSTERS:{NUM_CLUSTERS}, NUM_CLUSTERS_VARIABLE:{NUM_CLUSTERS_VARIABLE}, OUTMODE:{OUTMODE}')
-
-    # 문장 전처리
-    REMOVE_SENTENCE_LEN = settings['preprocessing']['REMOVE_SENTENCE_LEN']
-    REMOVE_DUPLICATION = settings['preprocessing']['REMOVE_DUPLICATION']
-    LOGGER.info(f'*문장전처리 Settings: REMOVE_SENTENCE_LEN:{REMOVE_SENTENCE_LEN}, REMOVE_DUPLICATION:{REMOVE_DUPLICATION}')
-
-    # 검색 관련
-    VECTOR_MAG = settings['search']['VECTOR_MAG']
-    LOGGER.info(f'*검색 Settings: VECTOR_MAG:{VECTOR_MAG}')
-
-    #------------------------------------
-    # 임베딩 BERT 모델 로딩
-    # => bi_encoder 모델 로딩, polling_mode 설정
-    # => bi_encoder1 = SentenceTransformer(bi_encoder_path) # 오히려 성능 떨어짐. 이유는 do_lower_case나, max_seq_len등 세부 설정이 안되므로.
-    #------------------------------------
-    global BI_ENCODER1, WORD_EMBDDING_MODEL1
-    
-    try:
-        WORD_EMBDDING_MODEL1, BI_ENCODER1 = bi_encoder(model_path=MODEL_PATH, max_seq_len=512, do_lower_case=True, 
-                                                       pooling_mode=POLLING_MODE, out_dimension=OUT_DIMENSION, device=DEVICE)
-    except Exception as e:
-        LOGGER.error(f'bi_encoder load fail({MODEL_PATH})=>{e}')
-        return
-    
-    LOGGER.info(f'\n---bi_encoder---------------------------')
-    LOGGER.info(BI_ENCODER1)
-    LOGGER.info(WORD_EMBDDING_MODEL1)
-    LOGGER.info(f'\n----------------------------------------')
-    #------------------------------------
-  
-    # 모델 저장
-    #output_path = "../../data11/model/kpf-sbert-128d-v1"
-    #BI_ENCODER1.save(output_path)
 
     #------------------------------------
     # FastAPI 서버 실행 - uvicorn으로 실행.
     #------------------------------------
     print(f'embedding server start')
     print()
+    
+    #uvicorn.run("embedserver:app", host=HOST, port=PORT, workers=2)# workers=2로 지정하는 경우 => 2개의 자식프로세스 생성됨.(일반적으로 cpu계수 * 2)
     uvicorn.run(app, host=HOST, port=PORT)
 #=========================================================
 
