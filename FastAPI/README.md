@@ -18,8 +18,10 @@ pip install fastapi[all]
 실행
 - test : python.py 파일명
 - app : .py 코드에 app = FastAPI() 인스턴스 명
+- --limit-concurrency: 연결 최대 허용 수
+<br>uvicorn 옵션들 : https://www.uvicorn.org/deployment/
 ```
-uvicorn test:app --reload --host=0.0.0.0 --port=8000
+uvicorn test:app --reload --host=0.0.0.0 --port=8000 --limit-concurrency=200
 ```
 
 ### aync(비동기)
@@ -59,7 +61,8 @@ uvicorn src.app:app --port 8000 --workers 3
 |[post_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/post_test.py)| POST RestAPI 예제||
 |[model_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/model_test.ipynb)|ES 검색 테스트 예제||
 |[yaml_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/yaml_test.py)|yaml 파일 로딩 예제||
-|[embedserver](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver.py)| **ES 연동한 문서클러스터링 임베딩 및 검색 예제**|설정값(환경에 맞게 수정 필요): data/settings.yaml<br>sh 실행스크립트: embedserver.sh|
+|[embedserver](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver.py)| **ES 연동한 문서클러스터링 임베딩 및 검색 예제**|설정값(환경에 맞게 수정 필요): data/settings.yaml<br>sh 실행스크립트: embedserver.sh(python으로 실행함)|
 |[embedserver_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver_test.ipynb)| 위서버와 RESTFul API를 이용한 Client 검색 및 임베딩 예제|embedserver 실행 필요|
+|[embedserver2](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver2.py)| **ES 연동한 문서클러스터링 임베딩 및 검색 예제2**|설정값(환경에 맞게 수정 필요): data/settings.yaml<br>sh 실행스크립트: embedserver2.sh(**uvicorn 으로 실행함-좀더 옵션을 많이 설정할수 있음**)|
 
 
