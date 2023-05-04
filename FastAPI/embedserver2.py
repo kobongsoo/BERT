@@ -2,7 +2,7 @@
 # FastAPI 이용한 임베딩 서버 예제2
 # - 설치 :pip install fastapi[all]
 # - python 업데이트(옵션) : conda install -c anaconda python=3.10 (3.10이상 필요)
-# - 실행 : python model1.py 혹은 uvicorn model1:app --reload --host=0.0.0.0 --port=8000
+# - 실행 : uvicorn model1:app --host=0.0.0.0 --port=9000 --limit-concurrency=200
 # - POST 테스트 docs : IP/docs
 # - 출처 : https://fastapi.tiangolo.com/ko/
 # - elasticsearh는 7.17 설치해야 함. => pip install elasticsearch==7.17
@@ -56,11 +56,6 @@ SETTINGS_FILE = './data/settings.yaml'  # 설정파일 경로 (yaml 파일)
 #------------------------------------
 # args 처리
 #------------------------------------
-parser = argparse.ArgumentParser(description='')
-parser.add_argument('-host', dest='host', help='', default='0.0.0.0')  # FastAPI 서버 바인딩 host
-parser.add_argument('-port', dest='port', help='', default=9000)       # FastAPI 서버 바인딩 port
-      
-args = parser.parse_args()
 
 # 설정값 settings.yaml 파일 로딩
 settings = get_options(file_path=SETTINGS_FILE)
@@ -80,10 +75,6 @@ if DEVICE == 'auto':
     DEVICE = GPU_info() # GPU 혹은 CPU
     
 LOGGER.info(f'*환경 Settings: LOG_PATH:{logfilepath}, SEED:{SEED}, DEVICE:{DEVICE}')
-
-HOST = args.host 
-PORT = args.port
-LOGGER.info(f'*host:{HOST}, port:{PORT}')
     
 # 모델 정보 로딩
 MODEL_PATH = settings['model']['MODEL_PATH']  
@@ -370,8 +361,6 @@ app = FastAPI(redoc_url=None) #FastAPI 인스턴스 생성(*redoc UI 비활성�
 @app.get("/")
 async def root():
     return {"서버": "문서임베딩AI API 서버", 
-            "*host":HOST, 
-            "*port":PORT, 
             "*임베딩모델":{"모델경로": MODEL_PATH, "폴링방식((mean=평균값, cls=문장대표값, max=최대값)": POLLING_MODE, "출력차원(128, 0=768)": OUT_DIMENSION,"임베딩방식(0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)": EMBEDDING_METHOD, "출력벡터타입('float32', 'float16')": FLOAT_TYPE},
             "*ES서버":{"URL":ES_URL, "인덱스파일경로": ES_INDEX_FILE, "배치크기": BATCH_SIZE},
             "*클러스터링":{"클러스터링 가변(True=문장계수에 따라 클러스터링계수를 다르게함)": NUM_CLUSTERS_VARIABLE, "방식(kmeans=k-평균 군집 분석, kmedoids=k-대표값 군집 분석)": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력(mean=평균벡터 출력, max=최대값벡터출력)": OUTMODE},
@@ -524,27 +513,3 @@ async def search_documents(esindex:str,
             
     return {"query":query, "docs": docs}
 #=========================================================
-
-#=========================================================
-# main()
-# - 인자를 파싱. bi_encoder 모델 로딩. FastAPI서버 실행
-#=========================================================
-
-def main():
-
-    #------------------------------------
-    # FastAPI 서버 실행 - uvicorn으로 실행.
-    #------------------------------------
-    #print(f'embedding server start')
-    #print()
-    
-    # workers=2로 지정하는 경우 => 2개의 자식프로세스 생성됨.(일반적으로 cpu계수 * 2)
-    # limit-concurrency=1000 : 최대 동시 연결 수, HTTP 503을 발행하기 전에 허용할 동시 연결수
-    #uvicorn.run("embedserver:app", host=HOST, port=PORT, workers=2)
-    uvicorn.run(app, host=HOST, port=PORT)
-#=========================================================
-
-if __name__ == "__main__":
-    main()
-
-    
