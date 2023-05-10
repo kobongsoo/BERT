@@ -351,8 +351,8 @@ async def async_es_embed_query(esindex:str, query:str, search_size:int):
 #---------------------------------------------------------------------------
 # http://10.10.4.10:9000/docs=>swagger UI, http://10.10.4.10:9000/redoc=>ReDoc UI 각각 비활성화 하려면
 # => docs_url=None, redoc_url=None 하면 된다.
-app = FastAPI(redoc_url=None) #FastAPI 인스턴스 생성(*redoc UI 비활성화)
-#app = FastAPI()
+#app = FastAPI(redoc_url=None) #FastAPI 인스턴스 생성(*redoc UI 비활성화)
+app = FastAPI()
 
 #=========================================================
 # 루트=>정보 출력
