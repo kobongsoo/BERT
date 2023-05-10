@@ -10,6 +10,60 @@ from elasticsearch.helpers import bulk
 from elasticsearch import helpers
 
 #---------------------------------------------------------------------------
+# 인덱스내 데이터 조회 => query 이용
+#---------------------------------------------------------------------------
+def es_search(es, index_name, data=None):
+    assert es is not None, f'error!!=>es is None'
+    assert index_name is not None, f'error!!=>index_name is None'
+    
+    if data is None: #모든 데이터 조회
+        data = {"match_all":{}}
+    else:
+        data = {"match": data}
+        
+    body = {"query": data}
+    res = es.search(index=index_name, body=body)
+    return res
+
+#---------------------------------------------------------------------------
+## 인덱스 내의 데이터 삭제 => query 이용
+#---------------------------------------------------------------------------
+def es_delete(es, index_name:str, data):
+    assert es is not None, f'error!!=>es is None'
+    assert index_name is not None, f'error!!=>index_name is None'
+    
+    if data is None:  # data가 없으면 모두 삭제
+        data = {"match_all":{}}
+    else:
+        data = {"match": data}
+        
+    body = {"query": data}
+    return es.delete_by_query(index=index_name, body=body)
+
+#---------------------------------------------------------------------------
+## 인덱스 내의 데이터 삭제 => id 이용
+#---------------------------------------------------------------------------
+def es_delete_by_id(es, index_name:str, id):
+    assert es is not None, f'error!!=>es is None'
+    assert index_name is not None, f'error!!=>index_name is None'
+    
+    return es.delete(index=index_name, id=id)
+
+#---------------------------------------------------------------------------
+## 인덱스 내의 데이터 업데이트=>_id 에 데이터 업데이트
+#---------------------------------------------------------------------------
+def es_update(es, index_name, id, doc, doc_type):
+    assert es is not None, f'error!!=>es is None'
+    assert index_name is not None, f'error!!=>index_name is None'
+    
+    body = {
+        'doc': doc
+    }
+    
+    res=es.update(index=index_name, id=id, body=body, doc_type=doc_type)
+    return res
+
+#---------------------------------------------------------------------------
 # ES 인덱스 생성
 # -in : es : ElasticSearch 객체.
 # -in : index_file_path: 인덱스 파일명

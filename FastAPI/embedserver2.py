@@ -42,7 +42,7 @@ from myutils import bi_encoder, dense_model, onnx_model, onnx_embed_text
 from myutils import seed_everything, GPU_info, mlogging, getListOfFiles, get_options
 from myutils import remove_reverse, clean_text, make_query_script, create_index, mpower_index_batch
 from myutils import embed_text, clustering_embedding, kmedoids_clustering_embedding
-from myutils import split_sentences1, make_docs_df, get_sentences
+from myutils import split_sentences1, make_docs_df, get_sentences, es_delete, es_delete_by_id, es_update, es_search
 
 # FutureWarning 제거
 import warnings
@@ -259,8 +259,110 @@ def index_data(es, df_contexts, doc_sentences:list):
 #---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
+# 업데이트 처리
+#---------------------------------------------------------------------------
+def update_data(es, df_contexts, doc_sentences:list):
+    #클러스터링 계수는 문단의 계수보다는 커야 함. 
+    #assert num_clusters <= len(doc_sentences), f"num_clusters:{num_clusters} > len(doc_sentences):{len(doc_sentences)}"
+    #-------------------------------------------------------------
+    # 각 문단의 문장들에 벡터를 구하고 리스트에 저장해 둠.
+    start = time.time()
+    cluster_list = []
+
+    rfile_names = df_contexts['contextid'].values.tolist()
+    rfile_texts = df_contexts['question'].values.tolist()
+
+    if OUT_DIMENSION == 0:
+        dimension = 768
+    else:
+        dimension = 128
+
+    clustering_num = NUM_CLUSTERS
+        
+    docs = []
+    count = 0
+    for i, sentences in enumerate(tqdm(doc_sentences)):
+        embeddings = embedding(sentences)
+        if i < 3:
+            print(f'[{i}] sentences-------------------')
+            if len(sentences) > 5:
+                print(sentences[:5])
+            else:
+                print(sentences)
+                
+        LOGGER.info(f'*[index_data] embeddings.shape: {embeddings.shape}')
+        print()
+        
+        #----------------------------------------------------------------
+        multiple = 1
+        
+        # [bong][2023-04-28] 임베딩 출력 계수에 따라 클러스터링 계수를 달리함.
+        if NUM_CLUSTERS_VARIABLE == True:
+            embeddings_len = embeddings.shape[0]
+            if embeddings_len > 2000:
+                multiple = 6
+            elif embeddings_len > 1000:
+                multiple = 5 # 5배
+            elif embeddings_len > 600:
+                multiple = 4 # 4배
+            elif embeddings_len > 300:
+                multiple = 3 # 3배
+            elif embeddings_len > 100:
+                multiple = 2 # 2배
+        #----------------------------------------------------------------
+        
+        # 0=문장클러스터링 임베딩
+        if EMBEDDING_METHOD == 0:
+            if CLUSTRING_MODE == "kmeans":
+                # 각 문단에 분할한 문장들의 임베딩 값을 입력해서 클러스터링 하고 평균값을 구함.
+                # [bong][2023-04-28] 문장이 많은 경우에는 클러스터링 계수를 2,3배수로 함
+                emb = clustering_embedding(embeddings = embeddings, outmode=OUTMODE, num_clusters=(clustering_num*multiple), seed=SEED).astype(FLOAT_TYPE) 
+            else:
+                emb = kmedoids_clustering_embedding(embeddings = embeddings, outmode=OUTMODE, num_clusters=(clustering_num*multiple), seed=SEED).astype(FLOAT_TYPE) 
+            
+        # 1= 문장평균임베딩
+        elif EMBEDDING_METHOD == 1:
+            # 문장들에 대해 임베딩 값을 구하고 평균 구함.
+            arr = np.array(embeddings).astype(FLOAT_TYPE)
+            emb = arr.mean(axis=0).reshape(1,-1) #(128,) 배열을 (1,128) 형태로 만들기 위해 reshape 해줌
+            clustering_num = 1  # 평균값일때는 NUM_CLUSTERS=1로 해줌.
+        # 2=문장임베딩
+        else:
+            emb = embeddings
+
+        LOGGER.info(f'*[index_data] cluster emb.shape: {emb.shape}')
+        print()
+        
+        #--------------------------------------------------- 
+        # docs에 저장 
+        #  [bong][2023-04-28] 여러개 벡터인 경우에는 벡터를 10개씩 분리해서 여러개 docs를 만듬.
+        for j in range(multiple):
+            count += 1
+            doc = {}                                #dict 선언
+            doc['rfile_name'] = rfile_names[i]      # contextid 담음
+            doc['rfile_text'] = rfile_texts[i]      # text 담음.
+            doc['dense_vectors'] = emb[j * clustering_num : (j+1) * clustering_num] # emb 담음.
+            docs.append(doc)
+        #---------------------------------------------------    
+
+            if count % BATCH_SIZE == 0:
+                mpower_index_batch(es, ES_INDEX_NAME, docs, vector_len=clustering_num, dim_size=dimension)
+                docs = []
+                LOGGER.info("[index_data](1) Indexed {} documents.".format(count))
+
+    if docs:
+        mpower_index_batch(es, ES_INDEX_NAME, docs, vector_len=clustering_num, dim_size=dimension)
+        LOGGER.info("[index_data](2) Indexed {} documents.".format(count))   
+
+    es.indices.refresh(index=ES_INDEX_NAME)
+
+    LOGGER.info(f'*인덱싱 시간 : {time.time()-start:.4f}\n')
+    print()
+#---------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------
 # ES 임베딩 벡터 쿼리 실행 함수
-# - in : query=쿼리 , search_size=검색출력계수
+# - in : esindex=인덱스명, query=쿼리 , search_size=검색출력계수
 #---------------------------------------------------------------------------
 def es_embed_query(esindex:str, query:str, search_size:int):
     
@@ -349,6 +451,49 @@ async def async_es_embed_query(esindex:str, query:str, search_size:int):
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, es_embed_query, esindex, query, search_size)
 #---------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------
+# ES 임베딩 도큐먼트 삭제 함수
+# -> 삭제할 _id를 얻어와서 삭제함.
+# - in : esindex=인덱스명, rfile_name=파일 유니크한 값(sfileid, contxtsid) 
+#---------------------------------------------------------------------------
+def es_embed_delete(esindex:str, rfile_name:str):
+    
+    error: int = 0
+    
+    # 1.elasticsearch 접속
+    es = Elasticsearch(ES_URL)   
+        
+    data = {'rfile_name': rfile_name}
+    
+    # 2. 쿼리 검색후 _id 얻어옴.
+    id_list = []
+    res=es_search(es, index_name=esindex, data=data)
+    for hits in res['hits']['hits']:
+        esid=hits['_id']
+        #print(f'id:{esid}')
+        id_list.append(esid)
+        
+    # 3. 삭제함.
+    if len(id_list) > 0:  
+        for id in id_list:
+            print(f'id:{id}')
+            res=es_delete_by_id(es, index_name=esindex, id=id)
+            print(f'res:{res}')
+            
+        return 0
+    else:
+        return 1002
+#---------------------------------------------------------------------------
+#---------------------------------------------------------------------------
+# 비동기 ES 임베딩 도큐먼트 삭제 함수
+#---------------------------------------------------------------------------
+async def async_es_embed_delete(esindex:str, rfile_name:str):
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, es_embed_delete, esindex, rfile_name)
+#---------------------------------------------------------------------------
+
+    
 # http://10.10.4.10:9000/docs=>swagger UI, http://10.10.4.10:9000/redoc=>ReDoc UI 각각 비활성화 하려면
 # => docs_url=None, redoc_url=None 하면 된다.
 #app = FastAPI(redoc_url=None) #FastAPI 인스턴스 생성(*redoc UI 비활성화)
@@ -505,7 +650,7 @@ async def search_documents(esindex:str,
     except Exception as e:
         error = f'async_es_embed_query fail'
         msg = f'{error}=>{e}'
-        LOGGER.error(f'/es/{esindex}/docs {msg}')
+        LOGGER.error(f'get /es/{esindex}/docs {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
     
     if error != 'success':
@@ -513,3 +658,29 @@ async def search_documents(esindex:str,
             
     return {"query":query, "docs": docs}
 #=========================================================
+
+#=========================================================
+# DELETE : ES/{인덱스명}/docs 검색(비동기)
+# => http://127.0.0.1:9000/es/{인덱스}/docs?id=rfile_name
+# - in : id=삭제할 문서 유니크한 id
+# - out: ??
+#=========================================================
+@app.delete("/es/{esindex}/docs")
+async def delete_documents(esindex:str,
+                           id:str = Query(...,min_length=1)):
+    error:int = 0
+    id = id.strip()
+    LOGGER.info(f'\ndelete /es/{esindex}/docs start-----\nid:{id}')
+    
+    try:
+        error = await async_es_embed_delete(esindex, id)
+    except Exception as e:
+        error = f'async_es_embed_delete fail'
+        msg = f'{error}=>{e}'
+        LOGGER.error(f'delete /es/{esindex}/docs {msg}')
+        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
+        
+    if error != 0:
+        raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
+        
+        
