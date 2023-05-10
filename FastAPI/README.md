@@ -53,7 +53,7 @@ uvicorn src.app:app --port 8000 --workers 3
 ```
 
 
-예제
+FastAPI 테스트 예제
 
 |소스명|설명|기타|
 |:-----------------|:-----------------------------------------------------------|:---------------------|
@@ -61,8 +61,16 @@ uvicorn src.app:app --port 8000 --workers 3
 |[post_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/post_test.py)| POST RestAPI 예제||
 |[model_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/model_test.ipynb)|ES 검색 테스트 예제||
 |[yaml_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/yaml_test.py)|yaml 파일 로딩 예제||
+|[security_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/security_test.py)|password flow(암호 로그인) 테스트 예제||
+|[jwt_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/jwt_test.py)|json web token 으로 로그인하는 테스트 예제||
+
+임베딩 예제
+|소스명|설명|기타|
+|:-----------------|:-----------------------------------------------------------|:---------------------|
 |[embedserver](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver.py)| **ES 연동한 문서클러스터링 임베딩 및 검색 예제**|설정값(환경에 맞게 수정 필요): data/settings.yaml<br>sh 실행스크립트: embedserver.sh(python으로 실행함)|
-|[embedserver_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver_test.ipynb)| 위서버와 RESTFul API를 이용한 Client 검색 및 임베딩 예제|embedserver 실행 필요|
 |[embedserver2](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver2.py)| **ES 연동한 문서클러스터링 임베딩 및 검색 예제2**|설정값(환경에 맞게 수정 필요): data/settings.yaml<br>sh 실행스크립트: embedserver2.sh(**uvicorn 으로 실행함-좀더 옵션을 많이 설정할수 있음**)|
+|[embedserver_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver_test.ipynb)| 위서버와 RESTFul API를 이용한 Client 검색 및 임베딩 예제|embedserver 실행 필요|
+
+
 
 
