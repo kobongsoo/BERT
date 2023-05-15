@@ -40,7 +40,7 @@ import sys
 sys.path.append('..')
 from myutils import bi_encoder, dense_model, onnx_model, onnx_embed_text
 from myutils import seed_everything, GPU_info, mlogging, getListOfFiles, get_options
-from myutils import remove_reverse, clean_text, make_query_script, create_index, mpower_index_batch
+from myutils import remove_reverse, clean_text, make_max_query_script, make_avg_query_script, create_index, mpower_index_batch
 from myutils import embed_text, clustering_embedding, kmedoids_clustering_embedding
 from myutils import split_sentences1, make_docs_df, get_sentences, es_delete, es_delete_by_id, es_update, es_search
 
@@ -261,8 +261,9 @@ def index_data(es, df_contexts, doc_sentences:list):
 #---------------------------------------------------------------------------
 # ES 임베딩 벡터 쿼리 실행 함수
 # - in : esindex=인덱스명, query=쿼리 , search_size=검색출력계수
+# - option: qmethod=0 혹은 1(0=max벡터 구하기, 1=평균벡터 구하기 (default=0))
 #---------------------------------------------------------------------------
-def es_embed_query(esindex:str, query:str, search_size:int):
+def es_embed_query(esindex:str, query:str, search_size:int, qmethod:int=0):
     
     error: str = 'success'
     
@@ -279,6 +280,8 @@ def es_embed_query(esindex:str, query:str, search_size:int):
         error = 'search_size < 1'
     elif not es.indices.exists(esindex):
          error = 'esindex is not exist'
+    elif qmethod < 0 or qmethod > 1:
+        error = 'qmenthod is not variable'
     
     if error != 'success':
         LOGGER.error(f'[es_embed_query] {error}')
@@ -298,7 +301,10 @@ def es_embed_query(esindex:str, query:str, search_size:int):
 
     # 3. 쿼리 만듬
     # - 쿼리 1개만 하므로, embed_query[0]으로 입력함.
-    script_query = make_query_script(query_vector=embed_query[0], vectormag=VECTOR_MAG, vectornum=10) # 쿼리를 만듬.
+    if qmethod == 0:
+        script_query = make_max_query_script(query_vector=embed_query[0], vectormag=VECTOR_MAG, vectornum=10) # max 쿼리를 만듬.
+    elif qmethod == 1:
+        script_query = make_avg_query_script(query_vector=embed_query[0], vectormag=VECTOR_MAG, vectornum=10) # 평균 쿼리를 만듬.
 
     #print(script_query)
     #print()
@@ -345,9 +351,9 @@ def es_embed_query(esindex:str, query:str, search_size:int):
 #---------------------------------------------------------------------------
 # 비동기 ES 임베딩 벡터 쿼리 실행 함수
 #---------------------------------------------------------------------------
-async def async_es_embed_query(esindex:str, query:str, search_size:int):
+async def async_es_embed_query(esindex:str, query:str, search_size:int, qmethod:int):
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, es_embed_query, esindex, query, search_size)
+    return await loop.run_in_executor(None, es_embed_query, esindex, query, search_size, qmethod)
 #---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
@@ -536,7 +542,10 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, infilepath:bool=False, create
 @app.get("/es/{esindex}/docs")
 async def search_documents(esindex:str, 
                      query: str = Query(..., min_length=1),     # ... 는 필수 입력 이고, min_length=1은 최소값이 1임. 작으면 422 Unprocessable Entity 응답반환됨
-                     search_size: int = Query(..., gt=0)):      # ... 는 필수 입력 이고, gt=0은 0보다 커야 한다. 작으면 422 Unprocessable Entity 응답반환됨
+                     search_size: int = Query(..., gt=0),       # ... 는 필수 입력 이고, gt=0은 0보다 커야 한다. 작으면 422 Unprocessable Entity 응답반환됨
+                     qmethod: int=0,                            # option: qmethod=0 혹은 1(0=max벡터 구하기, 1=평균벡터 구하기 (default=0))
+                     ):                          
+                    
       
     error:str = 'success'
     query = query.strip()
@@ -544,7 +553,7 @@ async def search_documents(esindex:str,
     
     try:
         # es로 임베딩 쿼리 실행
-        error, docs = await async_es_embed_query(esindex, query, search_size)
+        error, docs = await async_es_embed_query(esindex, query, search_size, qmethod)
     except Exception as e:
         error = f'async_es_embed_query fail'
         msg = f'{error}=>{e}'
