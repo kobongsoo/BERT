@@ -261,9 +261,9 @@ def index_data(es, df_contexts, doc_sentences:list):
 #---------------------------------------------------------------------------
 # ES 임베딩 벡터 쿼리 실행 함수
 # - in : esindex=인덱스명, query=쿼리 , search_size=검색출력계수
-# - option: qmethod=0 혹은 1(0=max벡터 구하기, 1=평균벡터 구하기 (default=0))
+# - option: qmethod=0 혹은 1(0=max벡터 구하기, 1=평균벡터 구하기 (default=0)), uid_list=검색할 uid 리스트
 #---------------------------------------------------------------------------
-def es_embed_query(esindex:str, query:str, search_size:int, qmethod:int=0):
+def es_embed_query(esindex:str, query:str, search_size:int, qmethod:int=0, uids:list=None):
     
     error: str = 'success'
     
@@ -302,9 +302,9 @@ def es_embed_query(esindex:str, query:str, search_size:int, qmethod:int=0):
     # 3. 쿼리 만듬
     # - 쿼리 1개만 하므로, embed_query[0]으로 입력함.
     if qmethod == 0:
-        script_query = make_max_query_script(query_vector=embed_query[0], vectormag=VECTOR_MAG, vectornum=10) # max 쿼리를 만듬.
+        script_query = make_max_query_script(query_vector=embed_query[0], vectormag=VECTOR_MAG, vectornum=10, uid_list=uids) # max 쿼리를 만듬.
     elif qmethod == 1:
-        script_query = make_avg_query_script(query_vector=embed_query[0], vectormag=VECTOR_MAG, vectornum=10) # 평균 쿼리를 만듬.
+        script_query = make_avg_query_script(query_vector=embed_query[0], vectormag=VECTOR_MAG, vectornum=10, uid_list=uids) # 평균 쿼리를 만듬.
 
     #print(script_query)
     #print()
@@ -351,9 +351,9 @@ def es_embed_query(esindex:str, query:str, search_size:int, qmethod:int=0):
 #---------------------------------------------------------------------------
 # 비동기 ES 임베딩 벡터 쿼리 실행 함수
 #---------------------------------------------------------------------------
-async def async_es_embed_query(esindex:str, query:str, search_size:int, qmethod:int):
+async def async_es_embed_query(esindex:str, query:str, search_size:int, qmethod:int, uids:list=None):
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, es_embed_query, esindex, query, search_size, qmethod)
+    return await loop.run_in_executor(None, es_embed_query, esindex, query, search_size, qmethod, uids)
 #---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
@@ -439,8 +439,8 @@ async def get_vector(sentences: List[str] = Query(..., description="sentences", 
     return {"vectors": embeddings_str}
 
 #=========================================================
-# POST: 입력 docs(문서)에 대한 임베딩값 구하고 ElasticSearch(이하:ES) 추가.(동기)
-# => http://127.0.0.1:9000/embed/{인덱스명}/docs
+# POST: es/{인덱스명}/docs (입력 docs(문서)에 대한 임베딩값 구하고 ElasticSearch(이하:ES) 추가.(동기))
+# => http://127.0.0.1:9000/es/{인덱스명}/docs
 # - in : docs: 문서 (예: ['오늘 날씨가 좋다', '내일은 비가 온다'] ), titles: 문서제목, uids(문서 고유id)
 # - in : esindexname : ES 인덱스명, createindex=True(True=무조건 인덱스생성. 만약 있으면 삭제후 생성/ Flase=있으면 추가, 없으면 생성)
 # - in : infilepath : True이면 documnets에 filepath 입력되고, 이때는 file를 로딩함. False이면 documents로는 문서내용이 들어옴.
@@ -533,7 +533,7 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, infilepath:bool=False, create
 #=========================================================
 
 #=========================================================
-# GET : ES/{인덱스명}/docs 검색(비동기)
+# GET : es/{인덱스명}/docs 검색(비동기)
 # => http://127.0.0.1:9000/es/{인덱스}/docs?query=쿼리문장&search_size=5
 # - in : query=쿼리할 문장, search_size=검색계수(몇개까지 검색 출력 할지)
 # - out: 검색 결과(스코어, rfile_name, rfile_text)
@@ -554,6 +554,44 @@ async def search_documents(esindex:str,
     try:
         # es로 임베딩 쿼리 실행
         error, docs = await async_es_embed_query(esindex, query, search_size, qmethod)
+    except Exception as e:
+        error = f'async_es_embed_query fail'
+        msg = f'{error}=>{e}'
+        LOGGER.error(f'get /es/{esindex}/docs {msg}')
+        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
+    
+    if error != 'success':
+        raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
+            
+    return {"query":query, "docs": docs}
+#=========================================================
+
+#=========================================================
+# POST : es/{인덱스명}/docs/uids => uid 목록에 대한 검색(비동기)
+# => http://127.0.0.1:9000/es/{인덱스}/docs/uid?query=쿼리문장&search_size=5
+# - in : query=쿼리할 문장, search_size=검색계수(몇개까지 검색 출력 할지)
+# - in(data) : DocsUidsIn=검색할 uid 목록
+# - out: 검색 결과(스코어, rfile_name, rfile_text)
+#=========================================================
+class DocsUidsIn(BaseModel):
+    uids: list       # uid(문서 고유id)->rfilename
+    
+@app.post("/es/{esindex}/docs/uids")
+async def search_documents_uid(esindex:str, 
+                     Data:DocsUidsIn,
+                     query: str = Query(..., min_length=1),     # ... 는 필수 입력 이고, min_length=1은 최소값이 1임. 작으면 422 Unprocessable Entity 응답반환됨
+                     search_size: int = Query(..., gt=0),       # ... 는 필수 입력 이고, gt=0은 0보다 커야 한다. 작으면 422 Unprocessable Entity 응답반환됨
+                     qmethod: int=0,                            # option: qmethod=0 혹은 1(0=max벡터 구하기, 1=평균벡터 구하기 (default=0))
+                     ):    
+    
+    error:str = 'success'
+    query = query.strip()
+    uids = Data.uids 
+    LOGGER.info(f'\npost /es/{esindex}/docs/uids start-----\nquery:{query}, search_size:{search_size}, len(uids):{len(uids)}')
+            
+    try:
+        # es로 임베딩 쿼리 실행
+        error, docs = await async_es_embed_query(esindex, query, search_size, qmethod, uids)
     except Exception as e:
         error = f'async_es_embed_query fail'
         msg = f'{error}=>{e}'

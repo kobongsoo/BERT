@@ -140,16 +140,21 @@ def mpower_index_batch(es, index_name:str, docs, vector_len:int=10, dim_size:int
 # -in: query_vector = 1차원 임베딩 벡터 (예: [10,10,1,1, ....]
 # -in: vectornum : ES 인덱스 벡터 수
 #---------------------------------------------------------------------------
-def make_avg_query_script(query_vector, vectornum:int=10, vectormag:float=0.8)->str:
+def make_avg_query_script(query_vector, vectornum:int=10, vectormag:float=0.8, uid_list:list=None)->str:
     # 문단별 10개의 벡터와 쿼리벡터를 서로 비교하여 유사도를 구하고, 10개를 구한 유사도의 평균을 최종 유사도로 지정하여 가장 유사한 문서 출력
     # => return 스코어는 음수(-0.212345)가 될수 없으므로, 음수가 나오면 0으로 리턴.
     # => script """ 안에 코드는 java 임.
     # => "queryVectorMag": 0.1905 일때 100% 일치하는 값은 9.98임(즉 10점 만점임)
+    
+    # uid_list가 있는 경우에는 해당하는 목록만 검색함
+    if uid_list:
+        query = { "bool" :{ "must": [ { "terms": { "rfile_name": uid_list } } ] } }
+    else: # uid_list가 있는 경우에는 해당하는 목록만 검색함
+        query = { "match_all" : {} }
+        
     script_query = {
         "script_score":{
-            "query":{
-                "match_all": {}
-            },
+            "query":query,
                 "script":{
                     "source": """
                       float avg_score = 0;
@@ -202,15 +207,20 @@ def make_avg_query_script(query_vector, vectornum:int=10, vectormag:float=0.8)->
 # -in: query_vector = 1차원 임베딩 벡터 (예: [10,10,1,1, ....]
 # -in: vectornum : ES 인덱스 벡터 수
 #---------------------------------------------------------------------------
-def make_max_query_script(query_vector, vectornum:int=10, vectormag:float=0.8)->str:
+def make_max_query_script(query_vector, vectornum:int=10, vectormag:float=0.8, uid_list:list=None)->str:
     # 문단별 10개의 벡터와 쿼리벡터를 서로 비교하여 최대값 갖는 문단들중 가장 유사한  문단 출력
     # => script """ 안에 코드는 java 임.
     # => "queryVectorMag": 0.1905 일때 100% 일치하는 값은 9.98임(즉 10점 만점임)
+                        
+    # uid_list가 있는 경우에는 해당하는 목록만 검색함
+    if uid_list:
+        query = { "bool" :{ "must": [ { "terms": { "rfile_name": uid_list } } ] } }
+    else: # uid_list가 있는 경우에는 해당하는 목록만 검색함
+        query = { "match_all" : {} }
+    
     script_query = {
         "script_score":{
-            "query":{
-                "match_all": {}
-            },
+             "query":query,
                 "script":{
                     "source": """
                       float max_score = 0;
