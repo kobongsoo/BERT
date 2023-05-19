@@ -606,19 +606,19 @@ async def search_documents_uid(esindex:str,
 
 #=========================================================
 # DELETE : ES/{인덱스명}/docs 검색(비동기)
-# => http://127.0.0.1:9000/es/{인덱스}/docs?id=rfile_name
-# - in : id=삭제할 문서 유니크한 id
+# => http://127.0.0.1:9000/es/{인덱스}/docs?uid=rfile_name
+# - in : uid=삭제할 문서 유니크한 id
 # - out: ??
 #=========================================================
 @app.delete("/es/{esindex}/docs")
 async def delete_documents(esindex:str,
-                           id:str = Query(...,min_length=1)):
+                           uid:str = Query(...,min_length=1)):
     error:int = 0
-    id = id.strip()
-    LOGGER.info(f'\ndelete /es/{esindex}/docs start-----\nid:{id}')
+    uid = uid.strip()
+    LOGGER.info(f'\ndelete /es/{esindex}/docs start-----\nid:{uid}')
     
     try:
-        error = await async_es_embed_delete(esindex, id)
+        error = await async_es_embed_delete(esindex, uid)
     except Exception as e:
         error = f'async_es_embed_delete fail'
         msg = f'{error}=>{e}'
