@@ -628,4 +628,5 @@ async def delete_documents(esindex:str,
     if error != 0:
         raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
         
+    
         

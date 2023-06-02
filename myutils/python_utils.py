@@ -4,6 +4,19 @@ import numpy as np
 import pandas as pd
 from typing import Dict, List, Optional
 
+
+#---------------------------------------------------------------
+# 들어온 list에서 최대값 찾는 함수
+# - in: arr = 최대값을 찾을 리스트 (예: [1,2,3,4,5])
+# - out: 최대값  리턴 (5)
+#---------------------------------------------------------------
+def find_max(arr:list):
+    max_value = arr[0]
+    for i in range(1, len(arr)):
+        if arr[i] > max_value:
+            max_value = arr[i]
+    return max_value
+
 #---------------------------------------------------------------
 # 들어온 문자열을 dot 구분자로 뒤에서 부터 찾아서 해당 구분자 까지만 출력하는 함수
 # - in: string : 문자열 (예: '1.보안사업부 사업.계획.txt')
