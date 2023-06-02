@@ -28,7 +28,8 @@ BERT로 부터 파생된 다양한 모델들(2019)
 - [BertWordPieceTokenizer/ SentencePieceTokenizer](https://github.com/kobongsoo/BERT/tree/master/tokenizer_sample)
 
 ### 유사도 측정
-- [유사도 측정 예제/FAISS](https://github.com/kobongsoo/BERT/tree/master/embedding_sample)
+- [유사도 측정 예제](https://github.com/kobongsoo/BERT/tree/master/embedding_sample)
+- [Faiss](https://github.com/kobongsoo/BERT/tree/master/Faiss)
 - [ElasticSearch로 임베딩 벡터(Embedding Vector)를 이용한 문장 유사도 검색 구현하기](https://github.com/kobongsoo/BERT/tree/master/elasticsearch)
 
 ### 기타
