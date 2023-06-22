@@ -8,6 +8,7 @@ import kss
 from .re_utils import clean_text, is_language
 from tqdm import tqdm
 import time
+import re
 
 #---------------------------------------------------------------------------
 # text 추출된 문서파일들을 불러와서 datafframe 형태로 만듬
@@ -147,13 +148,16 @@ def split_sentences(paragraphs:list,
                     
                     pattern = r'^\d+(\.\d+)*'  # 문장 맨앞에 '4.1.2.3' 패턴 제거,  r'^\d+(\.\d+)*\s+' # 문장 맨앞에 '4.1.2.3띄어쓰기' 있는 패턴 제거
                     subsentence = clean_text(text=subsentence, pattern=pattern)
-
+    
                     pattern = r'^\d+\.'  # 문장 맨 앞에 '4.' 패턴 제거
                     subsentence = clean_text(text=subsentence, pattern=pattern)
-
+                    
                     pattern = r'^\d+\)'  # 문장 맨 앞에 '4)' 패턴 제거
                     subsentence = clean_text(text=subsentence, pattern=pattern)
                 
+                    # 맨앞에 특수문자와 공백은 제거(*단 중간에 특수문자나 공백은 제거안함)
+                    subsentence = re.sub('^[\s\W]', '', subsentence)
+                    
                     # 한국어 혹은 영어문장인지 체크
                     if check_en_ko == True:
                         check = is_language(subsentence)
@@ -253,6 +257,9 @@ def split_sentences1(paragraphs:list,
 
                     pattern = r'^\d+\)'  # 문장 맨 앞에 '4)' 패턴 제거
                     subsentence = clean_text(text=subsentence, pattern=pattern)
+                    
+                    # 맨앞에 특수문자와 공백은 제거(*단 중간에 특수문자나 공백은 제거안함)
+                    subsentence = re.sub('^[\s\W]', '', subsentence)
 
                     # 한국어 혹은 영어문장인지 체크
                     if check_en_ko == True:
