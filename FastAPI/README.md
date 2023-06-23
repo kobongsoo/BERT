@@ -1,3 +1,24 @@
+# BERT와 LLM 모델을 이용한 질의응답 서비스 구축 예
+### [질의 응답 시스템 과정]
+```
+1. 문서들 전처리 : 
+단락별루 분할(\n) - 불용어 제거 -문장별루 분할.
+
+2.임베딩 : 
+kpf-sbert-v1.1로  문장 평균 임베딩벡터 구함 - es에 문장별루 단락text와 평균벡터 저장.
+
+3. 프롬프트생성 및 입력 : 
+검색어 입력(회사:과장일때 휴가 일수는 얼마?)-bert로 임베딩 검색(*스코어가 0.3이상인 경우 체택)
+LLM에 검색된 단락 text를 문맥으로 해서 prompt 구성
+
+4. 실
+LLM(sLLM, GPT, BARD등)에 prompt 입력-응답 결과 출력
+```
+|소스명|설명|기타|
+|:-----------------|:-----------------------------------------------------------|:---------------------|
+|[sLLM_test_embed](https://github.com/kobongsoo/BERT/blob/master/FastAPI/sLLM_test_embed.ipynb)|문서전처리-임베딩||
+|[sLLM_test_embed-search](https://github.com/kobongsoo/BERT/blob/master/FastAPI/sLLM_test_embed-search.ipynb)|프롬프트생성.입력-실행||
+
 # FastAPI
 FastAPI는 현대적이고, 빠르며(고성능), 파이썬 표준 타입 힌트에 기초한 Python3.6+의 API를 빌드하기 위한 웹 프레임워크입니다.
 <br>**ASGI(Ansynchronous Server Gateway Interface: 비동기 서버 게이트웨이 인터페이스)** 지원
@@ -70,7 +91,3 @@ FastAPI 테스트 예제
 |[embedserver](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver.py)| **ES 연동한 문서클러스터링 임베딩 및 검색 예제**|설정값(환경에 맞게 수정 필요): data/settings.yaml<br>sh 실행스크립트: embedserver.sh(python으로 실행함)|
 |[embedserver2](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver2.py)| **ES 연동한 문서클러스터링 임베딩 및 검색 예제2**|설정값(환경에 맞게 수정 필요): data/settings.yaml<br>sh 실행스크립트: embedserver2.sh(**uvicorn 으로 실행함-좀더 옵션을 많이 설정할수 있음**)|
 |[embedserver_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver_test.ipynb)| 위서버와 RESTFul API를 이용한 Client 검색 및 임베딩 예제|embedserver 실행 필요|
-
-
-
-
