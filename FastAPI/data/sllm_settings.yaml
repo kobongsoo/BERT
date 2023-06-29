@@ -1,0 +1,46 @@
+# 모델 관련 변수
+model:
+  MODEL_PATH: '../../data11/model/kpf-sbert-v1.1' # 모델 경로
+  POLLING_MODE: 'mean'  # 폴링모드*(mean, cls, max 중 1나)
+  OUT_DIMENSION: 768    # 임베딩 모델 출력 차원(128, 768)
+
+# 임베딩 변수
+embedding:
+  EMBEDDING_METHOD: 1   # 임베딩 방식(0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)
+  FLOAT_TYPE: 'float16' # 임베딩 출력 벡터 타입('float32', 'float16')
+  MIN_SCORE: 1.4        # 검색 1.4 스코어 이하면 제거
+
+# 클러스터링 전역 변수
+custring:
+  NUM_CLUSTERS_VARIABLE: True  # **True이면 문장길이에 따라 클러스터링수를 다르게 함, False이면 클러스터링 계수가 고정.
+  CLUSTRING_MODE: "kmeans"  # "kmeans" = k-평균 군집 분석, kmedoids =  k-대표값 군집 분석
+  NUM_CLUSTERS: 10          # 클러스터링 계수 
+  OUTMODE: "mean"           # 클러스터링후 출력벡터 정의(kmeans 일때 => mean=평균벡터 출력, max=최대값벡터출력 / kmedoids 일때=>mean=평균벡터, medoid=대표값벡터)
+
+# 문장 전처리
+preprocessing:
+  REMOVE_SENTENCE_LEN: 1     # 문장 길이가 8이하면 제거 
+  REMOVE_DUPLICATION: False  # 중복된 문장 제거(*중복된 문장 제거 안할때 1%정도 정확도 좋음)
+  
+# ES 관련 전역 변수
+es:
+  ES_URL: 'http://10.10.4.10:9200/'               # ES 서버 주소
+  ES_INDEX_FILE: './data/mpower10u_768d_1.json'   # 인덱스 파일 경로
+  BATCH_SIZE: 20  # 배치 사이즈 = 20이면 입력된 docs이 20개 이상이면, 최대 20개씩 ES에 인덱싱함.
+ 
+# LLM 관련 전역변수
+llmmodel:
+  LLM_MODEL_TYPE: 0 # 0=아래 지정한 sLLM 모델, 1=GPT 모델, 2=BARD 모델.
+
+# sLLM 관련 전역변수
+sllm:
+  lora_weights: '../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B-LoRA-qa-moco-1/'
+  llm_model_path: '../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B/'
+  uselora_weight: True
+  load_8bit: True
+
+# 환경 관련
+env:
+  LOG_PATH: './log/sllm'  # 로그경로
+  SEED: 111               # **seed 값 (**변경하면, 기존 임베딩벡터값과 다른 값이 나옴)
+  GPU: 'auto'              # 'auto'=gpu서버면 gpu, 아니면 cpu, 'cpu'=무조건 CPU로 동작 (소문자)

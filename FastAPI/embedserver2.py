@@ -261,7 +261,7 @@ def index_data(es, df_contexts, doc_sentences:list):
 #---------------------------------------------------------------------------
 # ES 임베딩 벡터 쿼리 실행 함수
 # - in : esindex=인덱스명, query=쿼리 , search_size=검색출력계수
-# - option: qmethod=0 혹은 1(0=max벡터 구하기, 1=평균벡터 구하기 (default=0)), uid_list=검색할 uid 리스트
+# - option: qmethod=0 혹은 1(0=max벡터 구하기, 1=평균벡터 구하기 (default=0)), uid_list=검색할 uid 리스트(*엠파워에서는 검색할 문서id를 지정해서 검색해야 검색속도가 느리지 않음)
 #---------------------------------------------------------------------------
 def es_embed_query(esindex:str, query:str, search_size:int, qmethod:int=0, uids:list=None):
     
