@@ -28,10 +28,6 @@ es:
   ES_INDEX_FILE: './data/mpower10u_768d_1.json'   # 인덱스 파일 경로
   BATCH_SIZE: 20  # 배치 사이즈 = 20이면 입력된 docs이 20개 이상이면, 최대 20개씩 ES에 인덱싱함.
  
-# LLM 관련 전역변수
-llmmodel:
-  LLM_MODEL_TYPE: 0 # 0=아래 지정한 sLLM 모델, 1=GPT 모델, 2=BARD 모델.
-
 # sLLM 관련 전역변수
 sllm:
   lora_weights: '../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B-LoRA-qa-moco-1/'

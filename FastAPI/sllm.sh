@@ -4,7 +4,7 @@ APP_NAME=sllm:app
 
 start() {
   echo "Starting $APP_NAME"
-  nohup uvicorn $APP_NAME --host=0.0.0.0 --port=9002 --limit-concurrency=200 > classificaitonserver.log 2>&1 &
+  nohup uvicorn $APP_NAME --host=0.0.0.0 --port=9002 --limit-concurrency=200 > sllm.log 2>&1 &
   echo "$APP_NAME started"
 }
 

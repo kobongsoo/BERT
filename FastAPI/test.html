@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>ChatGPT UI</title>
+    <style>
+      .container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      #chatbox {
+        width: 100%;
+        height: 300px;
+        border: 1px solid #ccc;
+        padding: 10px;
+        overflow-y: scroll;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>ChatGPT UI</h1>
+      <div id="chatbox"></div>
+      <input type="text" id="userInput" placeholder="Type your message" />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+      function sendMessage() {
+        var userInput = document.getElementById("userInput");
+        var message = userInput.value;
+        appendMessage("질문: " + message);
+        userInput.value = "";
+
+        // Send the message to ChatGPT backend or process it using JavaScript
+		console.log(message)		  // message 뿌려봄
+
+		$.ajax({
+			//+=======================================================================================
+			// **url 구성해야 함.
+			// =>url: "/es/{esindex}/docs"
+			url: "/es/mpower10u_768d_f16/docs",
+			//+=======================================================================================
+			method: 'GET',
+			contentType: 'application/json',
+			dataType: 'JSON',
+			cache: false,
+
+			// 전송할 데이터 구성(json 형식)
+			data: JSON.stringify({
+			'query': message,   // 검색어
+			'search_size': 5,   // 검색 계수
+			}),
+			
+			success: sucessHandler, // 성공 처리 함수 호출
+			error: errorHandler,    // 에러 처리 함수 호출 
+
+			timeout: 30000          // 타임아웃시간: 30초로 늘림
+		});
+
+        // Placeholder response for demonstration
+        //var response = "ChatGPT: This is a sample response.";
+
+        //setTimeout(function () {
+        //  appendMessage(response);
+        //}, 500);
+      }
+
+      function appendMessage(message) {
+        var chatbox = document.getElementById("chatbox");
+        var messageElement = document.createElement("div");
+        messageElement.textContent = message;
+        chatbox.appendChild(messageElement);
+        chatbox.scrollTop = chatbox.scrollHeight;
+      }
+
+	  // 성공시 처리 함수 
+	  function sucessHandler(response)
+	  {
+		appendMessage(response);
+	  }
+
+	  // 에러시 처리 함수 
+	  function errorHandler(error)
+	  {
+		console.error("Error:", error);
+		appendMessage(error);
+	  }
+
+    </script>
+  </body>
+</html>
