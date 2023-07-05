@@ -48,13 +48,13 @@
         }
 
         .question {
-            background-color: #ACD1E9;
+            background-color: #FFE4E1;
             padding: 10px;
             border-radius: 4px;
         }
 
         .answer {
-            background-color:  #E8D0A9;
+            background-color: #e6e6fa;
             padding: 10px;
             border-radius: 4px;
         }
@@ -68,20 +68,14 @@
 </head>
 <body>
     <div class="chat-container">
-        <form action="/es/mpower_doc_768d_f16/docs/bard" method="GET">
-			<h2>모코엠시스 Q&A with BARD</h2>
+        <form action="/es/mpower_doc_768d_f16/docs/gpt" method="GET">
+			<h2>모코엠시스 Q&A with GPT</h2>
 			<p>
 			질문을 입력하면 회사문서를 검색하고, 검색된 문서 내용을 이용하여 질문에 대한 답변을 생성합니다.<br>
 			회사문서가 없으면, 질문에 대해 일반적인 답변을 합니다.
-			<br><br>
-			*bard를 사용하려면, 아래 방식으로 쿠키 값을 입력해야합니다<br>
-			1) https://bard.google.com/ 방문 → 콘솔용 F12 클릭<br>
-			2) 애플리케이션 → 쿠키 → 쿠키 값 __Secure-1PSID 복사(*뒤에 .으로 끝남)<br>
 			</p>
-			<label for="query">쿠 키:</label>
-            <input type="query" name="token" value="{{ token }}" size="80">
             <label for="query">질 문:</label>
-            <input type="query" name="query">
+            <input type="query" name="query", size=50>
             <label for="search_size">검색수:</label>
             <select id="search_size" name="search_size" style="width: 80px;">
                 <option value="1">1</option>
@@ -95,7 +89,7 @@
         </form>
         {% if answer %}
             <p class="question">질문:<br> {{ question }}</p>
-            <p class="answer">답변:<br> {{ answer | replace('\n', '<br>') | safe }}</p>
+            <p class="answer">답변:<br> {{ answer }}</p>
             <p class="context">검색문단:<br>{{ context | replace('\n', '<br>') | safe }}</p>
         {% endif %}
     </div>

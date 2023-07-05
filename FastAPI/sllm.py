@@ -57,6 +57,10 @@ from myutils import fassi_index, find_max
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning) 
 
+import openai
+from bardapi import Bard
+
+
 #---------------------------------------------------------------------------
 # 전역 변수로 선언 => 함수 내부에서 사용할때 global 해줘야 함.
 
@@ -129,12 +133,19 @@ LOGGER.info(f'*sllm Settings: lora_weights:{lora_weights}, llm_model_path:{llm_m
 
 # PROMPT 사전
 PROMPT_DICT = {   
-    #"prompt_context":("###지시: 문단에서 질의에 대해 가장 적합한 내용을 찾아, 응답 문장을 만들어 주세요.\n\n###[문단]: {context}\n\n###[질의]: {query}\n\n###[응답]:"),
-    "prompt_context":("###지시: 아래 문단 내용을 요약해서, 질의에 맞게 응답 문장을 만들어 주세요.\n\n###[문단]: {context}\n\n###[질의]: {query}\n\n###[응답]:"),
+    "prompt_context":("###지시: 문단에서 질의에 대해 가장 적합한 내용을 찾아, 응답 문장을 만들어 주세요.\n\n###[문단]: {context}\n\n###[질의]: {query}\n\n###[응답]:"),
+    #"prompt_context":("###지시: 아래 문단 내용을 요약해서, 질의에 맞게 응답 문장을 만들어 주세요.\n\n###[문단]: {context}\n\n###[질의]: {query}\n\n###[응답]:"),
     "prompt_no_context":("###지시: 질의에 대해, 자세하게 응답 문장을 만들어 주세요.\n\n###[질의]: {query}\n\n###[응답]:")
 }
 
 #LOGGER.info(f'*llmmodel Settings: LLM_MODEL_TYPE:{LLM_MODEL_TYPE}, PROMPT_DICT:{PROMPT_DICT}')
+
+# GPT 관련 값
+# **key 지정
+openai.api_key = "sk-xxx"
+# 모델 - GPT 3.5 Turbo 지정
+# => 모델 목록은 : https://platform.openai.com/docs/models/gpt-4 참조
+gpt_model = "gpt-3.5-turbo"#"gpt-4"#"gpt-3.5-turbo" #gpt-4-0314
 
 #---------------------------------------------------------------------------
 
@@ -384,8 +395,6 @@ def generate_text_sLLM(prompt):
 # -> 참고로 반드시 뒤에 .으로 끝나고 .포함해서 길이가 72자임.
 #------------------------------------------------------------------
 
-from bardapi import Bard
-
 #token = 'XQhPmzE3Wa_GqgDH1Z9YcRwZieE0STZi0ANZ557Zcm9Lio8QeIQtQvdd8evImbUrF-ZapQ.' # bard 토큰 입력
 def generate_text_bard(prompt:str, token:str):
     #print(f'[generate_text_bard] prompt: {prompt}')
@@ -402,18 +411,47 @@ def generate_text_bard(prompt:str, token:str):
     
     #print(f'[generate_text_bard] output: {output}')
     return output
+#------------------------------------------------------------------
 
-#---------------------------------------------------------------------------
-# 비동기 sLLM 이용한 text 생성
-#---------------------------------------------------------------------------
-async def async_generate_text_bard(prompt:str, token:str):
-    loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, generate_text_bard, prompt, token)
-#--------------------------------------------------------------------------- 
+#-----------------------------------------
+# GPT를 이용한 text 생성
+#-----------------------------------------
+MESSAGES:list = []
+def generate_text_GPT(prompt, messages):
     
-#---------------------------------------------------------------------------
+    #print(f'len(messages):{len(messages)}') 
+    #print()
+    
+    #-----------------------------------------
+    # *** gpt에 메시지는 계속 대화 내용이 유지가 되므로, 비용이 발생함.
+    # 따라서 최근 2개 대화만 유지함.
+    #if len(messages) >= 2:
+    #    messages = messages[len(messages)-2:]  # 최근 2개의 대화만 가져오기
+    messages = []  # 무조건 최근대화 초기화
+    #-----------------------------------------
+        
+    # 사용자 메시지 추가
+    messages.append( {"role": "user", "content": prompt})
+    print(messages)
+
+    # ChatGPT-API 호출하기
+    response = openai.ChatCompletion.create(
+        model=gpt_model,
+        messages=messages,
+        max_tokens=1024, # 토큰 수 
+        temperature=1,  # temperature 0~2 범위 : 작을수록 정형화된 답변, 클수록 유연한 답변(2는 엉뚱한 답변을 하므로, 1.5정도가 좋은것 같음=기본값은=1)
+        top_p=0.1 # 기본값은 1 (0.1이라고 하면 10% 토큰들에서 출력 토큰들을 선택한다는 의미)
+    )
+
+    print(response)
+    print()
+    answer = response['choices'][0]['message']['content']
+    return answer
+#------------------------------------------------------------------
+
+#------------------------------------------------------------------
 # BERT로 문단 검색 후 sLLM 로 Text 생성.
-#---------------------------------------------------------------------------
+#------------------------------------------------------------------
 def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, model_key:str=''):
     error:str = 'success'
     
@@ -460,7 +498,7 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
         if llm_model_type == 0:
             response = generate_text_sLLM(prompt=prompt)
         elif llm_model_type == 1:
-            print(f'gpt model')
+            response = generate_text_GPT(prompt=prompt, messages=MESSAGES)
         elif llm_model_type == 2: # bard 일때
             response = generate_text_bard(prompt=prompt, token=model_key)
     except Exception as e:
@@ -504,9 +542,9 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
 
             query = query1
         return query, answer, context
-    
-    # bard일때
-    if llm_model_type == 2:
+           
+    # gpt 혹은 bard일때
+    if llm_model_type == 1 or llm_model_type == 2:
         query = query1
         answer = response
       
@@ -520,6 +558,7 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
                 
         #context = docs['rfile_text']
         return query, answer, context
+    
 #---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
@@ -550,18 +589,33 @@ async def root():
     
     return {
         "서버": "질의응답 AI 봇",
-        "*임베딩모델":{"모델경로": MODEL_PATH, "폴링방식((mean=평균값, cls=문장대표값, max=최대값)": POLLING_MODE, "출력차원(128, 0=768)": OUT_DIMENSION,"임베딩방식(0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)": EMBEDDING_METHOD, "출력벡터타입('float32', 'float16')": FLOAT_TYPE}
+        "*임베딩모델":{"모델경로": MODEL_PATH, "폴링방식((mean=평균값, cls=문장대표값, max=최대값)": POLLING_MODE, "출력차원(128, 0=768)": OUT_DIMENSION,"임베딩방식(0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)": EMBEDDING_METHOD, "출력벡터타입('float32', 'float16')": FLOAT_TYPE},
+        "*ES":{"ES서버URL": ES_URL, "INDEX 파일경로": ES_INDEX_FILE, "BATCH 크기": BATCH_SIZE},
+        "*sLLM 모델":{"LoRA 사용유.무": uselora_weight, "LoRA 8bit 사용": load_8bit, "LoRA 가중치 경로": lora_weights, "sLLM 모델 경로": llm_model_path},
+        "*클러스터링":{"클러스터링 가변(True=문장계수에 따라 클러스터링계수를 다르게함)": NUM_CLUSTERS_VARIABLE, "방식(kmeans=k-평균 군집 분석, kmedoids=k-대표값 군집 분석)": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력(mean=평균벡터 출력, max=최대값벡터출력)": OUTMODE},
+        "*문장전처리":{"제거문장길이(설정길이보다 작은 문장은 제거됨)": REMOVE_SENTENCE_LEN, "중복문장제거(True=중복된문장은 제거됨)": REMOVE_DUPLICATION},
+        "*환경설정":{"로그경로": logfilepath, "SEED": SEED}
            }
-    '''
-    return {"서버": "질의응답 AI 봇", 
-            "*임베딩모델":{"모델경로": MODEL_PATH, "폴링방식((mean=평균값, cls=문장대표값, max=최대값)": POLLING_MODE, "출력차원(128, 0=768)": OUT_DIMENSION,"임베딩방식(0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)": EMBEDDING_METHOD, "출력벡터타입('float32', 'float16')": FLOAT_TYPE},
-            "*클러스터링":{"클러스터링 가변(True=문장계수에 따라 클러스터링계수를 다르게함)": NUM_CLUSTERS_VARIABLE, "방식(kmeans=k-평균 군집 분석, kmedoids=k-대표값 군집 분석)": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력(mean=평균벡터 출력, max=최대값벡터출력)": OUTMODE},
-            "*문장전처리":{"제거문장길이(설정길이보다 작은 문장은 제거됨)": REMOVE_SENTENCE_LEN, "중복문장제거(True=중복된문장은 제거됨)": REMOVE_DUPLICATION},
-            "*ES":{"ES서버URL": ES_URL, "INDEX 파일경로": ES_INDEX_FILE, "BATCH 크기": BATCH_SIZE},
-            "*sLLM 모델":{"LoRA 사용유.무": uselora_weight, "LoRA 8bit 사용": load_8bit, "LoRA 가중치 경로": lora_weights, "sLLM 모델 경로": llm_model_path},
-            "*환경설정":{"로그경로": logfilepath, "SEED값": SEED, "GPU사용": DEVICE}
-           }
-     '''
+
+#=========================================================
+# gpt 이용
+#=========================================================
+@app.get("/gpt")
+async def text(request: Request):
+    return templates.TemplateResponse("gpt.html", {"request": request})
+
+@app.get("/es/{esindex}/docs/gpt")
+async def search_documents(esindex:str, 
+                     request: Request,
+                     query: str = Query(..., min_length=1),
+                     search_size: int = Query(..., gt=0)
+                     ): 
+    #print(f'/es/{esindex}/docs/gpt')
+    #print(f'query:{query}')
+    #print(f'search_size:{search_size}')
+  
+    question, answer, context = await async_search_docs(esindex, query, search_size, llm_model_type=1)
+    return templates.TemplateResponse("gpt.html", {"request": request, "question":question, "answer": answer, "context": context})
 
 #=========================================================
 # bard 이용
