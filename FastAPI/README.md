@@ -91,3 +91,5 @@ FastAPI 테스트 예제
 |[embedserver](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver.py)| **ES 연동한 문서클러스터링 임베딩 및 검색 예제**|설정값(환경에 맞게 수정 필요): data/settings.yaml<br>sh 실행스크립트: embedserver.sh(python으로 실행함)|
 |[embedserver2](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver2.py)| **ES 연동한 문서클러스터링 임베딩 및 검색 예제2**|설정값(환경에 맞게 수정 필요): data/settings.yaml<br>sh 실행스크립트: embedserver2.sh(**uvicorn 으로 실행함-좀더 옵션을 많이 설정할수 있음**)|
 |[embedserver_test](https://github.com/kobongsoo/BERT/blob/master/FastAPI/embedserver_test.ipynb)| 위서버와 RESTFul API를 이용한 Client 검색 및 임베딩 예제|embedserver 실행 필요|
+|[sllm.py](https://github.com/kobongsoo/BERT/blob/master/FastAPI/sllm.py)| **ES와 sLLM/BARD/GPT 이용한 기업자료 Q&A 시스템 예제**|설정값(환경에 맞게 수정 필요): data/sllm_settings.yaml<br>sh 실행스크립트: sllm.sh(**uvicorn 으로 실행함-좀더 옵션을 많이 설정할수 있음**)|
+
