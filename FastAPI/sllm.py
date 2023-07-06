@@ -81,7 +81,7 @@ SEED = settings['env']['SEED']
 DEVICE = settings['env']['GPU']
 assert DEVICE=='auto' or DEVICE=='cpu', f'GPU setting error!!. GPU is auto or cpu=>GPU:{DEVICE}'
     
-LOGGER = mlogging(loggername="classification-server", logfilename=logfilepath) # 로그
+LOGGER = mlogging(loggername="sllm", logfilename=logfilepath) # 로그
 seed_everything(SEED)
 if DEVICE == 'auto':
     DEVICE = GPU_info() # GPU 혹은 CPU
@@ -133,9 +133,11 @@ LOGGER.info(f'*sllm Settings: lora_weights:{lora_weights}, llm_model_path:{llm_m
 
 # PROMPT 사전
 PROMPT_DICT = {   
-    "prompt_context":("###지시: 문단에서 질의에 대해 가장 적합한 내용을 찾아, 응답 문장을 만들어 주세요.\n\n###[문단]: {context}\n\n###[질의]: {query}\n\n###[응답]:"),
+    #"prompt_context":("###지시: 문단에서 질의에 대해 가장 적합한 내용을 찾아, 응답 문장을 만들어 주세요.\n\n###[문단]: {context}\n\n###[질의]: {query}\n\n###[응답]:"),
     #"prompt_context":("###지시: 아래 문단 내용을 요약해서, 질의에 맞게 응답 문장을 만들어 주세요.\n\n###[문단]: {context}\n\n###[질의]: {query}\n\n###[응답]:"),
-    "prompt_no_context":("###지시: 질의에 대해, 자세하게 응답 문장을 만들어 주세요.\n\n###[질의]: {query}\n\n###[응답]:")
+    #"prompt_no_context":("###지시: 질의에 대해, 자세하게 응답 문장을 만들어 주세요.\n\n###[질의]: {query}\n\n###[응답]:")
+    "prompt_context":("###지시: 문단에서 질의에 대해 가장 적합한 내용을 찾아 응답 문장을 만들어 주세요.\n\n###문단: {context}\n\n###질의: {query}\n\n###응답:"),
+    "prompt_no_context":("###지시: 질의에 대해 자세하게 응답 문장을 만들어 주세요.\n\n###질의: {query}\n\n###문단:\n\n###응답:")
 }
 
 #LOGGER.info(f'*llmmodel Settings: LLM_MODEL_TYPE:{LLM_MODEL_TYPE}, PROMPT_DICT:{PROMPT_DICT}')
@@ -467,7 +469,7 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
         model_key = model_key.strip()
         #print(f'model_key:{model_key}')
     
-    LOGGER.info(f'[search_docs] esindex:{esindex}, query:{query}, search_size:{search_size}, llm_model_type:{llm_model_type}, model_key:{model_key}\n')
+    LOGGER.info(f'[search_docs] esindex:{esindex}, query:{query}, search_size:{search_size}, llm_model_type:{llm_model_type}, model_key:{model_key}')
     
     query_split = query.split('##')
     prefix = query_split[0]  
@@ -526,13 +528,13 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
 
         # 프롬프트에 따라 응답, 질의 ,문단으로 파싱하는 함수.
         if response:
-            answers = response.split("###[응답]:")
+            answers = response.split("###응답:")
             #print(answer[0])
             #print()
-            questions = answers[0].split("###[질의]:")
+            questions = answers[0].split("###질의:")
             #print(questions[0])
             #print()
-            contexts = questions[0].split("###[문단]:")
+            contexts = questions[0].split("###문단:")
             #print(contexts[1])
             #print()
 
@@ -543,6 +545,12 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
                 context = contexts[1].strip()
 
             query = query1
+            
+            if context == '':
+                context = '**질문과 관련된 회사 자료를 찾지 못했습니다.**'
+                
+            LOGGER.info(f'[search_docs] answer:{answer}')
+  
         return query, answer, context
            
     # gpt 혹은 bard일때
@@ -561,6 +569,11 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
                         context += rfile_text + '\n\n'
                 
         #context = docs['rfile_text']
+        
+        if context == '':
+            context = '**질문과 관련된 회사 자료를 찾지 못했습니다.**'
+            
+        LOGGER.info(f'[search_docs] answer:{answer}')
         return query, answer, context
     
 #---------------------------------------------------------------------------

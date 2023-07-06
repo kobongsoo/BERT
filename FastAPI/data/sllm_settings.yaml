@@ -30,9 +30,9 @@ es:
  
 # sLLM 관련 전역변수
 sllm:
-  lora_weights: '../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B-LoRA-qa-moco-2/'
-  #llm_model_path: '../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B/'
-  llm_model_path: ''                # 공백이면 sllm 모델 로딩안함
+  lora_weights: '../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B-LoRA-qa-moco-3/'
+  llm_model_path: '../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B/'
+  #llm_model_path: ''                # 공백이면 sllm 모델 로딩안함
   uselora_weight: True
   load_8bit: True
 
