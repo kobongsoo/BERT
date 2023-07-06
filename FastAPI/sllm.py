@@ -142,7 +142,7 @@ PROMPT_DICT = {
 
 # GPT 관련 값
 # **key 지정
-openai.api_key = "sk-xxx"
+openai.api_key = "sk-xxxx"
 # 모델 - GPT 3.5 Turbo 지정
 # => 모델 목록은 : https://platform.openai.com/docs/models/gpt-4 참조
 gpt_model = "gpt-3.5-turbo"#"gpt-4"#"gpt-3.5-turbo" #gpt-4-0314
@@ -172,29 +172,30 @@ LOGGER.info(f'\n----------------------------------------')
 #---------------------------------------------------------------------------
 # sLLM 모델 로딩
 #---------------------------------------------------------------------------
-try:
-    start_time = time.time()
+if llm_model_path:
+    try:
+        start_time = time.time()
 
-    # tokenizer 로딩
-    sllmtokenizer = transformers.AutoTokenizer.from_pretrained(llm_model_path)
+        # tokenizer 로딩
+        sllmtokenizer = transformers.AutoTokenizer.from_pretrained(llm_model_path)
 
-    # 원본 모델 로딩
-    sllmmodel = transformers.AutoModelForCausalLM.from_pretrained(llm_model_path, load_in_8bit=load_8bit, torch_dtype=torch.float16, device_map="auto")
+        # 원본 모델 로딩
+        sllmmodel = transformers.AutoModelForCausalLM.from_pretrained(llm_model_path, load_in_8bit=load_8bit, torch_dtype=torch.float16, device_map="auto")
 
-    if uselora_weight:
-        sllmmodel = PeftModel.from_pretrained(sllmmodel, lora_weights, torch_dtype=torch.float16) # loRA 모델 로딩
+        if uselora_weight:
+            sllmmodel = PeftModel.from_pretrained(sllmmodel, lora_weights, torch_dtype=torch.float16) # loRA 모델 로딩
 
-    if not load_8bit:
-        sllmmodel.half()
+        if not load_8bit:
+            sllmmodel.half()
 
-    sllmmodel.eval()
+        sllmmodel.eval()
 
-    end_time = time.time() - start_time
-    print("load sllm model time: {:.2f} ms\n".format(end_time * 1000)) 
-    print(sllmmodel)
-except Exception as e:
-    LOGGER.error(f'sllm load fail({llm_model_path})=>{e}')
-    assert False, f'sllm load fail({llm_model_path})=>{e}'
+        end_time = time.time() - start_time
+        print("load sllm model time: {:.2f} ms\n".format(end_time * 1000)) 
+        print(sllmmodel)
+    except Exception as e:
+        LOGGER.error(f'sllm load fail({llm_model_path})=>{e}')
+        assert False, f'sllm load fail({llm_model_path})=>{e}'
     
 #---------------------------------------------------------------------------
 # 임베딩 처리 함수 
@@ -474,6 +475,7 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
     if prefix == '@':  # 일반쿼리일때는 @## prefix 입력후 질문입력함. 
         query1 = query_split[1]
         prompt = make_prompt(docs='', query=query1)
+        docs = []
     else:
         query1 = query
         
@@ -549,12 +551,14 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
         answer = response
       
         context:str = ''
-        for doc in docs:
-            score = doc['score']
-            if score > MIN_SCORE:
-                rfile_text = doc['rfile_text']
-                if rfile_text:
-                    context += rfile_text + '\n\n'
+        
+        if len(docs) > 0:
+            for doc in docs:
+                score = doc['score']
+                if score > MIN_SCORE:
+                    rfile_text = doc['rfile_text']
+                    if rfile_text:
+                        context += rfile_text + '\n\n'
                 
         #context = docs['rfile_text']
         return query, answer, context
@@ -645,7 +649,10 @@ async def search_documents(esindex:str,
 #=========================================================
 @app.get("/sllm")
 async def text(request: Request):
-    return templates.TemplateResponse("sllm.html", {"request": request})
+    if llm_model_path:
+        return templates.TemplateResponse("sllm.html", {"request": request})
+    else:
+        return {"error": "sllm 모델 동작이 중지되었습니다. bard나 gpt 모델을 이용해 주세요"}
 
 @app.get("/es/{esindex}/docs/sllm")
 async def search_documents(esindex:str, 
