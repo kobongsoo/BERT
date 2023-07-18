@@ -769,12 +769,13 @@ async def search_documents(esindex:str,
 #=========================================================
 # 체팅 UI
 # - bard 이용
-#=========================================================  
+#========================================================= 
+# 문서 파일을 열어서 doc.html에 뿌리는 api
 @app.get("/doc")
 async def read_documents(name:str, 
                          request: Request):
     
-    file_path = DATA_FOLDER + name + ".txt"
+    file_path = DATA_FOLDER + name + ".txt" 
     
     with open(file_path, 'r', encoding='utf-8') as f:
         data = f.read()
@@ -782,10 +783,12 @@ async def read_documents(name:str,
         
     return templates.TemplateResponse("doc.html", {"request": request, "data":data, "title": name})
     
+# 메인 bart_chat.html 호출하는 api  
 @app.get("/bard/chat")
 async def form(request: Request):
     return templates.TemplateResponse("bard_chat.html", {"request": request})
 
+# 검색 처리 api
 @app.post("/es/{esindex}/docs/bard/chat")
 async def search_documents(esindex:str,
                      request: Request

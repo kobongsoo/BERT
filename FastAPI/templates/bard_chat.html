@@ -34,7 +34,7 @@
             border-radius: 4px;
         }
 
-		 input[type="text"], select {
+		input[type="text"], select {
             width: 95%;
             padding: 10px;
             border: 1px solid #ccc;
@@ -66,13 +66,33 @@
         .question {
             background-color: #E8D0A9;
             padding: 10px;
+			border: 1px solid #474646;
             border-radius: 4px;
+			margin-bottom: 10px; /* 아래 간격을 10px로 설정 */
+        }
+
+		.pquestion {
+            background-color: #fcf6eb;
+            padding: 10px;
+			border: 1px solid #ccc;
+            border-radius: 4px;
+			margin-bottom: 10px; /* 아래 간격을 10px로 설정 */
         }
 
         .answer {
             background-color:  #ACD1E9;
             padding: 10px;
+			border: 1px solid #474646;
             border-radius: 4px;
+			margin-bottom: 10px; /* 아래 간격을 10px로 설정 */
+        }
+
+		.panswer {
+            background-color:  #e6f5ff;
+            padding: 10px;
+			border: 1px solid #ccc;
+            border-radius: 4px;
+			margin-bottom: 10px; /* 아래 간격을 10px로 설정 */
         }
 
         .pre {
@@ -98,15 +118,15 @@
 
         <form action="/es/mpower_doc_768d_f16_1/docs/bard/chat" method="POST">
 			
-			<ul class="pre" style="overflow-y: auto; white-space: pre-wrap; max-height: 500px; list-style-type: disc; padding-left: 20px;" id="scrollContainer">
-				{% if preanswer %}{{ preanswer | replace('\n', '<br>') | safe }}<hr>{% endif %}{% if question %}<br>질문:<br>{{ question | replace('\n', '<br>') | safe }}<br><br>답변:<br>{{ answer | replace('\n', '<br>') | safe }}{% endif %}{% if titles %}<br><br>*회사문서: {{ titles | safe }}{% endif %}
+			<ul class="pre" style="overflow-y: auto; white-space: pre-wrap; max-height: 600px; list-style-type: disc; padding-left: 20px;" id="scrollContainer">
+				{% if preanswer %}{{ preanswer | replace('\n', '<br>') | safe }}<hr>{% endif %}{% if question %}<br><div class="question">{{ question | replace('\n', '<br>') | safe }}</div><div class="answer">{{ answer | replace('\n', '<br>') | safe }}</div>{% endif %}{% if titles %}<div class="answer">*관련문서: {{ titles | safe }}</div>{% endif %}
 			</ul>
 
-			<input type="text" name="query" placeholder="Enter your message...">
+			<input type="text" name="query" placeholder="질문을 입력하세요...">
 			<button type="submit">Send</button>
 			<button type="button" onclick="startNewConversation()">새로운 대화 시작</button>
 
-			<input type="hidden" name="prequery" value="{% if preanswer %}{{ preanswer | replace('\n', '<br>') | safe }}<hr>{% endif %}{% if question %}<br>질문:<br>{{ question | replace('\n', '<br>') | safe }}<br><br>답변:<br>{{ answer | replace('\n', '<br>') | safe }}{% endif %}{% if titles %}<br><br>*회사문서: {{ titles | safe }}{% endif %}">
+			<input type="hidden" name="prequery" value="{% if preanswer %}{{ preanswer | replace('\n', '<br>') | safe }}<hr>{% endif %}{% if question %}<br><div class='pquestion'>{{ question | replace('\n', '<br>') | safe }}</div><div class='panswer'>{{ answer | replace('\n', '<br>') | safe }}</div>{% endif %}{% if titles %}<div class='panswer'>*관련문서: {{ titles | safe }}</div>{% endif %}">
 			
 			
         </form>
