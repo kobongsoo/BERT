@@ -1,0 +1,246 @@
+/MOCOMSYS/anaconda3/envs/bong/lib/python3.9/site-packages/bitsandbytes/cuda_setup/main.py:149: UserWarning: Found duplicate ['libcudart.so', 'libcudart.so.11.0', 'libcudart.so.12.0'] files: {PosixPath('/MOCOMSYS/anaconda3/envs/bong/lib/libcudart.so'), PosixPath('/MOCOMSYS/anaconda3/envs/bong/lib/libcudart.so.11.0')}.. We'll flip a coin and try one of these, in order to fail forward.
+Either way, this might cause trouble in the future:
+If you get `CUDA error: invalid device function` errors, the above might be the cause and the solution is to make sure only one ['libcudart.so', 'libcudart.so.11.0', 'libcudart.so.12.0'] in the paths that we search based on your env.
+  warn(msg)
+/MOCOMSYS/anaconda3/envs/bong/lib/python3.9/site-packages/transformers/generation_utils.py:24: FutureWarning: Importing `GenerationMixin` from `src/transformers/generation_utils.py` is deprecated and will be removed in Transformers v5. Import as `from transformers import GenerationMixin` instead.
+  warnings.warn(
+2023-07-18 11:45:25,289 - sllm - INFO - *환경 Settings: LOG_PATH:./log/sllm, SEED:111, DEVICE:cuda:0
+[Kss]: *환경 Settings: LOG_PATH:./log/sllm, SEED:111, DEVICE:cuda:0
+2023-07-18 11:45:25,289 - sllm - INFO - *모델 Settings: MODEL_PATH:../../data11/model/kpf-sbert-v1.1, POLLING_MODE:mean, OUT_DIMENSION:0
+[Kss]: *모델 Settings: MODEL_PATH:../../data11/model/kpf-sbert-v1.1, POLLING_MODE:mean, OUT_DIMENSION:0
+2023-07-18 11:45:25,289 - sllm - INFO - *임베딩 Settings: EMBEDDING_METHOD:1, FLOAT_TYPE:float16, MIN_SCORE: 1.35
+[Kss]: *임베딩 Settings: EMBEDDING_METHOD:1, FLOAT_TYPE:float16, MIN_SCORE: 1.35
+2023-07-18 11:45:25,289 - sllm - INFO - *클러스터링 Settings: CLUSTRING_MODE:kmeans, NUM_CLUSTERS:10, NUM_CLUSTERS_VARIABLE:True, OUTMODE:mean
+[Kss]: *클러스터링 Settings: CLUSTRING_MODE:kmeans, NUM_CLUSTERS:10, NUM_CLUSTERS_VARIABLE:True, OUTMODE:mean
+2023-07-18 11:45:25,290 - sllm - INFO - *문장전처리 Settings: REMOVE_SENTENCE_LEN:1, REMOVE_DUPLICATION:False
+[Kss]: *문장전처리 Settings: REMOVE_SENTENCE_LEN:1, REMOVE_DUPLICATION:False
+2023-07-18 11:45:25,290 - sllm - INFO - *ES Settings: ES_URL:http://10.10.4.10:9200/, ES_INDEX_FILE:./data/mpower10u_768d_1.json, BATCH_SIZE:20
+[Kss]: *ES Settings: ES_URL:http://10.10.4.10:9200/, ES_INDEX_FILE:./data/mpower10u_768d_1.json, BATCH_SIZE:20
+2023-07-18 11:45:25,290 - sllm - INFO - *sllm Settings: lora_weights:../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B-LoRA-qa-moco-3/, llm_model_path:, uselora_weight:True, load_8bit:True, load_8bit:True
+[Kss]: *sllm Settings: lora_weights:../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B-LoRA-qa-moco-3/, llm_model_path:, uselora_weight:True, load_8bit:True, load_8bit:True
+2023-07-18 11:45:26,680 - sllm - INFO - 
+---bi_encoder---------------------------
+[Kss]: 
+---bi_encoder---------------------------
+2023-07-18 11:45:26,680 - sllm - INFO - SentenceTransformer(
+  (0): Transformer({'max_seq_length': 512, 'do_lower_case': True}) with Transformer model: BertModel 
+  (1): Pooling({'word_embedding_dimension': 768, 'pooling_mode_cls_token': False, 'pooling_mode_mean_tokens': True, 'pooling_mode_max_tokens': False, 'pooling_mode_mean_sqrt_len_tokens': False})
+)
+[Kss]: SentenceTransformer(
+  (0): Transformer({'max_seq_length': 512, 'do_lower_case': True}) with Transformer model: BertModel 
+  (1): Pooling({'word_embedding_dimension': 768, 'pooling_mode_cls_token': False, 'pooling_mode_mean_tokens': True, 'pooling_mode_max_tokens': False, 'pooling_mode_mean_sqrt_len_tokens': False})
+)
+2023-07-18 11:45:26,680 - sllm - INFO - Transformer({'max_seq_length': 512, 'do_lower_case': True}) with Transformer model: BertModel 
+[Kss]: Transformer({'max_seq_length': 512, 'do_lower_case': True}) with Transformer model: BertModel 
+2023-07-18 11:45:26,680 - sllm - INFO - 
+----------------------------------------
+[Kss]: 
+----------------------------------------
+INFO:     Started server process [134516]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:9002 (Press CTRL+C to quit)
+
+===================================BUG REPORT===================================
+Welcome to bitsandbytes. For bug reports, please run
+
+python -m bitsandbytes
+
+ and submit this information together with your error trace to: https://github.com/TimDettmers/bitsandbytes/issues
+================================================================================
+bin /MOCOMSYS/anaconda3/envs/bong/lib/python3.9/site-packages/bitsandbytes/libbitsandbytes_cuda113.so
+CUDA SETUP: CUDA runtime path found: /MOCOMSYS/anaconda3/envs/bong/lib/libcudart.so
+CUDA SETUP: Highest compute capability among GPUs detected: 8.0
+CUDA SETUP: Detected CUDA version 113
+CUDA SETUP: Loading binary /MOCOMSYS/anaconda3/envs/bong/lib/python3.9/site-packages/bitsandbytes/libbitsandbytes_cuda113.so...
+logfilepath:./log/sllm_2023-07-18.log
+True
+device: cuda:0
+cuda index: 0
+gpu 개수: 1
+graphic name: NVIDIA A30
+INFO:     192.168.10.142:11900 - "GET /bard/chat HTTP/1.1" 200 OK
+2023-07-18 11:45:55,845 - sllm - INFO - [search_docs] esindex:mpower_doc_768d_f16_1, query:잘츠부르크에서 할슈타트 갈때 몇시간 걸리나요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+[Kss]: [search_docs] esindex:mpower_doc_768d_f16_1, query:잘츠부르크에서 할슈타트 갈때 몇시간 걸리나요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+/MOCOMSYS/anaconda3/envs/bong/lib/python3.9/site-packages/elasticsearch/connection/base.py:200: ElasticsearchWarning: Elasticsearch built-in security features are not enabled. Without authentication, your cluster could be accessible to anyone. See https://www.elastic.co/guide/en/elasticsearch/reference/7.17/security-minimal-setup.html to enable security.
+  warnings.warn(message, category=ElasticsearchWarning)
+/MOCOMSYS/anaconda3/envs/bong/lib/python3.9/site-packages/elasticsearch/connection/base.py:200: ElasticsearchWarning: The vector functions of the form function(query, doc['field']) are deprecated, and the form function(query, 'field') should be used instead. For example, cosineSimilarity(query, doc['field']) is replaced by cosineSimilarity(query, 'field').
+  warnings.warn(message, category=ElasticsearchWarning)
+2023-07-18 11:45:59,635 - sllm - INFO - *ES 검색시간: 3779.02 ms
+[Kss]: *ES 검색시간: 3779.02 ms
+2023-07-18 11:46:06,645 - sllm - INFO - [search_docs] answer:안녕하세요.
+
+잘츠부르크에서 할슈타트까지는 자동차로 약 1시간 20분이 소요됩니다. 기차를 이용하면 약 2시간 30분이 소요됩니다. 버스를 이용하면 약 3시간이 소요됩니다.
+
+잘츠부르크에서 할슈타트까지는 경치가 매우 아름다운 길입니다. 특히 자동차로 이동할 때는 호수와 산을 따라 달리는 멋진 풍경을 감상할 수 있습니다. 기차를 이용하더라도 창밖으로 아름다운 풍경을 감상할 수 있습니다. 버스를 이용하더라도 버스 정류장에서 내려서 할슈타트까지 걸어가면 아름다운 풍경을 감상할 수 있습니다.
+
+잘츠부르크에서 할슈타트까지는 이동시간이 그리 오래 걸리지 않기 때문에 당일치기 여행으로도 충분히 즐길 수 있습니다. 할슈타트는 세계에서 가장 아름다운 마을 중 하나로 손꼽히는 곳입니다. 아름다운 호수와 알프스의 산맥이 어우러진 풍경은 정말 장관입니다. 할슈타트에서 마을을 산책하고, 호수를 보며 산책을 하고, 소금광산을 방문하는 등 다양한 즐길 거리가 있습니다.
+
+잘츠부르크에서 할슈타트까지의 여행을 계획하고 계시다면, 이동시간과 비용, 그리고 즐길 거리를 고려하여 가장 적합한 교통수단을 선택하시기 바랍니다.
+[Kss]: [search_docs] answer:안녕하세요.
+
+잘츠부르크에서 할슈타트까지는 자동차로 약 1시간 20분이 소요됩니다. 기차를 이용하면 약 2시간 30분이 소요됩니다. 버스를 이용하면 약 3시간이 소요됩니다.
+
+잘츠부르크에서 할슈타트까지는 경치가 매우 아름다운 길입니다. 특히 자동차로 이동할 때는 호수와 산을 따라 달리는 멋진 풍경을 감상할 수 있습니다. 기차를 이용하더라도 창밖으로 아름다운 풍경을 감상할 수 있습니다. 버스를 이용하더라도 버스 정류장에서 내려서 할슈타트까지 걸어가면 아름다운 풍경을 감상할 수 있습니다.
+
+잘츠부르크에서 할슈타트까지는 이동시간이 그리 오래 걸리지 않기 때문에 당일치기 여행으로도 충분히 즐길 수 있습니다. 할슈타트는 세계에서 가장 아름다운 마을 중 하나로 손꼽히는 곳입니다. 아름다운 호수와 알프스의 산맥이 어우러진 풍경은 정말 장관입니다. 할슈타트에서 마을을 산책하고, 호수를 보며 산책을 하고, 소금광산을 방문하는 등 다양한 즐길 거리가 있습니다.
+
+잘츠부르크에서 할슈타트까지의 여행을 계획하고 계시다면, 이동시간과 비용, 그리고 즐길 거리를 고려하여 가장 적합한 교통수단을 선택하시기 바랍니다.
+*len(embed_query) : 768
+[{'rfile_name': '46-23', 'rfile_text': '노사 협의회 규정\n제22조 (의결 사항)\n협의회는 다음 각 호의 1 에 해당하는 사항 등을 협의 결정한다.\n① 근로자의 교육훈련 및 능력개발 기본계획의 수립에 관한 사항\n② 사내 복지시설의 설치와 관리에 관한 사항\n③ 고충처리위원회에서 의결되지 아니한 사항\n④ 기타 관련법령의 규정에 해당하는 사항', 'score': 1.3301187}, {'rfile_name': '91-23', 'rfile_text': '노사 협의회 규정\n제22조 (의결 사항)\n협의회는 다음 각 호의 1 에 해당하는 사항 등을 협의 결정한다.\n① 근로자의 교육훈련 및 능력개발 기본계획의 수립에 관한 사항\n② 사내 복지시설의 설치와 관리에 관한 사항\n③ 고충처리위원회에서 의결되지 아니한 사항\n④ 기타 관련법령의 규정에 해당하는 사항', 'score': 1.3301187}, {'rfile_name': '75-30', 'rfile_text': '주주총회 운영규정\n제31조(연기 또는 속행)\n총회의 연기 또는 속행은 총회의 결의에 의하여야 한다.\n제1항의 연기 또는 속행을 결의하는 경우에는 그 연회 또는 계속회의 일시, 장소를 정하여야 한다.\n연회 또는 계속회의 회일은 총회일로부터 2주간 이내이어야 한다.\n연기 또는 속행의 결의가 이루어진 때에는 의장은 그 뜻을 말하고 그 날의 총회의 산회를 선포한다.', 'score': 1.3221093}, {'rfile_name': '28-30', 'rfile_text': '주주총회 운영규정\n제31조(연기 또는 속행)\n총회의 연기 또는 속행은 총회의 결의에 의하여야 한다.\n제1항의 연기 또는 속행을 결의하는 경우에는 그 연회 또는 계속회의 일시, 장소를 정하여야 한다.\n연회 또는 계속회의 회일은 총회일로부터 2주간 이내이어야 한다.\n연기 또는 속행의 결의가 이루어진 때에는 의장은 그 뜻을 말하고 그 날의 총회의 산회를 선포한다.', 'score': 1.3221093}, {'rfile_name': '24-37', 'rfile_text': '취업 규칙\n제 3절 모성보호\n제 35조(임산부의 보호)\n임신 중의 여성 사원에게 출산 전과 출산 후를 통하여 90일(한 번에 둘 이상 자녀를 임신한 경우에는 120일)의 출산전후휴가를 준다. \n이 경우 반드시 출산 후에 45일(한 번에 둘 이상 자녀를 임신한 경우에는 60일) 이상 부여한다.\n임신 중인 여성 사원이 유산의 경험 등 근로기준법 시행령이 정하는 사유로 제1항의 휴가를 청구하는 경우 출산 전 어느 때라도 휴가를 나누어 사용할 수 있도록 한다. \n이 경우 출산 후의 휴가 기간은 연속하여 45일(한 번에 둘 이상 자녀를 임신한 경우에는 60일) 이상이 되어야 한다.', 'score': 1.3161057}]
+
+INFO:     192.168.10.142:11905 - "POST /es/mpower_doc_768d_f16_1/docs/bard/chat HTTP/1.1" 200 OK
+2023-07-18 11:46:41,694 - sllm - INFO - [search_docs] esindex:mpower_doc_768d_f16_1, query:@##새로운 대화를 시작합니다., search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+[Kss]: [search_docs] esindex:mpower_doc_768d_f16_1, query:@##새로운 대화를 시작합니다., search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+2023-07-18 11:46:46,051 - sllm - INFO - [search_docs] answer:안녕하세요! 새로운 대화를 시작합니다. 오늘은 무엇을 도와드릴까요?
+[Kss]: [search_docs] answer:안녕하세요! 새로운 대화를 시작합니다. 오늘은 무엇을 도와드릴까요?
+INFO:     192.168.10.142:11906 - "POST /es/mpower_doc_768d_f16_1/docs/bard/chat HTTP/1.1" 200 OK
+2023-07-18 11:47:23,842 - sllm - INFO - [search_docs] esindex:mpower_doc_768d_f16_1, query:독일로 출장을 갈때, 항공비는 실비로 지급되나요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+[Kss]: [search_docs] esindex:mpower_doc_768d_f16_1, query:독일로 출장을 갈때, 항공비는 실비로 지급되나요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+2023-07-18 11:47:23,910 - sllm - INFO - *ES 검색시간: 62.49 ms
+[Kss]: *ES 검색시간: 62.49 ms
+2023-07-18 11:47:31,567 - sllm - INFO - [search_docs] answer:네, 독일로 출장을 갈 때, 항공비는 실비로 지급됩니다. 출장 여비 규정 5.3.2에 따르면, 국외 항공운임은 별표 5에 따라 지급되며, 별표 5에 따르면, 독일로 출장 시 항공비는 실비로 지급됩니다. 따라서, 독일로 출장을 갈 때, 항공비는 영수증을 제출하여 실비로 청구할 수 있습니다.
+[Kss]: [search_docs] answer:네, 독일로 출장을 갈 때, 항공비는 실비로 지급됩니다. 출장 여비 규정 5.3.2에 따르면, 국외 항공운임은 별표 5에 따라 지급되며, 별표 5에 따르면, 독일로 출장 시 항공비는 실비로 지급됩니다. 따라서, 독일로 출장을 갈 때, 항공비는 영수증을 제출하여 실비로 청구할 수 있습니다.
+*len(embed_query) : 768
+[{'rfile_name': '19-26', 'rfile_text': '출장 여비 규정\n13. 해외출장여비\n지급기준\n별표2에 따라 일비와 식비는 정액을 지급하고, 운임과 숙박비는 실비 정산한다. \n접대 목적의 해외 출장 시, 식비를 접대비로 사용할 경우(법인카드 사용) 별도의 식비를 지급하지 않고, 일비만은 정액으로 지급한다.\n13.1.2 7.5. 규정에 따라 준비금을 지급할 수 있다.', 'score': 1.4719024}, {'rfile_name': '66-26', 'rfile_text': '출장 여비 규정\n13. 해외출장여비\n지급기준\n별표2에 따라 일비와 식비는 정액을 지급하고, 운임과 숙박비는 실비 정산한다. \n접대 목적의 해외 출장 시, 식비를 접대비로 사용할 경우(법인카드 사용) 별도의 식비를 지급하지 않고, 일비만은 정액으로 지급한다.\n13.1.2 7.5. 규정에 따라 준비금을 지급할 수 있다.', 'score': 1.4719024}, {'rfile_name': '19-36', 'rfile_text': '출장 여비 규정\n국내출장여비 2\n임원은 일비와 식비를 실비로 정산할 수 있다.\n자가용 승용차를 이용할 경우의 운임은 유류비와 통행료를 제공한다. \n유류비는 이동거리를 산정하여, 1L당 8km, 오피넷 서울지역 평균 휘발류 가격을 기준으로 산정한다. \n산정된 유류비를 법인카드로 결제하여 사용한다. \n통행료는 실비 지원하고, 법인카드를 통해 결제하거나 영수증을 통해 추후 청구할 수 있다. \n차량 이용시 별도의 일비는 지급하지 않는다.\n법인차량을 이용할 경우, 운임과 일비는 지급하지 않는다.', 'score': 1.4642152}, {'rfile_name': '66-36', 'rfile_text': '출장 여비 규정\n국내출장여비 2\n임원은 일비와 식비를 실비로 정산할 수 있다.\n자가용 승용차를 이용할 경우의 운임은 유류비와 통행료를 제공한다. \n유류비는 이동거리를 산정하여, 1L당 8km, 오피넷 서울지역 평균 휘발류 가격을 기준으로 산정한다. \n산정된 유류비를 법인카드로 결제하여 사용한다. \n통행료는 실비 지원하고, 법인카드를 통해 결제하거나 영수증을 통해 추후 청구할 수 있다. \n차량 이용시 별도의 일비는 지급하지 않는다.\n법인차량을 이용할 경우, 운임과 일비는 지급하지 않는다.', 'score': 1.4642152}, {'rfile_name': '19-10', 'rfile_text': '출장 여비 규정\n5.3. 항공운임의 지급\n5.3.1 국내 항공운임은 별표 1에 따라 지급한다.\n5.3.2. 국외 항공운임은 별표 5에 따라 지급한다.\n5.4. 자동차운임의 지급\n5.4.1. 국내 자동차운임은 별표 1에 따라 지급한다.\n5.4.2. 국외 자동차운임은 실비로 지급한다.', 'score': 1.4453394}]
+
+INFO:     192.168.10.142:11913 - "POST /es/mpower_doc_768d_f16_1/docs/bard/chat HTTP/1.1" 200 OK
+INFO:     192.168.10.142:11919 - "GET /doc?name=%EC%B6%9C%EC%9E%A5%20%EC%97%AC%EB%B9%84%20%EA%B7%9C%EC%A0%95 HTTP/1.1" 200 OK
+2023-07-18 11:48:40,513 - sllm - INFO - [search_docs] esindex:mpower_doc_768d_f16_1, query:그럼 숙박비도 실비로 지급되나요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+[Kss]: [search_docs] esindex:mpower_doc_768d_f16_1, query:그럼 숙박비도 실비로 지급되나요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+2023-07-18 11:48:40,565 - sllm - INFO - *ES 검색시간: 48.22 ms
+[Kss]: *ES 검색시간: 48.22 ms
+2023-07-18 11:48:48,446 - sllm - INFO - [search_docs] answer:저는 언어 모델일 뿐이라서 그것을 도와드릴 수가 없습니다.
+[Kss]: [search_docs] answer:저는 언어 모델일 뿐이라서 그것을 도와드릴 수가 없습니다.
+*len(embed_query) : 768
+[{'rfile_name': '45-9', 'rfile_text': '급여규정\n5.6 지급방법\n급여는 통화로 전액을 본인에게 직접 지급하거나 본인이 신청한 본인의 실명계좌에 지급한다.', 'score': 1.3881919}, {'rfile_name': '89-9', 'rfile_text': '급여규정\n5.6 지급방법\n급여는 통화로 전액을 본인에게 직접 지급하거나 본인이 신청한 본인의 실명계좌에 지급한다.', 'score': 1.3881919}, {'rfile_name': '66-6', 'rfile_text': '출장 여비 규정\n4. 지급기준\n4.1. 일수 계산 시, 기산은 오전 0시부터로 하며 1일 미만의 단수는 1일로 계산한다.\n숙박비는 숙박일수에 따라 계산하며, 기산은 오전 0시를 경과함으로써 1박으로 하며, 숙박이 다른 출장목적지로의 이동 중 교통편 내에서 이루어졌을 경우 여행 목적지의 해당 숙박비만을 지급한다.', 'score': 1.3799113}, {'rfile_name': '19-6', 'rfile_text': '출장 여비 규정\n4. 지급기준\n4.1. 일수 계산 시, 기산은 오전 0시부터로 하며 1일 미만의 단수는 1일로 계산한다.\n숙박비는 숙박일수에 따라 계산하며, 기산은 오전 0시를 경과함으로써 1박으로 하며, 숙박이 다른 출장목적지로의 이동 중 교통편 내에서 이루어졌을 경우 여행 목적지의 해당 숙박비만을 지급한다.', 'score': 1.3799113}, {'rfile_name': '19-26', 'rfile_text': '출장 여비 규정\n13. 해외출장여비\n지급기준\n별표2에 따라 일비와 식비는 정액을 지급하고, 운임과 숙박비는 실비 정산한다. \n접대 목적의 해외 출장 시, 식비를 접대비로 사용할 경우(법인카드 사용) 별도의 식비를 지급하지 않고, 일비만은 정액으로 지급한다.\n13.1.2 7.5. 규정에 따라 준비금을 지급할 수 있다.', 'score': 1.3748624}]
+
+INFO:     192.168.10.142:11933 - "POST /es/mpower_doc_768d_f16_1/docs/bard/chat HTTP/1.1" 200 OK
+2023-07-18 11:49:11,071 - sllm - INFO - [search_docs] esindex:mpower_doc_768d_f16_1, query:해외 출장시 1일 숙박비는 얼마인가요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+[Kss]: [search_docs] esindex:mpower_doc_768d_f16_1, query:해외 출장시 1일 숙박비는 얼마인가요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+2023-07-18 11:49:11,145 - sllm - INFO - *ES 검색시간: 69.27 ms
+[Kss]: *ES 검색시간: 69.27 ms
+2023-07-18 11:49:18,379 - sllm - INFO - [search_docs] answer:저는 텍스트 기반 AI라서 그것을 도와드릴 수가 없습니다.
+[Kss]: [search_docs] answer:저는 텍스트 기반 AI라서 그것을 도와드릴 수가 없습니다.
+*len(embed_query) : 768
+[{'rfile_name': '19-11', 'rfile_text': '출장 여비 규정\n6. 일비, 숙박비 및 식비\n6.1. 일비, 숙박비, 식비의 지급\n6.1.1. 국내 여행자의 일비, 숙박비 및 식비는 별표 1에 따라 지급하고, 국외 여행자의 경우는 별표2에 따라 지급한다. \n다만, 부득이한 사유로 숙박비의 상한을 초과하는 여비 지출이 필요한 경우, 국내 여행의 경우에는 숙박비 상한액의 10분의 3을, 국외 여행의 경우 2분의 1을 넘지 아니하는 범위에서 여비를 추가로 지급할 수 있다. \n이 경우, 국내 여행의 경우, 본부장의 사전 승인을 득해야 하고, 국외 여행의 경우, 대표이사의 사전 승인을 득해야 한다.\n6.1.2. 일비는 여행일수에 따라 지급하되, 법인차량을 이용하는 경우에는 일비의 2분의 1을 지급한다.\n6.1.3. 식비는 여행일수에 따라 지급한다. 다만, 수로여행과 항공여행에 는 따로 식비가 필요한 경우에만 식비를 지급한다.', 'score': 1.499312}, {'rfile_name': '66-11', 'rfile_text': '출장 여비 규정\n6. 일비, 숙박비 및 식비\n6.1. 일비, 숙박비, 식비의 지급\n6.1.1. 국내 여행자의 일비, 숙박비 및 식비는 별표 1에 따라 지급하고, 국외 여행자의 경우는 별표2에 따라 지급한다. \n다만, 부득이한 사유로 숙박비의 상한을 초과하는 여비 지출이 필요한 경우, 국내 여행의 경우에는 숙박비 상한액의 10분의 3을, 국외 여행의 경우 2분의 1을 넘지 아니하는 범위에서 여비를 추가로 지급할 수 있다. \n이 경우, 국내 여행의 경우, 본부장의 사전 승인을 득해야 하고, 국외 여행의 경우, 대표이사의 사전 승인을 득해야 한다.\n6.1.2. 일비는 여행일수에 따라 지급하되, 법인차량을 이용하는 경우에는 일비의 2분의 1을 지급한다.\n6.1.3. 식비는 여행일수에 따라 지급한다. 다만, 수로여행과 항공여행에 는 따로 식비가 필요한 경우에만 식비를 지급한다.', 'score': 1.499312}, {'rfile_name': '19-35', 'rfile_text': '출장 여비 규정\n국내출장여비 1\n부장 이하: 철도 운임은 실비(KTX일반), 선박운임은 실비(2등급), 항공운임은 실비(일반실), 자동차 운임은 실비로 지원함.\n부장 이하: 1일비는 20,000원 지원함.\n부장 이하: 1일 숙박비는 1박당 실비로 지원함. 단 서울특별시는 사항액이 70,000원, 광역시는 60,000원, 그 밖의 지역은 50,000원 임\n부장 이하: 1일 식비는 20,000원 지원함.\n임원 이상: 철도 운임은 실비(KTX특실), 선박운임은 실비(1등급), 항공운임은 실비(일반실), 자동차 운임은 실비로 지원함.\n임원 이상: 1일비는 20,000원 지원함.\n임원 이상: 1일 숙박비는 1박당 실비로 지원함.\n임원 이상: 1일 식비는 25,000원 지원함.', 'score': 1.4825972}, {'rfile_name': '66-35', 'rfile_text': '출장 여비 규정\n국내출장여비 1\n부장 이하: 철도 운임은 실비(KTX일반), 선박운임은 실비(2등급), 항공운임은 실비(일반실), 자동차 운임은 실비로 지원함.\n부장 이하: 1일비는 20,000원 지원함.\n부장 이하: 1일 숙박비는 1박당 실비로 지원함. 단 서울특별시는 사항액이 70,000원, 광역시는 60,000원, 그 밖의 지역은 50,000원 임\n부장 이하: 1일 식비는 20,000원 지원함.\n임원 이상: 철도 운임은 실비(KTX특실), 선박운임은 실비(1등급), 항공운임은 실비(일반실), 자동차 운임은 실비로 지원함.\n임원 이상: 1일비는 20,000원 지원함.\n임원 이상: 1일 숙박비는 1박당 실비로 지원함.\n임원 이상: 1일 식비는 25,000원 지원함.', 'score': 1.4825972}, {'rfile_name': '19-26', 'rfile_text': '출장 여비 규정\n13. 해외출장여비\n지급기준\n별표2에 따라 일비와 식비는 정액을 지급하고, 운임과 숙박비는 실비 정산한다. \n접대 목적의 해외 출장 시, 식비를 접대비로 사용할 경우(법인카드 사용) 별도의 식비를 지급하지 않고, 일비만은 정액으로 지급한다.\n13.1.2 7.5. 규정에 따라 준비금을 지급할 수 있다.', 'score': 1.4818774}]
+
+INFO:     192.168.10.142:11936 - "POST /es/mpower_doc_768d_f16_1/docs/bard/chat HTTP/1.1" 200 OK
+2023-07-18 11:49:53,727 - sllm - INFO - [search_docs] esindex:mpower_doc_768d_f16_1, query:해외 출장시 1박 숙박비는 얼마?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+[Kss]: [search_docs] esindex:mpower_doc_768d_f16_1, query:해외 출장시 1박 숙박비는 얼마?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+2023-07-18 11:49:53,771 - sllm - INFO - *ES 검색시간: 40.00 ms
+[Kss]: *ES 검색시간: 40.00 ms
+2023-07-18 11:50:09,674 - sllm - INFO - [search_docs] answer:숙박비는 출장 국가, 도시, 숙박 시설의 종류에 따라 다릅니다. 일반적으로 유럽은 아시아보다 숙박비가 비쌉니다. 미국은 유럽보다 숙박비가 저렴하지만, 도시에 따라 차이가 있습니다. 예를 들어 뉴욕은 샌프란시스코보다 숙박비가 비쌉니다.
+
+숙박비를 절약하려면 호스텔이나 게스트하우스를 이용하는 것이 좋습니다. 호텔보다 숙박비가 저렴하고, 다른 여행자들과 교류할 수 있는 기회도 있습니다.
+
+다음은 해외 출장시 1박 숙박비의 평균입니다.
+
+* 유럽: 100~200 USD
+* 아시아: 50~100 USD
+* 미국: 75~150 USD
+
+이상의 정보는 참고용으로만 제공됩니다. 정확한 숙박비는 출장 국가, 도시, 숙박 시설의 종류에 따라 다를 수 있습니다.
+[Kss]: [search_docs] answer:숙박비는 출장 국가, 도시, 숙박 시설의 종류에 따라 다릅니다. 일반적으로 유럽은 아시아보다 숙박비가 비쌉니다. 미국은 유럽보다 숙박비가 저렴하지만, 도시에 따라 차이가 있습니다. 예를 들어 뉴욕은 샌프란시스코보다 숙박비가 비쌉니다.
+
+숙박비를 절약하려면 호스텔이나 게스트하우스를 이용하는 것이 좋습니다. 호텔보다 숙박비가 저렴하고, 다른 여행자들과 교류할 수 있는 기회도 있습니다.
+
+다음은 해외 출장시 1박 숙박비의 평균입니다.
+
+* 유럽: 100~200 USD
+* 아시아: 50~100 USD
+* 미국: 75~150 USD
+
+이상의 정보는 참고용으로만 제공됩니다. 정확한 숙박비는 출장 국가, 도시, 숙박 시설의 종류에 따라 다를 수 있습니다.
+*len(embed_query) : 768
+[{'rfile_name': '19-26', 'rfile_text': '출장 여비 규정\n13. 해외출장여비\n지급기준\n별표2에 따라 일비와 식비는 정액을 지급하고, 운임과 숙박비는 실비 정산한다. \n접대 목적의 해외 출장 시, 식비를 접대비로 사용할 경우(법인카드 사용) 별도의 식비를 지급하지 않고, 일비만은 정액으로 지급한다.\n13.1.2 7.5. 규정에 따라 준비금을 지급할 수 있다.', 'score': 1.4986978}, {'rfile_name': '66-26', 'rfile_text': '출장 여비 규정\n13. 해외출장여비\n지급기준\n별표2에 따라 일비와 식비는 정액을 지급하고, 운임과 숙박비는 실비 정산한다. \n접대 목적의 해외 출장 시, 식비를 접대비로 사용할 경우(법인카드 사용) 별도의 식비를 지급하지 않고, 일비만은 정액으로 지급한다.\n13.1.2 7.5. 규정에 따라 준비금을 지급할 수 있다.', 'score': 1.4986978}, {'rfile_name': '19-11', 'rfile_text': '출장 여비 규정\n6. 일비, 숙박비 및 식비\n6.1. 일비, 숙박비, 식비의 지급\n6.1.1. 국내 여행자의 일비, 숙박비 및 식비는 별표 1에 따라 지급하고, 국외 여행자의 경우는 별표2에 따라 지급한다. \n다만, 부득이한 사유로 숙박비의 상한을 초과하는 여비 지출이 필요한 경우, 국내 여행의 경우에는 숙박비 상한액의 10분의 3을, 국외 여행의 경우 2분의 1을 넘지 아니하는 범위에서 여비를 추가로 지급할 수 있다. \n이 경우, 국내 여행의 경우, 본부장의 사전 승인을 득해야 하고, 국외 여행의 경우, 대표이사의 사전 승인을 득해야 한다.\n6.1.2. 일비는 여행일수에 따라 지급하되, 법인차량을 이용하는 경우에는 일비의 2분의 1을 지급한다.\n6.1.3. 식비는 여행일수에 따라 지급한다. 다만, 수로여행과 항공여행에 는 따로 식비가 필요한 경우에만 식비를 지급한다.', 'score': 1.4840639}, {'rfile_name': '66-11', 'rfile_text': '출장 여비 규정\n6. 일비, 숙박비 및 식비\n6.1. 일비, 숙박비, 식비의 지급\n6.1.1. 국내 여행자의 일비, 숙박비 및 식비는 별표 1에 따라 지급하고, 국외 여행자의 경우는 별표2에 따라 지급한다. \n다만, 부득이한 사유로 숙박비의 상한을 초과하는 여비 지출이 필요한 경우, 국내 여행의 경우에는 숙박비 상한액의 10분의 3을, 국외 여행의 경우 2분의 1을 넘지 아니하는 범위에서 여비를 추가로 지급할 수 있다. \n이 경우, 국내 여행의 경우, 본부장의 사전 승인을 득해야 하고, 국외 여행의 경우, 대표이사의 사전 승인을 득해야 한다.\n6.1.2. 일비는 여행일수에 따라 지급하되, 법인차량을 이용하는 경우에는 일비의 2분의 1을 지급한다.\n6.1.3. 식비는 여행일수에 따라 지급한다. 다만, 수로여행과 항공여행에 는 따로 식비가 필요한 경우에만 식비를 지급한다.', 'score': 1.4840639}, {'rfile_name': '19-27', 'rfile_text': '출장 여비 규정\n13.2 회사파견/유학\n회사파견 또는 유학시 건별로 별도의 품의에 의한다.\n연수목적 해외출장\n13.3.1. 세미나, 박람회 등의 참석을 위한 해외출장을 연수목적 해외출장이라고 한다.\n13.3.2. 동일한 연수목적 해외출장을 2인 이상 동시에 참가할 경우, 일비의 2할을 감액한다.\n13.4 장기체재\n6.2. 규정에 따른다.', 'score': 1.4682777}]
+
+INFO:     192.168.10.142:11942 - "POST /es/mpower_doc_768d_f16_1/docs/bard/chat HTTP/1.1" 200 OK
+INFO:     192.168.10.142:11947 - "GET /doc?name=%EC%B6%9C%EC%9E%A5%20%EC%97%AC%EB%B9%84%20%EA%B7%9C%EC%A0%95 HTTP/1.1" 200 OK
+2023-07-18 11:51:14,204 - sllm - INFO - [search_docs] esindex:mpower_doc_768d_f16_1, query:할아버지 돌아가시면 휴가는 며칠 주어지나요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+[Kss]: [search_docs] esindex:mpower_doc_768d_f16_1, query:할아버지 돌아가시면 휴가는 며칠 주어지나요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+2023-07-18 11:51:14,271 - sllm - INFO - *ES 검색시간: 61.91 ms
+[Kss]: *ES 검색시간: 61.91 ms
+2023-07-18 11:51:19,417 - sllm - INFO - [search_docs] answer:안녕하세요. 문단에서 질의에 대해 가장 적합한 내용을 찾아 응답 문장을 만들어 드리겠습니다.
+
+질의: 할아버지 돌아가시면 휴가는 며칠 주어지나요?
+
+응답:
+
+할아버지가 돌아가시면 직계존속 사망의 경우 3일의 경조휴가가 주어집니다. 공휴일과 경조사가 중복되었을 경우 휴가일수는 공휴일을 제외하여 계산합니다. 따라서, 할아버지가 공휴일에 돌아가셨다면 1일의 경조휴가가 주어집니다.
+
+경조휴가는 유급휴가이므로 휴가를 사용하지 않고도 급여를 받을 수 있습니다. 경조휴가를 사용하기 위해서는 사전에 회사에 휴가신청서를 제출해야 합니다. 휴가신청서에는 휴가사유, 휴가기간, 휴가일시를 기재해야 합니다.
+
+경조휴가에 대한 자세한 내용은 회사의 복지규정을 참고하시기 바랍니다.
+
+감사합니다.
+[Kss]: [search_docs] answer:안녕하세요. 문단에서 질의에 대해 가장 적합한 내용을 찾아 응답 문장을 만들어 드리겠습니다.
+
+질의: 할아버지 돌아가시면 휴가는 며칠 주어지나요?
+
+응답:
+
+할아버지가 돌아가시면 직계존속 사망의 경우 3일의 경조휴가가 주어집니다. 공휴일과 경조사가 중복되었을 경우 휴가일수는 공휴일을 제외하여 계산합니다. 따라서, 할아버지가 공휴일에 돌아가셨다면 1일의 경조휴가가 주어집니다.
+
+경조휴가는 유급휴가이므로 휴가를 사용하지 않고도 급여를 받을 수 있습니다. 경조휴가를 사용하기 위해서는 사전에 회사에 휴가신청서를 제출해야 합니다. 휴가신청서에는 휴가사유, 휴가기간, 휴가일시를 기재해야 합니다.
+
+경조휴가에 대한 자세한 내용은 회사의 복지규정을 참고하시기 바랍니다.
+
+감사합니다.
+*len(embed_query) : 768
+[{'rfile_name': '44-5', 'rfile_text': '경조사 지원 규정\n4. 경조휴가일수\n공휴일과 경조사가 중복되었을 경우 휴가일수는 공휴일을 제외하여 계산한다.', 'score': 1.3968931}, {'rfile_name': '88-5', 'rfile_text': '경조사 지원 규정\n4. 경조휴가일수\n공휴일과 경조사가 중복되었을 경우 휴가일수는 공휴일을 제외하여 계산한다.', 'score': 1.3968931}, {'rfile_name': '39-3', 'rfile_text': '모코엠시스 회사 규정\n공가 및 하계휴가\n공가는 공무원이나 공무원이 아닌 사람이 공무로 인하여 출근이 불가능한 경우, 법률에 따라 출근이 불가능한 경우, 천재지변이나 재해로 인하여 출근이 불가능한 경우에 주어지는 휴가입니다.\n공가를 신청하려면 최소 휴가 하루 전 경영지원부 홍아름 과장에게 제출해야 합니다. \n공가 및 경조휴가의 경우 증빙을 첨부해야 합니다.\n별도 하계휴가는 없습니다. \n개인의 잔여연차에서 자유롭게 사용하시면 됩니다.', 'score': 1.349762}, {'rfile_name': '85-3', 'rfile_text': '모코엠시스 회사 규정\n공가 및 하계휴가\n공가는 공무원이나 공무원이 아닌 사람이 공무로 인하여 출근이 불가능한 경우, 법률에 따라 출근이 불가능한 경우, 천재지변이나 재해로 인하여 출근이 불가능한 경우에 주어지는 휴가입니다.\n공가를 신청하려면 최소 휴가 하루 전 경영지원부 홍아름 과장에게 제출해야 합니다. \n공가 및 경조휴가의 경우 증빙을 첨부해야 합니다.\n별도 하계휴가는 없습니다. \n개인의 잔여연차에서 자유롭게 사용하시면 됩니다.', 'score': 1.349762}, {'rfile_name': '44-3', 'rfile_text': '경조사 지원 규정\n조사 지원금\n본인 사망\n배우자 사망 : 5일 유급휴가, 1,000,000원 부조금 및 조화 지원\n부모 사망 : 5일 유급휴가, 1,000,000원 부조금 및 조화 지원\n자녀 사망 : 5일 유급휴가, 1,000,000원 부조금 및 조화 지원\n배우자 사망 : 5일 유급휴가, 1,000,000원 부조금 및 조화 지원\n부모 사망 : 5일 유급휴가, 500,000원 부조금 및 조화 지원\n형제자매 사망: 3일 유급휴가, 300,000원 부조금 및 조화 지원\n조부모/외조부모 사망: 3일 유급휴가, 200,000원 부조금 및 조화 지원', 'score': 1.3434501}]
+
+INFO:     192.168.10.142:11951 - "POST /es/mpower_doc_768d_f16_1/docs/bard/chat HTTP/1.1" 200 OK
+2023-07-18 11:51:53,903 - sllm - INFO - [search_docs] esindex:mpower_doc_768d_f16_1, query:그럼 할머니가 돌아가시면?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+[Kss]: [search_docs] esindex:mpower_doc_768d_f16_1, query:그럼 할머니가 돌아가시면?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+2023-07-18 11:51:53,956 - sllm - INFO - *ES 검색시간: 48.86 ms
+[Kss]: *ES 검색시간: 48.86 ms
+2023-07-18 11:51:58,801 - sllm - INFO - [search_docs] answer:당신의 할머니가 돌아가셨다면, 당신은 당연히 그녀의 장례식에 참석해야 합니다. 이것은 당신이 그녀를 사랑하고 존중한다는 것을 보여주는 방법입니다. 장례식에 참석하는 것은 그녀의 유족들에게도 위로가 될 것입니다.
+[Kss]: [search_docs] answer:당신의 할머니가 돌아가셨다면, 당신은 당연히 그녀의 장례식에 참석해야 합니다. 이것은 당신이 그녀를 사랑하고 존중한다는 것을 보여주는 방법입니다. 장례식에 참석하는 것은 그녀의 유족들에게도 위로가 될 것입니다.
+*len(embed_query) : 768
+[{'rfile_name': '67-48', 'rfile_text': '취업 규칙\n제7장 퇴직․해고 등 \n제44조 (퇴직 및 퇴직일)\n① 회사는 사원이 다음 각 호에 해당할 때에는 사원을 퇴직시킬 수 있다. \n1. 본인이 퇴직을 원하는 경우 \n2. 사망하였을 경우 \n3. 정년에 도달하였을 경우 \n4. 근로계약기간이 만료된 경우 \n5. 해고가 결정된 경우', 'score': 1.4270961}, {'rfile_name': '24-48', 'rfile_text': '취업 규칙\n제7장 퇴직․해고 등 \n제44조 (퇴직 및 퇴직일)\n① 회사는 사원이 다음 각 호에 해당할 때에는 사원을 퇴직시킬 수 있다. \n1. 본인이 퇴직을 원하는 경우 \n2. 사망하였을 경우 \n3. 정년에 도달하였을 경우 \n4. 근로계약기간이 만료된 경우 \n5. 해고가 결정된 경우', 'score': 1.4270961}, {'rfile_name': '11-43', 'rfile_text': '인사 규정\n40. 당연퇴직 \n직원이 다음 사항에 해당할 때에는 그 사유가 발생할 날로부터 퇴직한 것으로 본다.\n40.1 고용기간이 만료되었을 때\n40.2 사망하였을 때\n40.3 본인이 퇴직을 신청하고, 회사가 이를 승인하였을 때\n40.4 보직이 해임되어 대기발령을 받은 자가 3개월을 경과하여도 보직을 부여받지 못했을 때\n40.5 수습기간 중 채용을 취소하였을 때\n40.6 휴직기간이 종료하거나 휴직사유가 소멸된 후 7일 이내에 복직원을 제출하지 않았을 때\n40.7 기타 관행상 일신상의 이유로 계속 근무가 불가능하다고 판단되었을 때', 'score': 1.3824687}, {'rfile_name': '58-43', 'rfile_text': '인사 규정\n40. 당연퇴직 \n직원이 다음 사항에 해당할 때에는 그 사유가 발생할 날로부터 퇴직한 것으로 본다.\n40.1 고용기간이 만료되었을 때\n40.2 사망하였을 때\n40.3 본인이 퇴직을 신청하고, 회사가 이를 승인하였을 때\n40.4 보직이 해임되어 대기발령을 받은 자가 3개월을 경과하여도 보직을 부여받지 못했을 때\n40.5 수습기간 중 채용을 취소하였을 때\n40.6 휴직기간이 종료하거나 휴직사유가 소멸된 후 7일 이내에 복직원을 제출하지 않았을 때\n40.7 기타 관행상 일신상의 이유로 계속 근무가 불가능하다고 판단되었을 때', 'score': 1.3824687}, {'rfile_name': '24-49', 'rfile_text': '취업 규칙\n퇴직일\n② 제1항에 의한 퇴직의 퇴직일은 다음 각 호와 같다. \n1. 사원이 퇴직일자를 명시한 사직원을 제출하여 수리되었을 경우 그 날 \n2. 사원이 퇴직일자를 명시하지 아니하고 사직원을 제출하였을 경우 이를 수리한 날. 단, 회사는 업무의 인수인계를 위하여 사직원을 제출한 날로부터 30일을 넘지 않는 범위 내에서 퇴직일자를 지정하여 수리할 수 있다. \n3. 사망한 날 \n4. 정년에 도달한 날 \n5. 근로계약기간이 만료된 날 \n6. 해고가 결정․통보된 경우 해고일', 'score': 1.3701658}]
+
+INFO:     192.168.10.142:11962 - "POST /es/mpower_doc_768d_f16_1/docs/bard/chat HTTP/1.1" 200 OK
+2023-07-18 11:52:19,003 - sllm - INFO - [search_docs] esindex:mpower_doc_768d_f16_1, query:할머니가 돌아가시면 휴가는 며칠 주어지나요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+[Kss]: [search_docs] esindex:mpower_doc_768d_f16_1, query:할머니가 돌아가시면 휴가는 며칠 주어지나요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+2023-07-18 11:52:19,053 - sllm - INFO - *ES 검색시간: 45.33 ms
+[Kss]: *ES 검색시간: 45.33 ms
+2023-07-18 11:52:20,203 - sllm - INFO - [search_docs] esindex:mpower_doc_768d_f16_1, query:할머니가 돌아가시면 휴가는 며칠 주어지나요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+[Kss]: [search_docs] esindex:mpower_doc_768d_f16_1, query:할머니가 돌아가시면 휴가는 며칠 주어지나요?, search_size:5, llm_model_type:2, model_key:XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.
+2023-07-18 11:52:20,271 - sllm - INFO - *ES 검색시간: 62.99 ms
+[Kss]: *ES 검색시간: 62.99 ms
+2023-07-18 11:52:28,183 - sllm - INFO - [search_docs] answer:죄송하지만 그에 대한 답은 없습니다. 할머니가 돌아가시면 휴가를 얼마나 주느냐는 회사마다 다를 수 있습니다. 회사의 규정에 따라 휴가 일수가 다를 수 있습니다.
+[Kss]: [search_docs] answer:죄송하지만 그에 대한 답은 없습니다. 할머니가 돌아가시면 휴가를 얼마나 주느냐는 회사마다 다를 수 있습니다. 회사의 규정에 따라 휴가 일수가 다를 수 있습니다.
+2023-07-18 11:52:44,492 - sllm - INFO - [search_docs] answer:할머니가 돌아가시면 휴가는 며칠 주어지나요?
+
+한국의 근로기준법에 따르면, 직장인은 직계존속(부모, 자녀, 배우자)의 사망 시 3일간의 유급휴가를 받을 수 있습니다. 따라서 할머니가 돌아가시면 3일간의 유급휴가를 받을 수 있습니다.
+
+다만, 회사의 사규에 따라 유급휴가가 3일보다 적거나 더 많을 수 있습니다. 따라서 유급휴가 일수를 확인하려면 회사의 인사부나 담당자에게 문의하는 것이 좋습니다.
+
+또한, 유급휴가를 사용할 때는 회사에 미리 휴가신청서를 제출해야 합니다. 휴가신청서에는 휴가사유, 휴가기간, 휴가시작일, 휴가종료일을 기재해야 합니다.
+
+유급휴가를 사용하면 회사에서 급여를 받을 수 있습니다. 따라서 유급휴가를 사용하면 경제적 부담을 줄일 수 있습니다.
+
+할머니가 돌아가셨을 때는 유급휴가를 사용하여 장례식에 참석하고 가족을 위로하는 시간을 가지시기 바랍니다.
+[Kss]: [search_docs] answer:할머니가 돌아가시면 휴가는 며칠 주어지나요?
+
+한국의 근로기준법에 따르면, 직장인은 직계존속(부모, 자녀, 배우자)의 사망 시 3일간의 유급휴가를 받을 수 있습니다. 따라서 할머니가 돌아가시면 3일간의 유급휴가를 받을 수 있습니다.
+
+다만, 회사의 사규에 따라 유급휴가가 3일보다 적거나 더 많을 수 있습니다. 따라서 유급휴가 일수를 확인하려면 회사의 인사부나 담당자에게 문의하는 것이 좋습니다.
+
+또한, 유급휴가를 사용할 때는 회사에 미리 휴가신청서를 제출해야 합니다. 휴가신청서에는 휴가사유, 휴가기간, 휴가시작일, 휴가종료일을 기재해야 합니다.
+
+유급휴가를 사용하면 회사에서 급여를 받을 수 있습니다. 따라서 유급휴가를 사용하면 경제적 부담을 줄일 수 있습니다.
+
+할머니가 돌아가셨을 때는 유급휴가를 사용하여 장례식에 참석하고 가족을 위로하는 시간을 가지시기 바랍니다.
+*len(embed_query) : 768
+[{'rfile_name': '67-48', 'rfile_text': '취업 규칙\n제7장 퇴직․해고 등 \n제44조 (퇴직 및 퇴직일)\n① 회사는 사원이 다음 각 호에 해당할 때에는 사원을 퇴직시킬 수 있다. \n1. 본인이 퇴직을 원하는 경우 \n2. 사망하였을 경우 \n3. 정년에 도달하였을 경우 \n4. 근로계약기간이 만료된 경우 \n5. 해고가 결정된 경우', 'score': 1.3300112}, {'rfile_name': '24-48', 'rfile_text': '취업 규칙\n제7장 퇴직․해고 등 \n제44조 (퇴직 및 퇴직일)\n① 회사는 사원이 다음 각 호에 해당할 때에는 사원을 퇴직시킬 수 있다. \n1. 본인이 퇴직을 원하는 경우 \n2. 사망하였을 경우 \n3. 정년에 도달하였을 경우 \n4. 근로계약기간이 만료된 경우 \n5. 해고가 결정된 경우', 'score': 1.3300112}, {'rfile_name': '24-49', 'rfile_text': '취업 규칙\n퇴직일\n② 제1항에 의한 퇴직의 퇴직일은 다음 각 호와 같다. \n1. 사원이 퇴직일자를 명시한 사직원을 제출하여 수리되었을 경우 그 날 \n2. 사원이 퇴직일자를 명시하지 아니하고 사직원을 제출하였을 경우 이를 수리한 날. 단, 회사는 업무의 인수인계를 위하여 사직원을 제출한 날로부터 30일을 넘지 않는 범위 내에서 퇴직일자를 지정하여 수리할 수 있다. \n3. 사망한 날 \n4. 정년에 도달한 날 \n5. 근로계약기간이 만료된 날 \n6. 해고가 결정․통보된 경우 해고일', 'score': 1.3270153}, {'rfile_name': '67-49', 'rfile_text': '취업 규칙\n퇴직일\n② 제1항에 의한 퇴직의 퇴직일은 다음 각 호와 같다. \n1. 사원이 퇴직일자를 명시한 사직원을 제출하여 수리되었을 경우 그 날 \n2. 사원이 퇴직일자를 명시하지 아니하고 사직원을 제출하였을 경우 이를 수리한 날. 단, 회사는 업무의 인수인계를 위하여 사직원을 제출한 날로부터 30일을 넘지 않는 범위 내에서 퇴직일자를 지정하여 수리할 수 있다. \n3. 사망한 날 \n4. 정년에 도달한 날 \n5. 근로계약기간이 만료된 날 \n6. 해고가 결정․통보된 경우 해고일', 'score': 1.3270153}, {'rfile_name': '11-48', 'rfile_text': '인사 규정\n45. 퇴직후의 채무\n45.1 퇴직 또는 해고된 자는 재직 중에 행한 자기의 채무에 속하는 직무에 대하여 책임을 면할 수 없다.\n45.2 퇴직 후라도 재직 중에 지득한 비밀에 속하는 사항은 누설하여서는 아니 된다.', 'score': 1.3082927}]
+
+*len(embed_query) : 768
+[{'rfile_name': '67-48', 'rfile_text': '취업 규칙\n제7장 퇴직․해고 등 \n제44조 (퇴직 및 퇴직일)\n① 회사는 사원이 다음 각 호에 해당할 때에는 사원을 퇴직시킬 수 있다. \n1. 본인이 퇴직을 원하는 경우 \n2. 사망하였을 경우 \n3. 정년에 도달하였을 경우 \n4. 근로계약기간이 만료된 경우 \n5. 해고가 결정된 경우', 'score': 1.3300112}, {'rfile_name': '24-48', 'rfile_text': '취업 규칙\n제7장 퇴직․해고 등 \n제44조 (퇴직 및 퇴직일)\n① 회사는 사원이 다음 각 호에 해당할 때에는 사원을 퇴직시킬 수 있다. \n1. 본인이 퇴직을 원하는 경우 \n2. 사망하였을 경우 \n3. 정년에 도달하였을 경우 \n4. 근로계약기간이 만료된 경우 \n5. 해고가 결정된 경우', 'score': 1.3300112}, {'rfile_name': '24-49', 'rfile_text': '취업 규칙\n퇴직일\n② 제1항에 의한 퇴직의 퇴직일은 다음 각 호와 같다. \n1. 사원이 퇴직일자를 명시한 사직원을 제출하여 수리되었을 경우 그 날 \n2. 사원이 퇴직일자를 명시하지 아니하고 사직원을 제출하였을 경우 이를 수리한 날. 단, 회사는 업무의 인수인계를 위하여 사직원을 제출한 날로부터 30일을 넘지 않는 범위 내에서 퇴직일자를 지정하여 수리할 수 있다. \n3. 사망한 날 \n4. 정년에 도달한 날 \n5. 근로계약기간이 만료된 날 \n6. 해고가 결정․통보된 경우 해고일', 'score': 1.3270153}, {'rfile_name': '67-49', 'rfile_text': '취업 규칙\n퇴직일\n② 제1항에 의한 퇴직의 퇴직일은 다음 각 호와 같다. \n1. 사원이 퇴직일자를 명시한 사직원을 제출하여 수리되었을 경우 그 날 \n2. 사원이 퇴직일자를 명시하지 아니하고 사직원을 제출하였을 경우 이를 수리한 날. 단, 회사는 업무의 인수인계를 위하여 사직원을 제출한 날로부터 30일을 넘지 않는 범위 내에서 퇴직일자를 지정하여 수리할 수 있다. \n3. 사망한 날 \n4. 정년에 도달한 날 \n5. 근로계약기간이 만료된 날 \n6. 해고가 결정․통보된 경우 해고일', 'score': 1.3270153}, {'rfile_name': '11-48', 'rfile_text': '인사 규정\n45. 퇴직후의 채무\n45.1 퇴직 또는 해고된 자는 재직 중에 행한 자기의 채무에 속하는 직무에 대하여 책임을 면할 수 없다.\n45.2 퇴직 후라도 재직 중에 지득한 비밀에 속하는 사항은 누설하여서는 아니 된다.', 'score': 1.3082927}]
+
+INFO:     192.168.10.142:11966 - "POST /es/mpower_doc_768d_f16_1/docs/bard/chat HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [134516]

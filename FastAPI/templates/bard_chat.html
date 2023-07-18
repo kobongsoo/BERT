@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Text Input</title>
+    <style>
+        body {
+            background-color: #f2f2f2;
+            font-family: Arial, sans-serif;
+        }
+
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="query"], select {
+            width: 95%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+		 input[type="text"], select {
+            width: 95%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button[type="submit"] {
+            padding: 10px 20px;
+            background-color: #4caf50;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+		button[type="button"] {
+            padding: 9px 20px;
+            background-color: #4caf50;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        p {
+            margin-bottom: 10px;
+        }
+
+        .question {
+            background-color: #E8D0A9;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .answer {
+            background-color:  #ACD1E9;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .pre {
+            background-color: #f2f2f2;
+            padding: 10px;
+			border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+		input[type="text"],
+		button[type="submit"] {
+			margin-bottom: 15px; /* 컨트롤들 간의 아래 간격을 10px로 설정 */
+		}
+
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+		<h2>모코엠시스 Q&A with BARD-Chat</h2>
+		<p>
+		질문을 입력하면 회사문서를 검색하고, 검색된 문서 내용을 이용하여 질문에 대한 답변을 생성합니다.<br>
+		회사문서가 없으면, 질문에 대해 일반적인 답변을 합니다.<br>
+
+        <form action="/es/mpower_doc_768d_f16_1/docs/bard/chat" method="POST">
+			
+			<ul class="pre" style="overflow-y: auto; white-space: pre-wrap; max-height: 500px; list-style-type: disc; padding-left: 20px;" id="scrollContainer">
+				{% if preanswer %}{{ preanswer | replace('\n', '<br>') | safe }}<hr>{% endif %}{% if question %}<br>질문:<br>{{ question | replace('\n', '<br>') | safe }}<br><br>답변:<br>{{ answer | replace('\n', '<br>') | safe }}{% endif %}{% if titles %}<br><br>*회사문서: {{ titles | safe }}{% endif %}
+			</ul>
+
+			<input type="text" name="query" placeholder="Enter your message...">
+			<button type="submit">Send</button>
+			<button type="button" onclick="startNewConversation()">새로운 대화 시작</button>
+
+			<input type="hidden" name="prequery" value="{% if preanswer %}{{ preanswer | replace('\n', '<br>') | safe }}<hr>{% endif %}{% if question %}<br>질문:<br>{{ question | replace('\n', '<br>') | safe }}<br><br>답변:<br>{{ answer | replace('\n', '<br>') | safe }}{% endif %}{% if titles %}<br><br>*회사문서: {{ titles | safe }}{% endif %}">
+			
+			
+        </form>
+
+		<script>
+			var scrollContainer = document.getElementById("scrollContainer");
+			scrollContainer.scrollTop = scrollContainer.scrollHeight;
+		</script>
+
+		<script>
+			function startNewConversation() {
+				var form = document.querySelector('form');
+				var queryInput = form.querySelector('input[name="query"]');
+				queryInput.value = "@##새로운 대화를 시작합니다.";
+				form.submit();
+			}
+		</script>
+
+		<script>
+			function openPopup(url) {
+			  window.open(url, '_blank', 'width=500,height=500');
+			}
+	  </script>
+
+    </div>
+</body>
+</html>

@@ -76,8 +76,10 @@ assert len(settings) > 2, f'load settings error!!=>len(settigs):{len(settings)}'
 #------------------------------------
 # param
 #------------------------------------
+# 환경설정
 logfilepath = settings['env']['LOG_PATH']
 SEED = settings['env']['SEED']
+DATA_FOLDER = settings['env']['DATA_FOLDER']
 DEVICE = settings['env']['GPU']
 assert DEVICE=='auto' or DEVICE=='cpu', f'GPU setting error!!. GPU is auto or cpu=>GPU:{DEVICE}'
     
@@ -127,6 +129,9 @@ uselora_weight = settings['sllm']['uselora_weight']
 load_8bit = settings['sllm']['load_8bit']
 LOGGER.info(f'*sllm Settings: lora_weights:{lora_weights}, llm_model_path:{llm_model_path}, uselora_weight:{uselora_weight}, load_8bit:{load_8bit}, load_8bit:{load_8bit}')
 
+# BARD 관련
+BARD_TOKEN = settings['bard']['BARD_TOKEN']
+
 # LLM 모델 타입
 #LLM_MODEL_TYPE = settings['llmmodel']['LLM_MODEL_TYPE']
 #PROMPT_DICT = settings['llmmodel']['PROMPT_DICT']
@@ -137,14 +142,16 @@ PROMPT_DICT = {
     #"prompt_context":("###지시: 아래 문단 내용을 요약해서, 질의에 맞게 응답 문장을 만들어 주세요.\n\n###[문단]: {context}\n\n###[질의]: {query}\n\n###[응답]:"),
     #"prompt_no_context":("###지시: 질의에 대해, 자세하게 응답 문장을 만들어 주세요.\n\n###[질의]: {query}\n\n###[응답]:")
     "prompt_context":("###지시: 문단에서 질의에 대해 가장 적합한 내용을 찾아 응답 문장을 만들어 주세요.\n\n###문단: {context}\n\n###질의: {query}\n\n###응답:"),
-    "prompt_no_context":("###지시: 질의에 대해 자세하게 응답 문장을 만들어 주세요.\n\n###질의: {query}\n\n###문단:\n\n###응답:")
+    "prompt_no_context":("###지시: 질의에 대해 자세하게 응답 문장을 만들어 주세요.\n\n###질의: {query}\n\n###문단:\n\n###응답:"),
+      "prompt_context2":("###지시: 문맥에 이어서 질의를 합니다.\n문맥을 고려하여 문단 내용을 가지고 응답 문장을 만들어 주세요.\n\n###문맥:{context2}\n\n###문단: {context}\n\n###질의: {query}\n\n###응답:")
+ 
 }
 
 #LOGGER.info(f'*llmmodel Settings: LLM_MODEL_TYPE:{LLM_MODEL_TYPE}, PROMPT_DICT:{PROMPT_DICT}')
 
 # GPT 관련 값
 # **key 지정
-openai.api_key = "sk-xxxx"
+openai.api_key = "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"
 # 모델 - GPT 3.5 Turbo 지정
 # => 모델 목록은 : https://platform.openai.com/docs/models/gpt-4 참조
 gpt_model = "gpt-3.5-turbo"#"gpt-4"#"gpt-3.5-turbo" #gpt-4-0314
@@ -284,6 +291,63 @@ def es_embed_query(esindex:str, query:str, search_size:int):
             
     return error, docs
 #------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------
+# 이전 답변/응답 문장들중 오래된것 제거하며, 문장을 구분자 <hr> 로 구분해서 답변/응답 문단을 만든는 함수
+#---------------------------------------------------------------------------
+def remove_prequery(prequery:str, remove_count:int=4):
+    
+    if prequery:
+        # prequery는 5개 이상이면 무조건 오래된 문장/답변은 제거함
+        hr_count = prequery.count("<hr>")
+        #print(f'4) hr_count:{hr_count}')
+
+        remove_count -= 1
+        if hr_count > remove_count: # 4 개 이상이면 <hr>로 구분해서 오래된 문장/답변은 제거함.
+            hr_list = prequery.split("<hr>") # <hr>로 구분
+            hr_list.pop(0)                   # 제일 오래된 <hr> 구분해서 첫번째 문장/답변은 제거.
+            prequery = "<hr>".join(hr_list)  # 다시 hr 구분된 문장/답변 조합.
+            #print(f'5) prequery:{prequery}')
+    
+    return prequery
+#---------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------
+# context 문자열을 입력받아서,\n\n 문단으로 구분후, 문단 맨 첫번째 문장 title들을
+# 조합해서 title_str 만들고 ,return 하는 함수
+# -> title에 해당하는 문서가 있으면 url링크 생성함
+#---------------------------------------------------------------------------
+def get_title_with_urllink(context:str):
+    
+    titles_str:str = ''  # titles를 str형으로 만들어서 전송함. 
+    
+    # context에서 title만 뽑아냄
+    titles = []
+    context_list = context.split("\n\n")  #\n\n으로 구분.
+    for context1 in context_list:
+        context1 = context1.strip()
+        context2 = context1.split("\n")
+        if len(context2) > 0:
+            titles.append(context2[0].strip())
+    
+    # 중복 제거하면서 순서유지.
+    titles2 = []
+   
+    for idx, title in enumerate(titles):
+        if title and title not in titles2:
+            titles2.append(title)
+            
+            # 실제 title에 해당하는 파일이 경로에 존재하는 경우에만 url 링크 생성함.
+            if os.path.isfile(DATA_FOLDER + title + ".txt"):
+                title = f"<a href='/doc?name={title}'>{title}</a>"
+                
+            if idx == 0:
+                titles_str = title
+            else:
+                titles_str += ', ' + title
+                
+    return titles_str
+#---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
 # 비동기 ES 임베딩 벡터 쿼리 실행 함수
@@ -570,8 +634,8 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
                 
         #context = docs['rfile_text']
         
-        if context == '':
-            context = '**질문과 관련된 회사 자료를 찾지 못했습니다.**'
+        #if context == '':
+        #    context = '**질문과 관련된 회사 자료를 찾지 못했습니다.**'
             
         LOGGER.info(f'[search_docs] answer:{answer}')
         return query, answer, context
@@ -611,7 +675,8 @@ async def root():
         "*sLLM 모델":{"LoRA 사용유.무": uselora_weight, "LoRA 8bit 사용": load_8bit, "LoRA 가중치 경로": lora_weights, "sLLM 모델 경로": llm_model_path},
         "*클러스터링":{"클러스터링 가변(True=문장계수에 따라 클러스터링계수를 다르게함)": NUM_CLUSTERS_VARIABLE, "방식(kmeans=k-평균 군집 분석, kmedoids=k-대표값 군집 분석)": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력(mean=평균벡터 출력, max=최대값벡터출력)": OUTMODE},
         "*문장전처리":{"제거문장길이(설정길이보다 작은 문장은 제거됨)": REMOVE_SENTENCE_LEN, "중복문장제거(True=중복된문장은 제거됨)": REMOVE_DUPLICATION},
-        "*환경설정":{"로그경로": logfilepath, "SEED": SEED}
+        "*BARD":{"BARD_TOKEN": BARD_TOKEN},
+        "*환경설정":{"로그경로": logfilepath, "SEED": SEED, "DATA_FOLDER": DATA_FOLDER}
            }
 
 #=========================================================
@@ -699,3 +764,74 @@ async def search_documents(esindex:str,
     question, answer, context = await async_search_docs(esindex, query, search_size)
     return {"question":question, "answer": answer, "context": context}
 #=========================================================
+
+
+#=========================================================
+# 체팅 UI
+# - bard 이용
+#=========================================================  
+@app.get("/doc")
+async def read_documents(name:str, 
+                         request: Request):
+    
+    file_path = DATA_FOLDER + name + ".txt"
+    
+    with open(file_path, 'r', encoding='utf-8') as f:
+        data = f.read()
+        #data = data.replace('\n','<br>')
+        
+    return templates.TemplateResponse("doc.html", {"request": request, "data":data, "title": name})
+    
+@app.get("/bard/chat")
+async def form(request: Request):
+    return templates.TemplateResponse("bard_chat.html", {"request": request})
+
+@app.post("/es/{esindex}/docs/bard/chat")
+async def search_documents(esindex:str,
+                     request: Request
+                     ): 
+    form = await request.form()
+    search_size = 5
+    
+    query = form.get("query").strip()
+    prequery = form.get("prequery").strip()
+    
+    #print(f'1) /es/{esindex}/docs/bard/chat')
+    #print(f'2) prequery:{prequery}')
+    #print(f'3) query:{query}')
+    
+    # 이전 답변/응답 문단들 계수가 4를 넘으면, 가장오래된 문단을 제거하고, 각 문단별 <hr> 구분자를 넣어서 prequery를 만든다.
+    prequery = remove_prequery(prequery, 4)
+
+    # 새로운 대화 시도인 경우, 기존 preanswer 초기화 함.
+    if query.startswith("@##새로운 대화"):
+        prequery=""
+
+    question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=2, model_key=BARD_TOKEN)
+    
+     # context에서 title만 뽑아내서 url링크 만듬.
+    titles_str = get_title_with_urllink(context1)
+    
+    # html로 표기할때 중간에 "(쌍따옴표) 있으면 안되므로 , 쌍따옴표를 '(홑따옴표)로 치환
+    question = question.replace('"',"'")
+    answer = answer.replace('"',"'")
+    prequery = prequery.replace('"',"'")
+    titles_str = titles_str.replace('"',"'")
+    
+    return templates.TemplateResponse("bard_chat.html", {"request": request, "question":question, "answer": answer, "preanswer": prequery, "titles": titles_str})
+
+
+#=========================================================
+# POST 예제
+#=========================================================
+@app.post("/test/post")
+async def submit(request: Request):
+    form = await request.form()
+    name = form.get("name")
+    age = form.get("age")
+    return {"name": name, "age": age}
+
+
+@app.get("/test")
+async def form():
+    return templates.TemplateResponse("test.html", {"request": request})

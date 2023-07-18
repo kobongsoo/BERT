@@ -8,7 +8,7 @@ model:
 embedding:
   EMBEDDING_METHOD: 1   # 임베딩 방식(0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)
   FLOAT_TYPE: 'float16' # 임베딩 출력 벡터 타입('float32', 'float16')
-  MIN_SCORE: 1.3        # 검색 1.4 스코어 이하면 제거
+  MIN_SCORE: 1.35        # 검색 1.4 스코어 이하면 제거
 
 # 클러스터링 전역 변수
 custring:
@@ -31,13 +31,20 @@ es:
 # sLLM 관련 전역변수
 sllm:
   lora_weights: '../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B-LoRA-qa-moco-3/'
-  llm_model_path: '../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B/'
-  #llm_model_path: ''                # 공백이면 sllm 모델 로딩안함
+  #llm_model_path: '../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B/'
+  llm_model_path: ''                # 공백이면 sllm 모델 로딩안함
   uselora_weight: True
   load_8bit: True
 
+# BARD 관련 전역 변수
+bard:
+    BARD_TOKEN: 'XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.'
+    
 # 환경 관련
 env:
   LOG_PATH: './log/sllm'  # 로그경로
   SEED: 111               # **seed 값 (**변경하면, 기존 임베딩벡터값과 다른 값이 나옴)
   GPU: 'auto'              # 'auto'=gpu서버면 gpu, 아니면 cpu, 'cpu'=무조건 CPU로 동작 (소문자)
+  DATA_FOLDER: '../../data11/mpower_doc/사규개정-out-renew/'  # 회사문서등 임베딩할때 사용한 문서및데이터가 있는 폴더들
+  
+
