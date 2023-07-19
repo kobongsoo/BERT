@@ -38,7 +38,7 @@ sllm:
 
 # BARD 관련 전역 변수
 bard:
-    BARD_TOKEN: 'XwhPmzcV-hByZXy4T04wsvl5wTfGD2Bdkz59MgIkaDCTf_KURWvHNEY3YX8VG55joVa2Qg.'
+    BARD_TOKEN: 'YwhPmyReu6rFEK2VtiKzb5y2j_lxIBuPcTMKVeFJhPZ_18jArwSJmlncfgOu1eZA024mxg.'
     
 # 환경 관련
 env:
@@ -46,5 +46,6 @@ env:
   SEED: 111               # **seed 값 (**변경하면, 기존 임베딩벡터값과 다른 값이 나옴)
   GPU: 'auto'              # 'auto'=gpu서버면 gpu, 아니면 cpu, 'cpu'=무조건 CPU로 동작 (소문자)
   DATA_FOLDER: '../../data11/mpower_doc/사규개정-out-renew/'  # 회사문서등 임베딩할때 사용한 문서및데이터가 있는 폴더들
+  URL: 'http://10.10.4.10:9002' # FastAPI 동작 서버 IP
   
 

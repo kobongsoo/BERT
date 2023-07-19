@@ -9,7 +9,7 @@
         }
 
         .chat-container {
-            max-width: 800px;
+            max-width: 600px;
             margin: 0 auto;
             padding: 20px;
             background-color: #ffffff;
@@ -27,42 +27,39 @@
             font-weight: bold;
         }
 
-        input[type="query"], select {
-            width: 95%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+		.title {
+            /* 말뭉치와 비슷한 색상을 가지며, 오른쪽 정렬하여 대화 말뭉치처럼 보이도록 합니다. */
+			background-color: #cfeaf7;
+			border: 1px solid #b5e2fa;
+			border-radius: 5px;
+			padding: 10px;
+			font-family: Arial, sans-serif;
+			line-height: 1.6;
+			font-size: 14px;
+			color: #333;
+			max-width: 600px; /* 대화 말뭉치의 최대 너비를 설정합니다. */
+			text-align: center;
         }
 
-        button[type="submit"] {
-            padding: 10px 20px;
-            background-color: #4caf50;
-            color: #ffffff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        p {
-            margin-bottom: 10px;
-        }
-
-        .title {
-            background-color: #e6e6e6;
-            padding: 10px;
-            border-radius: 4px;
-        }
         .data {
-            background-color: #f2f2f2;
-            padding: 10px;
-            border-radius: 4px;
+            background-color: #f5f5f5;
+			border: 1px solid #ddd;
+			border-radius: 5px;
+			padding: 10px;
+			font-family: Arial, sans-serif;
+			line-height: 1.6;
+			font-size: 14px;
+			color: #333;
+			max-width: 600px; /* 대화 말뭉치의 최대 너비를 설정합니다. */
+			text-align: left;
         }
+        
     </style>
 </head>
 <body>
     <div class="chat-container">
         {% if data %}
-            <p class="title">[ {{ title }} ]</p>
+            <p class="title"> {{ title }} </p>
             <p class="data">{{ data | replace('\n', '<br>') | safe }}</p>
         {% endif %}
     </div>

@@ -81,6 +81,7 @@ logfilepath = settings['env']['LOG_PATH']
 SEED = settings['env']['SEED']
 DATA_FOLDER = settings['env']['DATA_FOLDER']
 DEVICE = settings['env']['GPU']
+ENV_URL = settings['env']['URL']
 assert DEVICE=='auto' or DEVICE=='cpu', f'GPU setting error!!. GPU is auto or cpu=>GPU:{DEVICE}'
     
 LOGGER = mlogging(loggername="sllm", logfilename=logfilepath) # 로그
@@ -339,7 +340,12 @@ def get_title_with_urllink(context:str):
             
             # 실제 title에 해당하는 파일이 경로에 존재하는 경우에만 url 링크 생성함.
             if os.path.isfile(DATA_FOLDER + title + ".txt"):
-                title = f"<a href='/doc?name={title}'>{title}</a>"
+                
+                # html뿌릴때 중간에 쌍따옴표가 있으면 에러 나므로, "(쌍따옴표) 대신에 ;s&s; 로 치환해서 전송함. 
+                # => 이후 bard_chat.html에서 ;s&s; 문자열을 다시 "(쌍따옴표)로 치환해줌.
+                # => 참고로 " 대신에 홑따옴표(') 해도 되는데, openPopup 함수는 반드시 "(쌍따옴표)로 묶어져야 동작하므로 이렇게 처리함.
+                title = f"<a href='javascript:void(0);' onclick=;s&s;;openPopup('{ENV_URL}/doc?name={title}');;s&s;>{title}</a>"
+                #title = f"<a href='/doc?name={title}'>{title}</a>"
                 
             if idx == 0:
                 titles_str = title
