@@ -142,10 +142,9 @@ PROMPT_DICT = {
     #"prompt_context":("###지시: 문단에서 질의에 대해 가장 적합한 내용을 찾아, 응답 문장을 만들어 주세요.\n\n###[문단]: {context}\n\n###[질의]: {query}\n\n###[응답]:"),
     #"prompt_context":("###지시: 아래 문단 내용을 요약해서, 질의에 맞게 응답 문장을 만들어 주세요.\n\n###[문단]: {context}\n\n###[질의]: {query}\n\n###[응답]:"),
     #"prompt_no_context":("###지시: 질의에 대해, 자세하게 응답 문장을 만들어 주세요.\n\n###[질의]: {query}\n\n###[응답]:")
-    "prompt_context":("###지시: 문단에서 질의에 대해 가장 적합한 내용을 찾아 응답 문장을 만들어 주세요.\n\n###문단: {context}\n\n###질의: {query}\n\n###응답:"),
-    "prompt_no_context":("###지시: 질의에 대해 자세하게 응답 문장을 만들어 주세요.\n\n###질의: {query}\n\n###문단:\n\n###응답:"),
-      "prompt_context2":("###지시: 문맥에 이어서 질의를 합니다.\n문맥을 고려하여 문단 내용을 가지고 응답 문장을 만들어 주세요.\n\n###문맥:{context2}\n\n###문단: {context}\n\n###질의: {query}\n\n###응답:")
- 
+    "prompt_context":("###지시: 문서에서 질의에 대해 가장 적합한 내용을 찾아 응답 문장을 만들어 주세요. 문서에서 질의에 대한 내용이 없으면, 새롭게 응답 문장을 만들어주세요.\n\n###문서: {context}\n\n###질의: {query}\n\n###응답:"),
+    "prompt_no_context":("###지시: 질의에 대해 자세하게 응답 문장을 만들어 주세요.\n\n###질의: {query}\n\n###문서:\n\n###응답:"),
+    "prompt_context2":("###지시: 문맥에 이어서 질의를 합니다.\n문맥을 고려하여 문단 내용을 가지고 응답 문장을 만들어 주세요.\n\n###문맥:{context2}\n\n###문단: {context}\n\n###질의: {query}\n\n###응답:")
 }
 
 #LOGGER.info(f'*llmmodel Settings: LLM_MODEL_TYPE:{LLM_MODEL_TYPE}, PROMPT_DICT:{PROMPT_DICT}')
@@ -525,7 +524,7 @@ def generate_text_GPT(prompt, messages):
 #------------------------------------------------------------------
 # BERT로 문단 검색 후 sLLM 로 Text 생성.
 #------------------------------------------------------------------
-def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, model_key:str=''):
+def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, model_key:str='', checkdocs:bool=True):
     error:str = 'success'
     
     assert query, f'query is empty'
@@ -543,11 +542,15 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
     
     query_split = query.split('##')
     prefix = query_split[0]  
+    docs = []
     
-    if prefix == '@':  # 일반쿼리일때는 @## prefix 입력후 질문입력함. 
+    if checkdocs == False: # 회사문서검색 체크하지 않으면 그냥 쿼리 그대로 prompt 설정함.
+        query1=query
+        prompt=query1
+    elif prefix == '@':  # 일반쿼리일때는 @## prefix 입력후 질문입력함. 
         query1 = query_split[1]
         prompt = make_prompt(docs='', query=query1)
-        docs = []
+        
     else:
         query1 = query
         
@@ -604,7 +607,7 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
             questions = answers[0].split("###질의:")
             #print(questions[0])
             #print()
-            contexts = questions[0].split("###문단:")
+            contexts = questions[0].split("###문서:")
             #print(contexts[1])
             #print()
 
@@ -651,14 +654,14 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
 #---------------------------------------------------------------------------
 # 비동기 BERT로 문단 검색 후 LLM모델 로 Text 생성.
 #---------------------------------------------------------------------------
-async def async_search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, model_key:str=''):
+async def async_search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, model_key:str='', checkdocs:bool=True):
     loop = asyncio.get_running_loop()
     #print(f'[async_search_docs] esindex :{esindex}')
     ##print(f'[async_search_docs] query :{query}')
     #print(f'[async_search_docs] llm_model_type :{llm_model_type}')
     #print(f'[async_search_docs] model_key :{model_key}')
     
-    return await loop.run_in_executor(None, search_docs, esindex, query, search_size, llm_model_type, model_key)
+    return await loop.run_in_executor(None, search_docs, esindex, query, search_size, llm_model_type, model_key, checkdocs)
     
 # http://10.10.4.10:9000/docs=>swagger UI, http://10.10.4.10:9000/redoc=>ReDoc UI 각각 비활성화 하려면
 # => docs_url=None, redoc_url=None 하면 된다.
@@ -682,7 +685,7 @@ async def root():
         "*클러스터링":{"클러스터링 가변(True=문장계수에 따라 클러스터링계수를 다르게함)": NUM_CLUSTERS_VARIABLE, "방식(kmeans=k-평균 군집 분석, kmedoids=k-대표값 군집 분석)": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력(mean=평균벡터 출력, max=최대값벡터출력)": OUTMODE},
         "*문장전처리":{"제거문장길이(설정길이보다 작은 문장은 제거됨)": REMOVE_SENTENCE_LEN, "중복문장제거(True=중복된문장은 제거됨)": REMOVE_DUPLICATION},
         "*BARD":{"BARD_TOKEN": BARD_TOKEN},
-        "*환경설정":{"로그경로": logfilepath, "SEED": SEED, "DATA_FOLDER": DATA_FOLDER}
+        "*환경설정":{"URL":ENV_URL, "로그경로": logfilepath, "SEED": SEED, "DATA_FOLDER": DATA_FOLDER}
            }
 
 #=========================================================
@@ -804,6 +807,13 @@ async def search_documents(esindex:str,
     
     query = form.get("query").strip()
     prequery = form.get("prequery").strip()
+    checkdocsstr = form.get("checkdocs")
+    #print(f'==>checkdocsstr :{checkdocsstr}')
+    checkdocs = True
+    if checkdocsstr == None: # 체크버튼 값은 False일때 None으로 들어오고, True이면 on으로 들어옴. 따라서 None으로 들어오면 False 해줌.
+        checkdocs=False
+    
+    print(f'checkdocs :{checkdocs}')
     
     #print(f'1) /es/{esindex}/docs/bard/chat')
     #print(f'2) prequery:{prequery}')
@@ -816,7 +826,7 @@ async def search_documents(esindex:str,
     if query.startswith("@##새로운 대화"):
         prequery=""
 
-    question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=2, model_key=BARD_TOKEN)
+    question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=2, model_key=BARD_TOKEN, checkdocs=checkdocs)
     
      # context에서 title만 뽑아내서 url링크 만듬.
     titles_str = get_title_with_urllink(context1)
