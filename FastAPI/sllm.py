@@ -59,6 +59,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import openai
 from bardapi import Bard
+from bardapi import BardCookies
 
 
 #---------------------------------------------------------------------------
@@ -132,6 +133,7 @@ LOGGER.info(f'*sllm Settings: lora_weights:{lora_weights}, llm_model_path:{llm_m
 
 # BARD 관련
 BARD_TOKEN = settings['bard']['BARD_TOKEN']
+BARD_1PSIDTS_TOKEN = settings['bard']['BARD_1PSIDTS_TOKEN']
 
 # LLM 모델 타입
 #LLM_MODEL_TYPE = settings['llmmodel']['LLM_MODEL_TYPE']
@@ -151,7 +153,7 @@ PROMPT_DICT = {
 
 # GPT 관련 값
 # **key 지정
-openai.api_key = "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"
+openai.api_key = "sk-xxx"
 # 모델 - GPT 3.5 Turbo 지정
 # => 모델 목록은 : https://platform.openai.com/docs/models/gpt-4 참조
 gpt_model = "gpt-3.5-turbo"#"gpt-4"#"gpt-3.5-turbo" #gpt-4-0314
@@ -466,19 +468,31 @@ def generate_text_sLLM(prompt):
 # 세션: 애플리케이션 → 쿠키 → 쿠키 값을 복사합니다 __Secure-1PSID.
 # -> 참고로 반드시 뒤에 .으로 끝나고 .포함해서 길이가 72자임.
 #------------------------------------------------------------------
-
-#token = 'XQhPmzE3Wa_GqgDH1Z9YcRwZieE0STZi0ANZ557Zcm9Lio8QeIQtQvdd8evImbUrF-ZapQ.' # bard 토큰 입력
-def generate_text_bard(prompt:str, token:str):
+from bardapi import BardCookies
+#token = 'XQhPmzE3Wa_GqgDH1Z9YcRwZieE0STZi0ANZ557Zcm9Lio8QeIQtQvdd8evImbUrF-ZapQ.' # bard __Secure-1PSID 토큰 입력
+#token1 = 'XQhPmzE3Wa_GqgDH1Z9YcRwZieE0STZi0ANZ557Zcm9Lio8QeIQtQvdd8evImbUrF-ZapQ.' # bard __Secure-1PSIDTS 토큰 입력
+def generate_text_bard(prompt:str, token:str, token1:str=None):
     #print(f'[generate_text_bard] prompt: {prompt}')
-    #print(f'[generate_text_bard] token: {token}')
-    
+    print(f'[generate_text_bard] token: {token}, token1: {token1}')
    
     assert token, f'token is not empty'
     
     token = token.strip()
-    bard = Bard(token=token,timeout=30) # Set timeout in seconds
     
-    #print(f'[generate_text_bard] bard: {bard}')
+    # __Secure-1PSID 토큰만 이용하는 경우 "SNlM0e value not found. Double-check __Secure-1PSID value or pass it as token='xxxxx'" 에러가 자주 발생하여,
+    # __Secure-1PSIDTS 함께 이용하는 멀티토큰 방식으로 함. (출처 : https://github.com/dsdanielpark/Bard-API/issues/99)
+    if token1:
+        token1 = token1.strip()
+        cookie_dict = {
+            "__Secure-1PSID": token,
+            "__Secure-1PSIDTS": token1,
+            # Any cookie values you want to pass session object.
+        }
+        
+        bard = BardCookies(cookie_dict=cookie_dict)
+    else:
+        bard = Bard(token=token,timeout=30) # Set timeout in seconds
+        
     output = bard.get_answer(prompt)['content']
     
     #print(f'[generate_text_bard] output: {output}')
@@ -524,7 +538,7 @@ def generate_text_GPT(prompt, messages):
 #------------------------------------------------------------------
 # BERT로 문단 검색 후 sLLM 로 Text 생성.
 #------------------------------------------------------------------
-def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, model_key:str='', checkdocs:bool=True):
+def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, model_key:str='', model_key1:str='', checkdocs:bool=True):
     error:str = 'success'
     
     assert query, f'query is empty'
@@ -577,7 +591,7 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
         elif llm_model_type == 1:
             response = generate_text_GPT(prompt=prompt, messages=MESSAGES)
         elif llm_model_type == 2: # bard 일때
-            response = generate_text_bard(prompt=prompt, token=model_key)
+            response = generate_text_bard(prompt=prompt, token=model_key, token1=model_key1)
     except Exception as e:
         error = f'generate_text_xxx fail=>model:{llm_model_type}'
         msg = f'{error}=>{e}'
@@ -654,14 +668,14 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
 #---------------------------------------------------------------------------
 # 비동기 BERT로 문단 검색 후 LLM모델 로 Text 생성.
 #---------------------------------------------------------------------------
-async def async_search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, model_key:str='', checkdocs:bool=True):
+async def async_search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, model_key:str='', model_key1:str='', checkdocs:bool=True):
     loop = asyncio.get_running_loop()
     #print(f'[async_search_docs] esindex :{esindex}')
     ##print(f'[async_search_docs] query :{query}')
     #print(f'[async_search_docs] llm_model_type :{llm_model_type}')
     #print(f'[async_search_docs] model_key :{model_key}')
     
-    return await loop.run_in_executor(None, search_docs, esindex, query, search_size, llm_model_type, model_key, checkdocs)
+    return await loop.run_in_executor(None, search_docs, esindex, query, search_size, llm_model_type, model_key, model_key1, checkdocs)
     
 # http://10.10.4.10:9000/docs=>swagger UI, http://10.10.4.10:9000/redoc=>ReDoc UI 각각 비활성화 하려면
 # => docs_url=None, redoc_url=None 하면 된다.
@@ -684,7 +698,7 @@ async def root():
         "*sLLM 모델":{"LoRA 사용유.무": uselora_weight, "LoRA 8bit 사용": load_8bit, "LoRA 가중치 경로": lora_weights, "sLLM 모델 경로": llm_model_path},
         "*클러스터링":{"클러스터링 가변(True=문장계수에 따라 클러스터링계수를 다르게함)": NUM_CLUSTERS_VARIABLE, "방식(kmeans=k-평균 군집 분석, kmedoids=k-대표값 군집 분석)": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력(mean=평균벡터 출력, max=최대값벡터출력)": OUTMODE},
         "*문장전처리":{"제거문장길이(설정길이보다 작은 문장은 제거됨)": REMOVE_SENTENCE_LEN, "중복문장제거(True=중복된문장은 제거됨)": REMOVE_DUPLICATION},
-        "*BARD":{"BARD_TOKEN": BARD_TOKEN},
+        "*BARD":{"BARD_TOKEN": BARD_TOKEN, "BARD_1PSIDTS_TOKEN": BARD_1PSIDTS_TOKEN},
         "*환경설정":{"URL":ENV_URL, "로그경로": logfilepath, "SEED": SEED, "DATA_FOLDER": DATA_FOLDER}
            }
 
@@ -826,7 +840,7 @@ async def search_documents(esindex:str,
     if query.startswith("@##새로운 대화"):
         prequery=""
 
-    question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=2, model_key=BARD_TOKEN, checkdocs=checkdocs)
+    question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=2, model_key=BARD_TOKEN, model_key1=BARD_1PSIDTS_TOKEN, checkdocs=checkdocs)
     
      # context에서 title만 뽑아내서 url링크 만듬.
     titles_str = get_title_with_urllink(context1)

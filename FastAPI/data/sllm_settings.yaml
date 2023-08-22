@@ -38,7 +38,10 @@ sllm:
 
 # BARD 관련 전역 변수
 bard:
-    BARD_TOKEN: 'YwhPmyReu6rFEK2VtiKzb5y2j_lxIBuPcTMKVeFJhPZ_18jArwSJmlncfgOu1eZA024mxg.'
+    BARD_TOKEN: 'aAhPm3G0dcjJrbUB0GbI9S0g3Gq7qR9Roz-JsaNZcy6DtoTWj3hlvXTXRZ2mPwA0gb5yqw.'  # __Secure-1PSID
+    # __Secure-1PSID 토큰만 이용하는 경우 "SNlM0e value not found. Double-check __Secure-1PSID value or pass it as token='xxxxx'" 에러가 자주 발생하여,
+    # __Secure-1PSIDTS 함께 이용하는 멀티토큰도 지정해줌 (출처 : https://github.com/dsdanielpark/Bard-API/issues/99)
+    BARD_1PSIDTS_TOKEN: 'sidts-CjEBSAxbGc3F_g6N3p1nh_-ZsjvQE36SrKpMBH7AiAGt5bpqZetn3Yxpf01ro1Veu0FSEAA' # __Secure-1PSIDTS  
     
 # 환경 관련
 env:
