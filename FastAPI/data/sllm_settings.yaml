@@ -37,11 +37,14 @@ sllm:
   load_8bit: True
 
 # BARD 관련 전역 변수
-bard:
-    BARD_TOKEN: 'aAhPm3G0dcjJrbUB0GbI9S0g3Gq7qR9Roz-JsaNZcy6DtoTWj3hlvXTXRZ2mPwA0gb5yqw.'  # __Secure-1PSID
+bard:           
+    BARD_TOKEN: 'xxx'  # __Secure-1PSID
     # __Secure-1PSID 토큰만 이용하는 경우 "SNlM0e value not found. Double-check __Secure-1PSID value or pass it as token='xxxxx'" 에러가 자주 발생하여,
     # __Secure-1PSIDTS 함께 이용하는 멀티토큰도 지정해줌 (출처 : https://github.com/dsdanielpark/Bard-API/issues/99)
-    BARD_1PSIDTS_TOKEN: 'sidts-CjEBSAxbGc3F_g6N3p1nh_-ZsjvQE36SrKpMBH7AiAGt5bpqZetn3Yxpf01ro1Veu0FSEAA' # __Secure-1PSIDTS  
+    # **이렇게 하더라도 1일정도 지나면, 에러가 발생함 이때마다  __Secure-1PSIDTS, __Secure-1PSIDCC 값이 변경 되므로, 업데이트 해줘야 함.
+    # 출처 : https://github.com/dsdanielpark/Bard-API/blob/main/documents/README_DEV.md#auto-cookie-bard
+    BARD_1PSIDTS_TOKEN: 'xxx' # __Secure-1PSIDTS  
+    BARD_1PSIDCC_TOKEN: 'xxx'    # __Secure-1PSIDCC
     
 # 환경 관련
 env:
