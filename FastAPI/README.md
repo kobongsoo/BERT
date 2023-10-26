@@ -16,8 +16,8 @@ LLM(sLLM, GPT, BARD등)에 prompt 입력-응답 결과 출력
 ```
 |소스명|설명|기타|
 |:-----------------|:-----------------------------------------------------------|:---------------------|
-|[sLLM_test_embed](https://github.com/kobongsoo/BERT/blob/master/FastAPI/sLLM_test_embed.ipynb)|문서전처리-임베딩||
-|[sLLM_test_embed-search](https://github.com/kobongsoo/BERT/blob/master/FastAPI/sLLM_test_embed-search.ipynb)|프롬프트생성.입력-실행||
+|[sLLM_test_embed](https://github.com/kobongsoo/GPUTech/blob/master/sLLM_test_embed.ipynb)|문서전처리-임베딩||
+|[sLLM_test_embed-search](https://github.com/kobongsoo/GPUTech/blob/master/sLLM_test_embed-search.ipynb)|프롬프트생성.입력-실행||
 
 # FastAPI
 FastAPI는 현대적이고, 빠르며(고성능), 파이썬 표준 타입 힌트에 기초한 Python3.6+의 API를 빌드하기 위한 웹 프레임워크입니다.
