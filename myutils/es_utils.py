@@ -261,6 +261,32 @@ def make_max_query_script(query_vector, vectornum:int=10, vectormag:float=0.8, u
     return script_query
 #---------------------------------------------------------------------------
 
+#---------------------------------------------------------------------------
+# ES 기본 vector 쿼리 구성
+#---------------------------------------------------------------------------
+def make_query_script(query_vector, uid_list:list=None)->str:
+    # 문단별 10개의 벡터와 쿼리벡터를 서로 비교하여 최대값 갖는 문단들중 가장 유사한  문단 출력
+    # => script """ 안에 코드는 java 임.
+    # => "queryVectorMag": 0.1905 일때 100% 일치하는 값은 9.98임(즉 10점 만점임)
+                        
+    # uid_list가 있는 경우에는 해당하는 목록만 검색함
+    if uid_list:
+        query = { "bool" :{ "must": [ { "terms": { "rfile_name": uid_list } } ] } }
+    else: # uid_list가 있는 경우에는 해당하는 목록만 검색함
+        query = { "match_all" : {} }
+    
+    script_query = {
+        "script_score":{
+            "query":query,
+            "script":{
+                "source": "cosineSimilarity(params.queryVector, doc['vector1']) + 1.0",  # 뒤에 1.0 은 코사인유사도 측정된 값 + 1.0을 더해준 출력이 나옴
+                "params": {"queryVector": query_vector}
+            }
+        }
+    }
+    
+    return script_query
+
 # main    
 if __name__ == '__main__':
     main()
