@@ -40,7 +40,7 @@ import sys
 sys.path.append('..')
 from myutils import bi_encoder, dense_model, onnx_model, onnx_embed_text
 from myutils import seed_everything, GPU_info, mlogging, getListOfFiles, get_options
-from myutils import remove_reverse, clean_text, make_max_query_script, make_avg_query_script, create_index, mpower_index_batch
+from myutils import remove_reverse, clean_text, make_max_query_script, make_avg_query_script, make_query_script, create_index, mpower_index_batch
 from myutils import embed_text, clustering_embedding, kmedoids_clustering_embedding
 from myutils import split_sentences1, make_docs_df, get_sentences, es_delete, es_delete_by_id, es_update, es_search
 
@@ -261,7 +261,7 @@ def index_data(es, df_contexts, doc_sentences:list):
 #---------------------------------------------------------------------------
 # ES 임베딩 벡터 쿼리 실행 함수
 # - in : esindex=인덱스명, query=쿼리 , search_size=검색출력계수
-# - option: qmethod=0 혹은 1(0=max벡터 구하기, 1=평균벡터 구하기 (default=0)), uid_list=검색할 uid 리스트(*엠파워에서는 검색할 문서id를 지정해서 검색해야 검색속도가 느리지 않음)
+# - option: qmethod=0 혹은 1 혹은 2(0=max벡터 구하기, 1=평균벡터 구하기, 2=임베딩벡터가 1개인 경우 (default=0)), uid_list=검색할 uid 리스트(*엠파워에서는 검색할 문서id를 지정해서 검색해야 검색속도가 느리지 않음)
 #---------------------------------------------------------------------------
 def es_embed_query(esindex:str, query:str, search_size:int, qmethod:int=0, uids:list=None):
     
@@ -280,7 +280,7 @@ def es_embed_query(esindex:str, query:str, search_size:int, qmethod:int=0, uids:
         error = 'search_size < 1'
     elif not es.indices.exists(esindex):
          error = 'esindex is not exist'
-    elif qmethod < 0 or qmethod > 1:
+    elif qmethod < 0 or qmethod > 2:
         error = 'qmenthod is not variable'
     
     if error != 'success':
@@ -305,7 +305,9 @@ def es_embed_query(esindex:str, query:str, search_size:int, qmethod:int=0, uids:
         script_query = make_max_query_script(query_vector=embed_query[0], vectormag=VECTOR_MAG, vectornum=10, uid_list=uids) # max 쿼리를 만듬.
     elif qmethod == 1:
         script_query = make_avg_query_script(query_vector=embed_query[0], vectormag=VECTOR_MAG, vectornum=10, uid_list=uids) # 평균 쿼리를 만듬.
-
+    else:
+        script_query = make_query_script(query_vector=embed_query[0], uid_list=uids) # 임베딩 벡터가 1개인경우=>기본 쿼리 만듬.
+        
     #print(script_query)
     #print()
 
