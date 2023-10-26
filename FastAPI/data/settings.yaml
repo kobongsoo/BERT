@@ -6,14 +6,19 @@ model:
 
 # 임베딩 변수
 embedding:
-  EMBEDDING_METHOD: 0   # 임베딩 방식(0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)
+  EMBEDDING_METHOD: 1   # 임베딩 방식(0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)
   FLOAT_TYPE: 'float16' # 임베딩 출력 벡터 타입('float32', 'float16')
-
+  
 # ES 관련 전역 변수
 es:
   ES_URL: 'http://10.10.4.10:9200/'  # ES 서버 주소
-  ES_INDEX_FILE: './data/mpower10u_128d_10.json'  # 인덱스 파일 경로
+  
+  # 인덱스 파일 경로 => **인덱싱 1개만 할거면 아래 Q_METHOD=2로 변경해야 함. ** 인덱싱 계수에 따라 NUM_CLUSTERS 값도 변경해야함.
+  ES_INDEX_FILE: './data/mpower10u_128d_1.json'  
+  
+  Q_METHOD: 2     # 검색시 ES 스크립트 어떤형식으로 만들지.(0=임베딩이 여러개일때 MAX(기본), 1=임베딩이 여러개일때 평균, 2=임베딩이1개일때)
   BATCH_SIZE: 20  # 배치 사이즈 = 20이면 입력된 docs이 20개 이상이면, 최대 20개씩 ES에 인덱싱함.
+  MIN_SCORE: 1.30       # 검색 1.30 스코어 이하면 제거
 
 # 클러스터링 전역 변수
 custring:
@@ -39,3 +44,38 @@ env:
   LOG_PATH: './log/embed'  # 로그경로
   SEED: 111               # **seed 값 (**변경하면, 기존 임베딩벡터값과 다른 값이 나옴)
   GPU: 'cpu'              # 'auto'=gpu서버면 gpu, 아니면 cpu, 'cpu'=무조건 CPU로 동작 (소문자)
+  #DATA_FOLDER: '../../data11/mpower_doc/사규개정-out-renew/'  # 회사문서등 임베딩할때 사용한 문서및데이터가 있는 폴더들
+  DATA_FOLDER: '' 
+  URL: 'http://10.10.4.10:9000' # FastAPI 동작 서버 IP
+   
+llm_model:
+    # LLM 모델 타입 ( 0=sllm, 1=gpt, 2=bard ) => 타입에 따라 아래 sllm, gpt, bard 인자를 변경해야 함.
+    model_type: 1 
+    
+    prompt: # prompt_context: context 가 있을때(검색된 내용이 있을때)
+      prompt_context: '###지시: 문서에서 질의에 대해 가장 적합한 내용을 찾아 응답 문장을 만들어 주세요. 문서에서 질의에 대한 내용이 없으면, 새롭게 응답 문장을 만들어주세요.\n\n###문서: {context}\n\n###질의: {query}\n\n###응답:'
+      prompt_no_context: '###지시: 질의에 대해 자세하게 응답 문장을 만들어 주세요.\n\n###질의: {query}\n\n###문서:\n\n###응답:'
+    
+    # sLLM 관련 전역변수
+    sllm:
+      lora_weights: '../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B-LoRA-qa-moco-3/'
+      #llm_model_path: '../../data11/model/LLM/beomi/KoAlpaca-Polyglot-5.8B/'
+      llm_model_path: ''                # **공백이면 sllm 모델 로딩안함
+      uselora_weight: True
+      load_8bit: True
+
+    #GPT 관련 전역 변수    
+    gpt:
+       GPT_TOKEN: 'sk-'           # openai key
+       GPT_MODEL: 'gpt-3.5-turbo' # 모델종류
+
+    # BARD 관련 전역 변수
+    bard:           
+        BARD_TOKEN: 'cAhPm63Uhzf4za4NiL8oOpxVgPIvRoFRd0Zx5plVhNtg4wgDMebTKYAp8fpLv75r0R4q5Q.'  # __Secure-1PSID
+        # __Secure-1PSID 토큰만 이용하는 경우 "SNlM0e value not found. Double-check __Secure-1PSID value or pass it as token='xxxxx'" 에러가 자주 발생하여,
+        # __Secure-1PSIDTS 함께 이용하는 멀티토큰도 지정해줌 (출처 : https://github.com/dsdanielpark/Bard-API/issues/99)
+        # **이렇게 하더라도 1일정도 지나면, 에러가 발생함 이때마다  __Secure-1PSIDTS, __Secure-1PSIDCC 값이 변경 되므로, 업데이트 해줘야 함.
+        # 출처 : https://github.com/dsdanielpark/Bard-API/blob/main/documents/README_DEV.md#auto-cookie-bard
+        BARD_1PSIDTS_TOKEN: 'sidts-CjEBNiGH7lGGa36ZORv0SVbJj9W0xRWNUiogunKsDbnT4wiORvlBuDM-HcgWWJEZcjt3EAA' # __Secure-1PSIDTS  
+        BARD_1PSIDCC_TOKEN: 'ACA-OxNV0dJlf0ypdabAwD1RH2YmFwea7SzGu1JpZ69XR-3nsuRldlEXB5ClxkR1cjyAaqGh2g'    # __Secure-1PSIDCC
+

@@ -26,6 +26,7 @@ from enum import Enum
 from typing import Union, Dict, List, Optional
 from typing_extensions import Annotated
 from fastapi import FastAPI, Query, Cookie, Form, Request, HTTPException, BackgroundTasks
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
 import asyncio
@@ -48,6 +49,10 @@ from myutils import split_sentences1, make_docs_df, get_sentences, es_delete, es
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning) 
 
+import openai
+from bardapi import Bard
+from bardapi import BardCookies
+
 #---------------------------------------------------------------------------
 # 전역 변수로 선언 => 함수 내부에서 사용할때 global 해줘야 함.
 
@@ -67,6 +72,8 @@ assert len(settings) > 2, f'load settings error!!=>len(settigs):{len(settings)}'
 logfilepath = settings['env']['LOG_PATH']
 SEED = settings['env']['SEED']
 DEVICE = settings['env']['GPU']
+DATA_FOLDER = settings['env']['DATA_FOLDER']
+ENV_URL = settings['env']['URL']
 assert DEVICE=='auto' or DEVICE=='cpu', f'DEVICE setting error!!. DEVICE is auto or cpu=>DEVICE:{DEVICE}'
     
 LOGGER = mlogging(loggername="embed-server", logfilename=logfilepath) # 로그
@@ -92,8 +99,11 @@ LOGGER.info(f'*임베딩 Settings: EMBEDDING_METHOD:{EMBEDDING_METHOD}, FLOAT_TY
 # ES 관련 전역 변수
 ES_URL = settings['es']['ES_URL']
 ES_INDEX_FILE = settings['es']['ES_INDEX_FILE'] # 인덱스 파일 경로
+Q_METHOD = settings['es']['Q_METHOD']     # 검색시 ES 스크립트 어떤형식으로 만들지.(0=임베딩이 여러개일때 MAX(기본), 1=임베딩이 여러개일때 평균, 2=임베딩이1개일때)
 BATCH_SIZE = settings['es']['BATCH_SIZE'] # 배치 사이즈 = 20이면 20개씩 ES에 인덱싱함.
-LOGGER.info(f'*ES Settings: ES_URL:{ES_URL}, ES_INDEX_FILE:{ES_INDEX_FILE}, BATCH_SIZE:{BATCH_SIZE}')
+MIN_SCORE = settings['es']['MIN_SCORE']   # 검색 1.30 스코어 이하면 제거
+
+LOGGER.info(f'*ES Settings: ES_URL:{ES_URL}, Q_METHOD:{Q_METHOD}, ES_INDEX_FILE:{ES_INDEX_FILE}, BATCH_SIZE:{BATCH_SIZE}, MIN_SCORE:{MIN_SCORE}')
 
 # 클러스터링 전역 변수
 CLUSTRING_MODE = settings['custring']['CLUSTRING_MODE'] # "kmeans" = k-평균 군집 분석, kmedoids =  k-대표값 군집 분석
@@ -112,6 +122,41 @@ LOGGER.info(f'*문장전처리 Settings: REMOVE_SENTENCE_LEN:{REMOVE_SENTENCE_LE
 # 예를 들어, 벡터 [1, 2, 3]의 크기는 sqrt(1^2 + 2^2 + 3^2) 즉, 3.7416이 된다.클수록 -> 스코어는 작아짐, 작을수록 -> 스코어 커짐.
 VECTOR_MAG = settings['search']['VECTOR_MAG']
 LOGGER.info(f'*검색 Settings: VECTOR_MAG:{VECTOR_MAG}')
+
+# 어떤 LLM 모델을 사용할지
+LLM_MODEL = settings['llm_model']['model_type']
+LOGGER.info(f'*llm_model_type: {LLM_MODEL}(0=sllm, 1=bard, 2=gpt)')
+
+# 프롬프트
+PROMPT_CONTEXT = settings['llm_model']['prompt']['prompt_context']  # context 가 있을때(검색된 내용이 있을때)
+PROMPT_NO_CONTEXT = settings['llm_model']['prompt']['prompt_no_context']
+LOGGER.info(f'*PROMPT_CONTEXT: {PROMPT_CONTEXT}, PROMPT_NO_CONTEXT: {PROMPT_NO_CONTEXT}')
+
+# sLLM 모델
+lora_weights = settings['llm_model']['sllm']['lora_weights']
+llm_model_path = settings['llm_model']['sllm']['llm_model_path']
+uselora_weight = settings['llm_model']['sllm']['uselora_weight']
+load_8bit = settings['llm_model']['sllm']['load_8bit']
+LOGGER.info(f'--0.*sllm Settings: lora_weights:{lora_weights}, llm_model_path:{llm_model_path}, uselora_weight:{uselora_weight}, load_8bit:{load_8bit}, load_8bit:{load_8bit}')
+
+# BARD 관련
+BARD_TOKEN = settings['llm_model']['bard']['BARD_TOKEN']
+BARD_1PSIDTS_TOKEN = settings['llm_model']['bard']['BARD_1PSIDTS_TOKEN']
+BARD_1PSIDCC_TOKEN = settings['llm_model']['bard']['BARD_1PSIDCC_TOKEN']
+LOGGER.info(f'*--1.bard Settings: BARD_TOKEN:{BARD_TOKEN}, BARD_1PSIDTS_TOKEN:{BARD_1PSIDTS_TOKEN}, BARD_1PSIDCC_TOKEN:{BARD_1PSIDCC_TOKEN}')
+
+# GPT 관련
+GPT_TOKEN = settings['llm_model']['gpt']['GPT_TOKEN']
+GPT_MODEL = settings['llm_model']['gpt']['GPT_MODEL']
+LOGGER.info(f'*--2.bard Settings: GPT_MODEL:{GPT_MODEL}')
+            
+# GPT 관련 값
+# **key 지정
+openai.api_key = GPT_TOKEN
+# 모델 - GPT 3.5 Turbo 지정
+# => 모델 목록은 : https://platform.openai.com/docs/models/gpt-4 참조
+gpt_model = GPT_MODEL  #"gpt-4"#"gpt-3.5-turbo" #gpt-4-0314
+
 #---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
@@ -138,6 +183,35 @@ LOGGER.info(f'\n----------------------------------------')
 #output_path = "../../data11/model/kpf-sbert-128d-v1"
 #BI_ENCODER1.save(output_path)
 #---------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------
+# sLLM 모델 로딩
+#---------------------------------------------------------------------------
+if llm_model_path:
+    try:
+        start_time = time.time()
+
+        # tokenizer 로딩
+        sllmtokenizer = transformers.AutoTokenizer.from_pretrained(llm_model_path)
+
+        # 원본 모델 로딩
+        sllmmodel = transformers.AutoModelForCausalLM.from_pretrained(llm_model_path, load_in_8bit=load_8bit, torch_dtype=torch.float16, device_map="auto")
+
+        if uselora_weight:
+            sllmmodel = PeftModel.from_pretrained(sllmmodel, lora_weights, torch_dtype=torch.float16) # loRA 모델 로딩
+
+        if not load_8bit:
+            sllmmodel.half()
+
+        sllmmodel.eval()
+
+        end_time = time.time() - start_time
+        print("load sllm model time: {:.2f} ms\n".format(end_time * 1000)) 
+        print(sllmmodel)
+    except Exception as e:
+        LOGGER.error(f'sllm load fail({llm_model_path})=>{e}')
+        assert False, f'sllm load fail({llm_model_path})=>{e}'
+        
 #---------------------------------------------------------------------------
 # 임베딩 처리 함수 
 # -in : paragrphs 문단 리스트
@@ -399,12 +473,390 @@ async def async_es_embed_delete(esindex:str, rfile_name:str):
     return await loop.run_in_executor(None, es_embed_delete, esindex, rfile_name)
 #---------------------------------------------------------------------------
 
+#------------------------------------------------------------------------
+# PROMPT 생성
+#------------------------------------------------------------------------
+def make_prompt(docs, query)->str:
+     # prompt 구성
+    context:str = ''
+
+    for doc in docs:
+        score = doc['score']
+        if score > MIN_SCORE:
+            rfile_text = doc['rfile_text']
+            if rfile_text:
+                context += rfile_text + '\n\n'
+                
+    if context:
+        prompt = PROMPT_CONTEXT.format(query=query, context=context)
+    else:
+        prompt = PROMPT_NO_CONTEXT.format(query=query)
+                
+    # KoAlpaca 프롬프트
+    #prompt = f"### 질문: {query}\n질문에 대해 아래 내용을 바탕으로 간략히 답변해 주세요\n\n### 문맥: {context}\n\n### 답변:" if context else f"### 질문: {query}\n질문에 대해 간략히 답변해 주세요\n\n### 답변:"
+    
+    # llama 프롬프트
+    #prompt = f"아래는 작업을 설명하는 명령어입니다. 요청을 적절히 완료하는 응답을 작성하세요. ### Instruction: {context}\n{query} ### Response:"
+
+    #print(prompt)
+    #print()
+    return prompt
+#------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------
+# 비동기 PROMPT 생성
+#---------------------------------------------------------------------------
+async def async_make_prompt(docs, query:str):
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, make_prompt, docs, query)
+#---------------------------------------------------------------------------
+
+#------------------------------------------------------------------------
+# sLLM 이용한 text 생성
+#------------------------------------------------------------------------
+def generate_text_sLLM(prompt):
+    
+    max_new_tokens = 256
+    eos_str = sllmtokenizer.decode(sllmtokenizer.eos_token_id)
+    start_time = time.time()
+    #print(f'eos_str:{eos_str}')
+    
+    #prompt = query
+    #prompt = f"### 질문: {input_text}\n\n### 맥락: {context}\n\n### 답변:" if context else f"### 질문: {input_text}\n\n### 답변:"
+    #prompt = f"### 질문 : 간략히 답변해줘.{query}\r\n###답변:"
+    #prompt = f"### 질문: {query}\n\n### 답변:"
+    #print(prompt)
+
+    # config 설정
+    generation_config = GenerationConfig(
+        temperature=0.5,
+        top_p=0.75,
+        top_k=40,
+        num_beams=1,
+        bos_token_id=sllmtokenizer.bos_token_id,  # 시작토큰 
+        eos_token_id=sllmtokenizer.eos_token_id,  # end 토큰
+        pad_token_id=sllmtokenizer.pad_token_id   # padding 토큰
+    )
+
+    # 프롬프트 tokenizer 
+    inputs = sllmtokenizer(prompt, return_tensors="pt").to(DEVICE)
+    input_ids = inputs["input_ids"]
+    #print(input_ids)
+       
+    # Without streaming
+    # generate 처리
+    with torch.no_grad():
+        generation_output = sllmmodel.generate(
+            input_ids=input_ids,
+            generation_config=generation_config,
+            return_dict_in_generate=True,
+            output_scores=False,
+            max_new_tokens=max_new_tokens,
+        )
+
+    # 출력
+    s = generation_output.sequences[0]
+    output = sllmtokenizer.decode(s)
+
+    end_time = time.time() - start_time
+    print("*Text생성시간: {:.2f} ms\n".format(end_time * 1000)) 
+    #print(output.replace(eos_str, ''))
+    #print()
+    return output.replace(eos_str, '')
+#------------------------------------------------------------------------
+
+#------------------------------------------------------------------
+# 구글 bard를 이용한 text 생성
+#
+# 세션키를 이용하여 구글 bard 테스트 예제
+# 출처 : https://github.com/dsdanielpark/Bard-API
+#
+# token 값얻기
+# https://bard.google.com/ 방문
+# 콘솔용 F12
+# 세션: 애플리케이션 → 쿠키 → 쿠키 값을 복사합니다 __Secure-1PSID.
+# -> 참고로 반드시 뒤에 .으로 끝나고 .포함해서 길이가 72자임.
+#------------------------------------------------------------------
+from bardapi import BardCookies
+#token = 'XQhPmzE3Wa_GqgDH1Z9YcRwZieE0STZi0ANZ557Zcm9Lio8QeIQtQvdd8evImbUrF-ZapQ.' # bard __Secure-1PSID 토큰 입력
+#token1 = 'XQhPmzE3Wa_GqgDH1Z9YcRwZieE0STZi0ANZ557Zcm9Lio8QeIQtQvdd8evImbUrF-ZapQ.' # bard __Secure-1PSIDTS 토큰 입력
+def generate_text_bard(prompt:str, token:str, token1:str=None, token2:str=None):
+    #print(f'[generate_text_bard] prompt: {prompt}')
+    print(f'[generate_text_bard] token: {token}, token1: {token1}, token2:{token2}')
+   
+    assert token, f'token is not empty'
+    
+    token = token.strip()
+    
+    # __Secure-1PSID 토큰만 이용하는 경우 "SNlM0e value not found. Double-check __Secure-1PSID value or pass it as token='xxxxx'" 에러가 자주 발생하여,
+    # __Secure-1PSIDTS 함께 이용하는 멀티토큰 방식으로 함. (출처 : https://github.com/dsdanielpark/Bard-API/issues/99)
+    if token1 and token2:
+        token1 = token1.strip()
+        token2 = token2.strip()
+        cookie_dict = {
+            "__Secure-1PSID": token,
+            "__Secure-1PSIDTS": token1,
+            "__Secure-1PSIDCC": token2,
+            # Any cookie values you want to pass session object.
+        }
+        
+        bard = BardCookies(cookie_dict=cookie_dict)
+    else:
+        bard = Bard(token=token,timeout=30) # Set timeout in seconds
+        
+    output = bard.get_answer(prompt)['content']
+    
+    #print(f'[generate_text_bard] output: {output}')
+    return output
+#------------------------------------------------------------------
+
+#-----------------------------------------
+# GPT를 이용한 text 생성
+#-----------------------------------------
+MESSAGES:list = []
+def generate_text_GPT(prompt, messages):
+    
+    #print(f'len(messages):{len(messages)}') 
+    #print()
+    
+    #-----------------------------------------
+    # *** gpt에 메시지는 계속 대화 내용이 유지가 되므로, 비용이 발생함.
+    # 따라서 최근 2개 대화만 유지함.
+    #if len(messages) >= 2:
+    #    messages = messages[len(messages)-2:]  # 최근 2개의 대화만 가져오기
+    messages = []  # 무조건 최근대화 초기화
+    #-----------------------------------------
+        
+    # 사용자 메시지 추가
+    messages.append( {"role": "user", "content": prompt})
+    print(messages)
+
+    # ChatGPT-API 호출하기
+    response = openai.ChatCompletion.create(
+        model=gpt_model,
+        messages=messages,
+        max_tokens=1024, # 토큰 수 
+        temperature=1,  # temperature 0~2 범위 : 작을수록 정형화된 답변, 클수록 유연한 답변(2는 엉뚱한 답변을 하므로, 1.5정도가 좋은것 같음=기본값은=1)
+        top_p=0.1 # 기본값은 1 (0.1이라고 하면 10% 토큰들에서 출력 토큰들을 선택한다는 의미)
+    )
+
+    print(response)
+    print()
+    answer = response['choices'][0]['message']['content']
+    return answer
+#------------------------------------------------------------------
+
+#---------------------------------------------------------------------------
+# 이전 답변/응답 문장들중 오래된것 제거하며, 문장을 구분자 <hr> 로 구분해서 답변/응답 문단을 만든는 함수
+#---------------------------------------------------------------------------
+def remove_prequery(prequery:str, remove_count:int=4):
+    
+    if prequery:
+        # prequery는 5개 이상이면 무조건 오래된 문장/답변은 제거함
+        hr_count = prequery.count("<hr>")
+        #print(f'4) hr_count:{hr_count}')
+
+        remove_count -= 1
+        if hr_count > remove_count: # 4 개 이상이면 <hr>로 구분해서 오래된 문장/답변은 제거함.
+            hr_list = prequery.split("<hr>") # <hr>로 구분
+            hr_list.pop(0)                   # 제일 오래된 <hr> 구분해서 첫번째 문장/답변은 제거.
+            prequery = "<hr>".join(hr_list)  # 다시 hr 구분된 문장/답변 조합.
+            #print(f'5) prequery:{prequery}')
+    
+    return prequery
+#---------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------
+# context 문자열을 입력받아서,\n\n 문단으로 구분후, 문단 맨 첫번째 문장 title들을
+# 조합해서 title_str 만들고 ,return 하는 함수
+# -> title에 해당하는 문서가 있으면 url링크 생성함
+#---------------------------------------------------------------------------
+def get_title_with_urllink(context:str):
+    
+    titles_str:str = ''  # titles를 str형으로 만들어서 전송함. 
+    
+    # context에서 title만 뽑아냄
+    titles = []
+    context_list = context.split("\n\n")  #\n\n으로 구분.
+    for context1 in context_list:
+        context1 = context1.strip()
+        context2 = context1.split("\n")
+        if len(context2) > 0:
+            titles.append(context2[0].strip())
+    
+    # 중복 제거하면서 순서유지.
+    titles2 = []
+   
+    for idx, title in enumerate(titles):
+        if title and title not in titles2:
+            titles2.append(title)
+            
+            # 실제 title에 해당하는 파일이 경로에 존재하는 경우에만 url 링크 생성함.
+            if os.path.isfile(DATA_FOLDER + title + ".txt"):
+                
+                # html뿌릴때 중간에 쌍따옴표가 있으면 에러 나므로, "(쌍따옴표) 대신에 ;s&s; 로 치환해서 전송함. 
+                # => 이후 chat01.html에서 ;s&s; 문자열을 다시 "(쌍따옴표)로 치환해줌.
+                # => 참고로 " 대신에 홑따옴표(') 해도 되는데, openPopup 함수는 반드시 "(쌍따옴표)로 묶어져야 동작하므로 이렇게 처리함.
+                title = f"<a href='javascript:void(0);' onclick=;s&s;;openPopup('{ENV_URL}/doc?name={title}');;s&s;>{title}</a>"
+                #title = f"<a href='/doc?name={title}'>{title}</a>"
+                
+            if idx == 0:
+                titles_str = title
+            else:
+                titles_str += ', ' + title
+                
+    return titles_str
+#---------------------------------------------------------------------------
+
+#------------------------------------------------------------------
+# BERT로 문단 검색 후 sLLM 로 Text 생성.
+#------------------------------------------------------------------
+def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, model_key:str='', model_key1:str='', model_key2:str='', qmethod:int=0, checkdocs:bool=True):
+    error:str = 'success'
+    
+    assert query, f'query is empty'
+    assert esindex, f'esindex is empty'
+    
+    query = query.strip()
+    esindex = esindex.strip()
+    #print(f'model_key:{model_key}')
+    
+    if model_key:
+        model_key = model_key.strip()
+        #print(f'model_key:{model_key}')
+    
+    LOGGER.info(f'[search_docs] esindex:{esindex}, query:{query}, search_size:{search_size}, llm_model_type:{llm_model_type}, model_key:{model_key}')
+    
+    query_split = query.split('##')
+    prefix = query_split[0]  
+    docs = []
+    
+    if checkdocs == False: # 회사문서검색 체크하지 않으면 그냥 쿼리 그대로 prompt 설정함.
+        query1=query
+        prompt=query1
+    elif prefix == '@':  # 일반쿼리일때는 @## prefix 입력후 질문입력함. 
+        query1 = query_split[1]
+        prompt = make_prompt(docs='', query=query1)
+        
+    else:
+        query1 = query
+        
+        # es로 임베딩 쿼리 실행
+        try:
+            error, docs = es_embed_query(esindex, query1, search_size, qmethod)
+        except Exception as e:
+            error = f'es_embed_query fail'
+            msg = f'{error}=>{e}'
+            LOGGER.error(f'[search_docs]: {msg}\n')
+            raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
+         
+        # 검색된 문단들 출력
+        print(docs)
+        print()
+        
+        # prompt 생성    
+        prompt = make_prompt(docs=docs, query=query1)
+        LOGGER.info(f'[search_docs] prompt:{prompt}')
+  
+    # sllM으로 text 생성
+    try:
+        if llm_model_type == 0:
+            response = generate_text_sLLM(prompt=prompt)
+        elif llm_model_type == 1:
+            response = generate_text_GPT(prompt=prompt, messages=MESSAGES)
+        elif llm_model_type == 2: # bard 일때
+            response = generate_text_bard(prompt=prompt, token=model_key, token1=model_key1, token2=model_key2)
+    except Exception as e:
+        error = f'generate_text_xxx fail=>model:{llm_model_type}'
+        msg = f'{error}=>{e}'
+        LOGGER.error(f'[search_docs]: {msg}\n')
+        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
+    
+    if error != 'success':
+        raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
+     
+    # sllm모델일때
+    if llm_model_type == 0:
+        # 응답을 파싱해서 응답만 뽑아내서 return 함.
+        answer:str = "답변 없음."
+        answers:list = []
+        questions:list = []
+        contexts:list = []
+        context:str = ""
+
+        print(f'response')
+        print(response)
+
+        # 프롬프트에 따라 응답, 질의 ,문단으로 파싱하는 함수.
+        if response:
+            answers = response.split("###응답:")
+            #print(answer[0])
+            #print()
+            questions = answers[0].split("###질의:")
+            #print(questions[0])
+            #print()
+            contexts = questions[0].split("###문서:")
+            #print(contexts[1])
+            #print()
+
+            if len(answers) > 1:
+                answer = answers[1].strip()
+
+            if len(contexts) > 1:
+                context = contexts[1].strip()
+
+            query = query1
+            
+            if context == '':
+                context = '**질문과 관련된 회사 자료를 찾지 못했습니다.**'
+                
+            LOGGER.info(f'[search_docs] answer:{answer}')
+  
+        return query, answer, context
+           
+    # gpt 혹은 bard일때
+    if llm_model_type == 1 or llm_model_type == 2:
+        query = query1
+        answer = response
+      
+        context:str = ''
+        
+        if len(docs) > 0:
+            for doc in docs:
+                score = doc['score']
+                if score > MIN_SCORE:
+                    rfile_text = doc['rfile_text']
+                    if rfile_text:
+                        context += rfile_text + '\n\n'
+                
+        #context = docs['rfile_text']
+        
+        #if context == '':
+        #    context = '**질문과 관련된 회사 자료를 찾지 못했습니다.**'
+            
+        LOGGER.info(f'[search_docs] answer:{answer}')
+        return query, answer, context
+    
+#---------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------
+# 비동기 BERT로 문단 검색 후 LLM모델 로 Text 생성.
+#---------------------------------------------------------------------------
+async def async_search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, model_key:str='', model_key1:str='', model_key2:str='', qmethod:int=0, checkdocs:bool=True):
+    loop = asyncio.get_running_loop()
+    #print(f'[async_search_docs] esindex :{esindex}')
+    ##print(f'[async_search_docs] query :{query}')
+    #print(f'[async_search_docs] llm_model_type :{llm_model_type}')
+    #print(f'[async_search_docs] model_key :{model_key}')
+    
+    return await loop.run_in_executor(None, search_docs, esindex, query, search_size, llm_model_type, model_key, model_key1, model_key2, qmethod, checkdocs)
+
     
 # http://10.10.4.10:9000/docs=>swagger UI, http://10.10.4.10:9000/redoc=>ReDoc UI 각각 비활성화 하려면
 # => docs_url=None, redoc_url=None 하면 된다.
 #app = FastAPI(redoc_url=None) #FastAPI 인스턴스 생성(*redoc UI 비활성화)
 app = FastAPI()
-
+templates = Jinja2Templates(directory="templates") # html 파일이 있는 경로를 지정.
 #=========================================================
 # 루트=>정보 출력
 # => http://127.0.0.1:9000/
@@ -629,6 +1081,69 @@ async def delete_documents(esindex:str,
         
     if error != 0:
         raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
+  
+
+#=========================================================================================
+# 체팅 UI
+# - bard 이용
+#========================================================================================= 
+
+#=========================================================
+# 메인 bart_chat.html 호출하는 api  
+#=========================================================
+@app.get("/chat")
+async def form(request: Request):
+    return templates.TemplateResponse("chat01.html", {"request": request})
+
+#=========================================================
+# 검색 처리 api
+#=========================================================
+@app.post("/es/{esindex}/chat")
+async def search_documents(esindex:str,
+                     request: Request
+                     ): 
+    form = await request.form()
+    search_size = 5
+    
+    query = form.get("query").strip()
+    prequery = form.get("prequery").strip()
+    checkdocsstr = form.get("checkdocs")
+    #print(f'==>checkdocsstr :{checkdocsstr}')
+    checkdocs = True
+    if checkdocsstr == None: # 체크버튼 값은 False일때 None으로 들어오고, True이면 on으로 들어옴. 따라서 None으로 들어오면 False 해줌.
+        checkdocs=False
+    
+    print(f'checkdocs :{checkdocs}')
+    
+    #print(f'1) /es/{esindex}/docs/bard/chat')
+    #print(f'2) prequery:{prequery}')
+    #print(f'3) query:{query}')
+    
+    # 이전 답변/응답 문단들 계수가 4를 넘으면, 가장오래된 문단을 제거하고, 각 문단별 <hr> 구분자를 넣어서 prequery를 만든다.
+    prequery = remove_prequery(prequery, 4)
+
+    # 새로운 대화 시도인 경우, 기존 preanswer 초기화 함.
+    if query.startswith("@##새로운 대화"):
+        prequery=""
+
+    if LLM_MODEL == 0:       # SLLM
+        question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=0, model_key='', model_key1='', model_key2='', qmethod=Q_METHOD, checkdocs=checkdocs)
+    elif LLM_MODEL == 1:     # gpt
+        question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=1, model_key='', model_key1='', model_key2='', qmethod=Q_METHOD, checkdocs=checkdocs)
+    elif LLM_MODEL == 2:     # GPT
+        question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=2, model_key=BARD_TOKEN, model_key1=BARD_1PSIDTS_TOKEN, model_key2=BARD_1PSIDCC_TOKEN, qmethod=Q_METHOD, checkdocs=checkdocs)
+    
+     # context에서 title만 뽑아내서 url링크 만듬.
+    titles_str = get_title_with_urllink(context1)
+    
+    # html로 표기할때 중간에 "(쌍따옴표) 있으면 안되므로 , 쌍따옴표를 '(홑따옴표)로 치환
+    question = question.replace('"',"'")
+    answer = answer.replace('"',"'")
+    prequery = prequery.replace('"',"'")
+    titles_str = titles_str.replace('"',"'")
+    
+    return templates.TemplateResponse("chat01.html", {"request": request, "question":question, "answer": answer, "preanswer": prequery, "titles": titles_str})
+
         
     
         
