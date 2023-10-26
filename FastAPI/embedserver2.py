@@ -860,15 +860,21 @@ templates = Jinja2Templates(directory="templates") # html 파일이 있는 경�
 #=========================================================
 # 루트=>정보 출력
 # => http://127.0.0.1:9000/
+Q_METHOD = settings['es']['Q_METHOD']     # 검색시 ES 스크립트 어떤형식으로 만들지.(0=임베딩이 여러개일때 MAX(기본), 1=임베딩이 여러개일때 평균, 2=임베딩이1개일때)
+BATCH_SIZE = settings['es']['BATCH_SIZE'] # 배치 사이즈 = 20이면 20개씩 ES에 인덱싱함.
+MIN_SCORE = settings['es']['MIN_SCORE']   # 검색 1.30 스코어 이하면 제거
+
 #=========================================================
 @app.get("/")
 async def root():
     return {"서버": "문서임베딩AI API 서버", 
             "*임베딩모델":{"모델경로": MODEL_PATH, "폴링방식((mean=평균값, cls=문장대표값, max=최대값)": POLLING_MODE, "출력차원(128, 0=768)": OUT_DIMENSION,"임베딩방식(0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)": EMBEDDING_METHOD, "출력벡터타입('float32', 'float16')": FLOAT_TYPE},
-            "*ES서버":{"URL":ES_URL, "인덱스파일경로": ES_INDEX_FILE, "배치크기": BATCH_SIZE},
+            "*ES서버":{"URL":ES_URL, "인덱스파일경로": ES_INDEX_FILE, "최소스코어": MIN_SCORE, "배치크기": BATCH_SIZE, "검색스크립트((0=임베딩이 여러개일때 MAX(기본), 1=임베딩이 여러개일때 평균, 2=임베딩이1개일때))": Q_METHOD},
             "*클러스터링":{"클러스터링 가변(True=문장계수에 따라 클러스터링계수를 다르게함)": NUM_CLUSTERS_VARIABLE, "방식(kmeans=k-평균 군집 분석, kmedoids=k-대표값 군집 분석)": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력(mean=평균벡터 출력, max=최대값벡터출력)": OUTMODE},
             "*문장전처리":{"제거문장길이(설정길이보다 작은 문장은 제거됨)": REMOVE_SENTENCE_LEN, "중복문장제거(True=중복된문장은 제거됨)": REMOVE_DUPLICATION},
-            "*검색":{"*검색비교벡터값": VECTOR_MAG}
+            "*검색":{"*검색비교벡터값": VECTOR_MAG},
+            "*LLM":{"모델타입(0=SLLM, 1=BARD, 2=GPT)":LLM_MODEL },
+            "*프롬프트":{"컨텍스트 O": PROMPT_CONTEXT, "컨텍스트 X": PROMPT_NO_CONTEXT}
             }
 
 #=========================================================
