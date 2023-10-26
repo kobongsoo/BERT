@@ -860,10 +860,6 @@ templates = Jinja2Templates(directory="templates") # html 파일이 있는 경�
 #=========================================================
 # 루트=>정보 출력
 # => http://127.0.0.1:9000/
-Q_METHOD = settings['es']['Q_METHOD']     # 검색시 ES 스크립트 어떤형식으로 만들지.(0=임베딩이 여러개일때 MAX(기본), 1=임베딩이 여러개일때 평균, 2=임베딩이1개일때)
-BATCH_SIZE = settings['es']['BATCH_SIZE'] # 배치 사이즈 = 20이면 20개씩 ES에 인덱싱함.
-MIN_SCORE = settings['es']['MIN_SCORE']   # 검색 1.30 스코어 이하면 제거
-
 #=========================================================
 @app.get("/")
 async def root():
