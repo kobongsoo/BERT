@@ -125,7 +125,7 @@ LOGGER.info(f'*검색 Settings: VECTOR_MAG:{VECTOR_MAG}')
 
 # 어떤 LLM 모델을 사용할지
 LLM_MODEL = settings['llm_model']['model_type']
-LOGGER.info(f'*llm_model_type: {LLM_MODEL}(0=sllm, 1=bard, 2=gpt)')
+LOGGER.info(f'*llm_model_type: {LLM_MODEL}(0=sllm, 1=gpt, 2=bard)')
 
 # 프롬프트
 PROMPT_CONTEXT = settings['llm_model']['prompt']['prompt_context']  # context 가 있을때(검색된 내용이 있을때)
@@ -389,7 +389,8 @@ def es_embed_query(esindex:str, query:str, search_size:int, qmethod:int=0, uids:
     response = es.search(
         index=esindex,
         body={
-            "size": search_size * 3, # 3배 정도 얻어옴
+            #"size": search_size * 3, # 3배 정도 얻어옴
+            "size": search_size,
             "query": script_query,
             "_source":{"includes": ["rfile_name","rfile_text"]}
         }
@@ -490,8 +491,10 @@ def make_prompt(docs, query)->str:
     if context:
         prompt = PROMPT_CONTEXT.format(query=query, context=context)
     else:
-        prompt = PROMPT_NO_CONTEXT.format(query=query)
-                
+        if LLM_MODEL == 0:  #SLLM 모델일때 
+            prompt = PROMPT_NO_CONTEXT.format(query=query)
+        else:   # GPT 혹은 BARD인 경우, context가 없으면  프롬프트는 쿼리만 생성함.
+            prompt = query
     # KoAlpaca 프롬프트
     #prompt = f"### 질문: {query}\n질문에 대해 아래 내용을 바탕으로 간략히 답변해 주세요\n\n### 문맥: {context}\n\n### 답변:" if context else f"### 질문: {query}\n질문에 대해 간략히 답변해 주세요\n\n### 답변:"
     
@@ -635,7 +638,7 @@ def generate_text_GPT(prompt, messages):
     response = openai.ChatCompletion.create(
         model=gpt_model,
         messages=messages,
-        max_tokens=1024, # 토큰 수 
+        max_tokens=512, # 토큰 수 
         temperature=1,  # temperature 0~2 범위 : 작을수록 정형화된 답변, 클수록 유연한 답변(2는 엉뚱한 답변을 하므로, 1.5정도가 좋은것 같음=기본값은=1)
         top_p=0.1 # 기본값은 1 (0.1이라고 하면 10% 토큰들에서 출력 토큰들을 선택한다는 의미)
     )
@@ -857,6 +860,110 @@ async def async_search_docs(esindex:str, query:str, search_size:int, llm_model_t
 #app = FastAPI(redoc_url=None) #FastAPI 인스턴스 생성(*redoc UI 비활성화)
 app = FastAPI()
 templates = Jinja2Templates(directory="templates") # html 파일이 있는 경로를 지정.
+
+#=========================================================
+# 카카오 쳇봇 연동 테스트 
+# - 임베딩 비교하여 가장 적합한 문서 리턴
+#=========================================================
+@app.post("/chatbot")
+async def chabot(content: Dict):
+    #user_id = content["userRequest"]["user"]["id"]  # id
+    query = content["userRequest"]["utterance"]  # 질문
+    content1 = content["userRequest"]
+    LOGGER.info(f'/test-----\content1:{content1}')
+
+    #text = "답변\n" + question 
+    #LOGGER.info(f'/test-----\text:{text}')
+
+    search_size = 2      # 검색 계수
+    esindex = "qaindex"  # qaindex
+    checkdocs = True     # True = index 검색 / False = index 검색 안하고, 바로 LLM 응답함
+    
+    LOGGER.info(f'/test-----\query:{query}, search_size:{search_size}, esindex:{esindex}, checkdocs:{checkdocs}, LLM_MODEL:{LLM_MODEL}, Q_METHOD:{Q_METHOD}')
+    
+    # es로 임베딩 쿼리 실행
+    try:
+        error, docs = es_embed_query(esindex, query, search_size, Q_METHOD)
+    except Exception as e:
+        error = f'es_embed_query fail'
+        msg = f'{error}=>{e}'
+        LOGGER.error(f'[search_docs]: {msg}\n')
+        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
+        
+    #LOGGER.info(f'/test-----\question:{question}, answer:{answer}')
+    
+    context:str = ''
+
+    for doc in docs:
+        score = doc['score']
+        if score > MIN_SCORE:
+            rfile_text = doc['rfile_text']
+            if rfile_text:
+                 context += rfile_text + '\n\n'
+                
+    if len(context) < 5:
+        context = '질문에 맞는 답변을 찾지 못했습니다.'
+        
+    # 답변 테긋트 설정
+    content = {
+        "version": "2.0",
+        "template": {
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text": context
+                    }
+                }
+            ]
+        }
+    }
+    
+    return JSONResponse(content=content)
+
+#=========================================================
+# 카카오 쳇봇 연동 테스트 2. 
+#=========================================================
+@app.post("/chatbot2")
+async def chabot2(content: Dict):
+    #user_id = content["userRequest"]["user"]["id"]  # id
+    query = content["userRequest"]["utterance"]  # 질문
+    content1 = content["userRequest"]
+    LOGGER.info(f'/test-----\content1:{content1}')
+
+    #text = "답변\n" + question 
+    #LOGGER.info(f'/test-----\text:{text}')
+
+    search_size = 2      # 검색 계수
+    esindex = "qaindex"  # qaindex
+    checkdocs = True     # True = index 검색 / False = index 검색 안하고, 바로 LLM 응답함
+    
+    LOGGER.info(f'/test-----\query:{query}, search_size:{search_size}, esindex:{esindex}, checkdocs:{checkdocs}, LLM_MODEL:{LLM_MODEL}, Q_METHOD:{Q_METHOD}')
+    
+    if LLM_MODEL == 0:       # SLLM
+        question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=0, model_key='', model_key1='', model_key2='', qmethod=Q_METHOD, checkdocs=checkdocs)
+    elif LLM_MODEL == 1:     # gpt
+        question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=1, model_key='', model_key1='', model_key2='', qmethod=Q_METHOD, checkdocs=checkdocs)
+    elif LLM_MODEL == 2:     # GPT
+        question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=2, model_key=BARD_TOKEN, model_key1=BARD_1PSIDTS_TOKEN, model_key2=BARD_1PSIDCC_TOKEN, qmethod=Q_METHOD, checkdocs=checkdocs)
+        
+    #LOGGER.info(f'/test-----\question:{question}, answer:{answer}')
+    
+    # 답변 테긋트 설정
+    content = {
+        "version": "2.0",
+        "template": {
+            "outputs": [
+                {
+                    "simpleText": {
+                        "text": answer
+                    }
+                }
+            ]
+        }
+    }
+    
+    return JSONResponse(content=content)
+    
 #=========================================================
 # 루트=>정보 출력
 # => http://127.0.0.1:9000/
@@ -869,7 +976,7 @@ async def root():
             "*클러스터링":{"클러스터링 가변(True=문장계수에 따라 클러스터링계수를 다르게함)": NUM_CLUSTERS_VARIABLE, "방식(kmeans=k-평균 군집 분석, kmedoids=k-대표값 군집 분석)": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력(mean=평균벡터 출력, max=최대값벡터출력)": OUTMODE},
             "*문장전처리":{"제거문장길이(설정길이보다 작은 문장은 제거됨)": REMOVE_SENTENCE_LEN, "중복문장제거(True=중복된문장은 제거됨)": REMOVE_DUPLICATION},
             "*검색":{"*검색비교벡터값": VECTOR_MAG},
-            "*LLM":{"모델타입(0=SLLM, 1=BARD, 2=GPT)":LLM_MODEL },
+            "*LLM":{"모델타입(0=SLLM, 1=GPT, 2=BARD)":LLM_MODEL },
             "*프롬프트":{"컨텍스트 O": PROMPT_CONTEXT, "컨텍스트 X": PROMPT_NO_CONTEXT}
             }
 
@@ -1105,7 +1212,7 @@ async def search_documents(esindex:str,
                      request: Request
                      ): 
     form = await request.form()
-    search_size = 5
+    search_size = 2
     
     query = form.get("query").strip()
     prequery = form.get("prequery").strip()
