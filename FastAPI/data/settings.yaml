@@ -1,8 +1,8 @@
 # 모델 관련 변수
 model:
-  MODEL_PATH: '../../data11/model/kpf-sbert-128d-v1' # 모델 경로
+  MODEL_PATH: '../../data11/model/kpf-sbert-v1.1' # 모델 경로
   POLLING_MODE: 'mean'  # 폴링모드*(mean, cls, max 중 1나)
-  OUT_DIMENSION: 128    # 임베딩 모델 출력 차원(128, 768)
+  OUT_DIMENSION: 768    # 임베딩 모델 출력 차원(128, 768)
 
 # 임베딩 변수
 embedding:
@@ -14,11 +14,11 @@ es:
   ES_URL: 'http://10.10.4.10:9200/'  # ES 서버 주소
   
   # 인덱스 파일 경로 => **인덱싱 1개만 할거면 아래 Q_METHOD=2로 변경해야 함. ** 인덱싱 계수에 따라 NUM_CLUSTERS 값도 변경해야함.
-  ES_INDEX_FILE: './data/mpower10u_128d_1.json'  
+  ES_INDEX_FILE: './data/mpower10u_768d_1.json'  
   
   Q_METHOD: 2     # 검색시 ES 스크립트 어떤형식으로 만들지.(0=임베딩이 여러개일때 MAX(기본), 1=임베딩이 여러개일때 평균, 2=임베딩이1개일때)
   BATCH_SIZE: 20  # 배치 사이즈 = 20이면 입력된 docs이 20개 이상이면, 최대 20개씩 ES에 인덱싱함.
-  MIN_SCORE: 1.30       # 검색 1.30 스코어 이하면 제거
+  MIN_SCORE: 1.45       # 검색 1.30 스코어 이하면 제거
 
 # 클러스터링 전역 변수
 custring:
@@ -53,7 +53,7 @@ llm_model:
     model_type: 1 
     
     prompt: # prompt_context: context 가 있을때(검색된 내용이 있을때)
-      prompt_context: '###지시: 문서에서 질의에 대해 가장 적합한 내용을 찾아 응답 문장을 만들어 주세요. 문서에서 질의에 대한 내용이 없으면, 새롭게 응답 문장을 만들어주세요.\n\n###문서: {context}\n\n###질의: {query}\n\n###응답:'
+      prompt_context: '###지시: 문서에서 질의에 대해 가장 적합한 내용을 찾아 간단하게 응답 문장을 만들어 주세요. 적합한 내용이 없으면 "적절한 내용을 찾지 못했습니다." 라고 알려주세요.\n\n###문서: {context}\n\n###질의: {query}\n\n###응답:'
       prompt_no_context: '###지시: 질의에 대해 자세하게 응답 문장을 만들어 주세요.\n\n###질의: {query}\n\n###문서:\n\n###응답:'
     
     # sLLM 관련 전역변수
@@ -66,7 +66,7 @@ llm_model:
 
     #GPT 관련 전역 변수    
     gpt:
-       GPT_TOKEN: 'sk-'           # openai key
+       GPT_TOKEN: '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'           # openai key
        GPT_MODEL: 'gpt-3.5-turbo' # 모델종류
 
     # BARD 관련 전역 변수
