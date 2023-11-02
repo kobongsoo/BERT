@@ -53,8 +53,13 @@ llm_model:
     model_type: 1 
     
     prompt: # prompt_context: context 가 있을때(검색된 내용이 있을때)
-      prompt_context: '내용에서 질문에 대한 답을 찾아 한문장으로 간단히 요약해 주세요.\n질문:{query}\n내용:{context}'
+      prompt_context: '내용에서 질문에 대한 답을 찾아 한문장으로 간단히 요약해 주세요\n질문:{query}\n내용:{context}'
       prompt_no_context: '질문에 대해 한문장으로 간단히 답변해 주세요.\n질문: {query}'
+      
+      # 위 프롬프트를 영어로 해봄 
+      #prompt_context: 'Please find the answer to the question in the content and briefly summarize it in one sentence.\nquestion:{query}\ncontent:{context}'
+      #prompt_no_context: 'Please briefly answer the question in one sentence.\nquestion: {query}'
+      
       
       #prompt_context: '###지시: 문서에서 질의에 대해 가장 적합한 내용을 찾아 간단하게 응답 문장을 만들어 주세요. 적합한 내용이 없으면 "적절한 내용을 찾지 못했습니다." 라고 알려주세요.\n\n###문서: {context}\n\n###질의: {query}\n\n###응답:'
       #prompt_no_context: '###지시: 질의에 대해 자세하게 응답 문장을 만들어 주세요.\n\n###질의: {query}\n\n###문서:\n\n###응답:'
@@ -79,6 +84,6 @@ llm_model:
         # __Secure-1PSIDTS 함께 이용하는 멀티토큰도 지정해줌 (출처 : https://github.com/dsdanielpark/Bard-API/issues/99)
         # **이렇게 하더라도 1일정도 지나면, 에러가 발생함 이때마다  __Secure-1PSIDTS, __Secure-1PSIDCC 값이 변경 되므로, 업데이트 해줘야 함.
         # 출처 : https://github.com/dsdanielpark/Bard-API/blob/main/documents/README_DEV.md#auto-cookie-bard
-        BARD_1PSIDTS_TOKEN: 'sidts-CjEBNiGH7lGGa36ZORv0SVbJj9W0xRWNUiogunKsDbnT4wiORvlBuDM-HcgWWJEZcjt3EAA' # __Secure-1PSIDTS  
-        BARD_1PSIDCC_TOKEN: 'ACA-OxNV0dJlf0ypdabAwD1RH2YmFwea7SzGu1JpZ69XR-3nsuRldlEXB5ClxkR1cjyAaqGh2g'    # __Secure-1PSIDCC
+        BARD_1PSIDTS_TOKEN: 'sidts-CjEBNiGH7jrtSOQc3pBBJ2lVPqohbYs_8fYwDs_EBXf11PQg9Rdz72t6ddhkvJZRRZZAEAA' # __Secure-1PSIDTS  
+        BARD_1PSIDCC_TOKEN: 'ACA-OxN6sE3rhAW3kKKORkjaFVQHa1_-_ek_yVgPKotpz9vOIvVa76JME07Lu77Vf2P6eMY8Bw'    # __Secure-1PSIDCC
 

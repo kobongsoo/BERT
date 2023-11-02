@@ -491,11 +491,13 @@ def make_prompt(docs, query):
     if context:
         prompt = PROMPT_CONTEXT.format(query=query, context=context)
     else:
+        prompt = PROMPT_NO_CONTEXT.format(query=query)
+        '''
         if LLM_MODEL == 0:  #SLLM 모델일때 
             prompt = PROMPT_NO_CONTEXT.format(query=query)
         else:   # GPT 혹은 BARD인 경우, context가 없으면  프롬프트는 쿼리만 생성함.
             prompt = query
-  
+        '''  
     return prompt, context
 #------------------------------------------------------------------------
 
@@ -641,7 +643,7 @@ def generate_text_GPT(prompt, messages):
 
     #print(response)
     #print()
-    answer = response['choices'][0]['message']['content']
+    answer = response['choices'][0]['message']['content'] + '다.' # 뒤에 '다' 붙여줌.
     return answer
 #------------------------------------------------------------------
 
@@ -735,11 +737,12 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
     
     if checkdocs == False: # 회사문서검색 체크하지 않으면 그냥 쿼리 그대로 prompt 설정함.
         query1=query
-        prompt=query1
+        #prompt=query1
+        prompt, embed_context = make_prompt(docs='', query=query1)   
     elif prefix == '@':  # 일반쿼리일때는 @## prefix 입력후 질문입력함. 
         query1 = query_split[1]
-        prompt=query1
-        #prompt, embed_context = make_prompt(docs='', query=query1)   
+        #prompt=query1
+        prompt, embed_context = make_prompt(docs='', query=query1)   
     else:
         query1 = query
         
@@ -761,7 +764,7 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
         if len(embed_context) < 2:
             bllm_model_query = False
             
-        LOGGER.info(f'[search_docs] prompt:{prompt}, bllm_model_query:{bllm_model_query}')
+    LOGGER.info(f'[search_docs] prompt:{prompt}, bllm_model_query:{bllm_model_query}')
   
     # llm_model_query == True일때만 쿼리함.
     if bllm_model_query == True:
@@ -791,8 +794,8 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
         contexts:list = []
         context:str = ""
 
-        print(f'response')
-        print(response)
+        #print(f'response')
+        #print(response)
 
         # 프롬프트에 따라 응답, 질의 ,문단으로 파싱하는 함수.
         if response:
@@ -925,6 +928,9 @@ async def chabot(content: Dict):
 #=========================================================
 @app.post("/chatbot2")
 async def chabot2(content: Dict):
+       
+    start_time = time.time()
+    
     #user_id = content["userRequest"]["user"]["id"]  # id
     query = content["userRequest"]["utterance"]  # 질문
     content1 = content["userRequest"]
@@ -935,7 +941,7 @@ async def chabot2(content: Dict):
 
     search_size = 2      # 검색 계수
     esindex = "qaindex"  # qaindex
-    checkdocs = True     # True = index 검색 / False = index 검색 안하고, 바로 LLM 응답함
+    checkdocs = False     # True = index 검색 / False = index 검색 안하고, 바로 LLM 응답함
     
     LOGGER.info(f'/test-----\query:{query}, search_size:{search_size}, esindex:{esindex}, checkdocs:{checkdocs}, LLM_MODEL:{LLM_MODEL}, Q_METHOD:{Q_METHOD}')
     
@@ -947,6 +953,12 @@ async def chabot2(content: Dict):
         question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=2, model_key=BARD_TOKEN, model_key1=BARD_1PSIDTS_TOKEN, model_key2=BARD_1PSIDCC_TOKEN, qmethod=Q_METHOD, checkdocs=checkdocs)
         
     #LOGGER.info(f'/test-----\question:{question}, answer:{answer}')
+    
+    # 소요된 시간을 계산합니다.
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    
+    answer += '(' + str(elapsed_time) + ')'   # 응답시간 추가
     
     # 답변 테긋트 설정
     content = {
