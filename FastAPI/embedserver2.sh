@@ -4,7 +4,8 @@ APP_NAME=embedserver2:app
 
 start() {
   echo "Starting $APP_NAME"
-  nohup uvicorn $APP_NAME --host=0.0.0.0 --port=9000 --limit-concurrency=200 > embederror.log 2>&1 &
+  mkdir -p "./log"
+  nohup uvicorn $APP_NAME --host=0.0.0.0 --port=9000 --limit-concurrency=200 > ./log/error.log 2>&1 &
   echo "$APP_NAME started"
 }
 

@@ -477,7 +477,7 @@ async def async_es_embed_delete(esindex:str, rfile_name:str):
 #------------------------------------------------------------------------
 # PROMPT 생성
 #------------------------------------------------------------------------
-def make_prompt(docs, query)->str:
+def make_prompt(docs, query):
      # prompt 구성
     context:str = ''
 
@@ -495,15 +495,8 @@ def make_prompt(docs, query)->str:
             prompt = PROMPT_NO_CONTEXT.format(query=query)
         else:   # GPT 혹은 BARD인 경우, context가 없으면  프롬프트는 쿼리만 생성함.
             prompt = query
-    # KoAlpaca 프롬프트
-    #prompt = f"### 질문: {query}\n질문에 대해 아래 내용을 바탕으로 간략히 답변해 주세요\n\n### 문맥: {context}\n\n### 답변:" if context else f"### 질문: {query}\n질문에 대해 간략히 답변해 주세요\n\n### 답변:"
-    
-    # llama 프롬프트
-    #prompt = f"아래는 작업을 설명하는 명령어입니다. 요청을 적절히 완료하는 응답을 작성하세요. ### Instruction: {context}\n{query} ### Response:"
-
-    #print(prompt)
-    #print()
-    return prompt
+  
+    return prompt, context
 #------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
@@ -640,11 +633,14 @@ def generate_text_GPT(prompt, messages):
         messages=messages,
         max_tokens=512, # 토큰 수 
         temperature=1,  # temperature 0~2 범위 : 작을수록 정형화된 답변, 클수록 유연한 답변(2는 엉뚱한 답변을 하므로, 1.5정도가 좋은것 같음=기본값은=1)
-        top_p=0.1 # 기본값은 1 (0.1이라고 하면 10% 토큰들에서 출력 토큰들을 선택한다는 의미)
+        top_p=0.1, # 기본값은 1 (0.1이라고 하면 10% 토큰들에서 출력 토큰들을 선택한다는 의미)
+        frequency_penalty=0.5, # 일반적으로 나오지 않는 단어를 억제하는 정도
+        presence_penalty=0.5, # 동일한 단어나 구문이 반복되는 것을 억제하는 정도
+        stop=["다.","다!"] # . 나오면 중단
     )
 
-    print(response)
-    print()
+    #print(response)
+    #print()
     answer = response['choices'][0]['message']['content']
     return answer
 #------------------------------------------------------------------
@@ -733,14 +729,17 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
     query_split = query.split('##')
     prefix = query_split[0]  
     docs = []
+    response:str = '질문에 대한 답을 찾지 못했습니다. 다시 질문해 주세요'
+    embed_context:str = ''
+    bllm_model_query = True # True이면 llm_model 쿼리함.
     
     if checkdocs == False: # 회사문서검색 체크하지 않으면 그냥 쿼리 그대로 prompt 설정함.
         query1=query
         prompt=query1
     elif prefix == '@':  # 일반쿼리일때는 @## prefix 입력후 질문입력함. 
         query1 = query_split[1]
-        prompt = make_prompt(docs='', query=query1)
-        
+        prompt=query1
+        #prompt, embed_context = make_prompt(docs='', query=query1)   
     else:
         query1 = query
         
@@ -758,25 +757,30 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
         print()
         
         # prompt 생성    
-        prompt = make_prompt(docs=docs, query=query1)
-        LOGGER.info(f'[search_docs] prompt:{prompt}')
+        prompt, embed_context = make_prompt(docs=docs, query=query1)
+        if len(embed_context) < 2:
+            bllm_model_query = False
+            
+        LOGGER.info(f'[search_docs] prompt:{prompt}, bllm_model_query:{bllm_model_query}')
   
-    # sllM으로 text 생성
-    try:
-        if llm_model_type == 0:
-            response = generate_text_sLLM(prompt=prompt)
-        elif llm_model_type == 1:
-            response = generate_text_GPT(prompt=prompt, messages=MESSAGES)
-        elif llm_model_type == 2: # bard 일때
-            response = generate_text_bard(prompt=prompt, token=model_key, token1=model_key1, token2=model_key2)
-    except Exception as e:
-        error = f'generate_text_xxx fail=>model:{llm_model_type}'
-        msg = f'{error}=>{e}'
-        LOGGER.error(f'[search_docs]: {msg}\n')
-        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
-    
-    if error != 'success':
-        raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
+    # llm_model_query == True일때만 쿼리함.
+    if bllm_model_query == True:
+        # sllM으로 text 생성
+        try:
+            if llm_model_type == 0:
+                response = generate_text_sLLM(prompt=prompt)
+            elif llm_model_type == 1:
+                response = generate_text_GPT(prompt=prompt, messages=MESSAGES)
+            elif llm_model_type == 2: # bard 일때
+                response = generate_text_bard(prompt=prompt, token=model_key, token1=model_key1, token2=model_key2)
+        except Exception as e:
+            error = f'generate_text_xxx fail=>model:{llm_model_type}'
+            msg = f'{error}=>{e}'
+            LOGGER.error(f'[search_docs]: {msg}\n')
+            raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
+
+        if error != 'success':
+            raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
      
     # sllm모델일때
     if llm_model_type == 0:
@@ -821,24 +825,20 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
     if llm_model_type == 1 or llm_model_type == 2:
         query = query1
         answer = response
-      
         context:str = ''
         
-        if len(docs) > 0:
-            for doc in docs:
-                score = doc['score']
-                if score > MIN_SCORE:
-                    rfile_text = doc['rfile_text']
-                    if rfile_text:
-                        context += rfile_text + '\n\n'
-                
-        #context = docs['rfile_text']
-        
-        #if context == '':
-        #    context = '**질문과 관련된 회사 자료를 찾지 못했습니다.**'
-            
+        '''
+        if checkdocs == True:
+            if len(docs) > 0:
+                for doc in docs:
+                    score = doc['score']
+                    if score > MIN_SCORE:
+                        rfile_text = doc['rfile_text']
+                        if rfile_text:
+                            context += rfile_text + '\n\n'
+        '''
         LOGGER.info(f'[search_docs] answer:{answer}')
-        return query, answer, context
+        return query, answer, embed_context
     
 #---------------------------------------------------------------------------
 
@@ -1211,6 +1211,9 @@ async def form(request: Request):
 async def search_documents(esindex:str,
                      request: Request
                      ): 
+    
+    start_time = time.time()
+    
     form = await request.form()
     search_size = 2
     
@@ -1241,13 +1244,17 @@ async def search_documents(esindex:str,
         question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=1, model_key='', model_key1='', model_key2='', qmethod=Q_METHOD, checkdocs=checkdocs)
     elif LLM_MODEL == 2:     # GPT
         question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=2, model_key=BARD_TOKEN, model_key1=BARD_1PSIDTS_TOKEN, model_key2=BARD_1PSIDCC_TOKEN, qmethod=Q_METHOD, checkdocs=checkdocs)
-    
+        
      # context에서 title만 뽑아내서 url링크 만듬.
     titles_str = get_title_with_urllink(context1)
     
+     # 소요된 시간을 계산합니다.
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
     # html로 표기할때 중간에 "(쌍따옴표) 있으면 안되므로 , 쌍따옴표를 '(홑따옴표)로 치환
     question = question.replace('"',"'")
-    answer = answer.replace('"',"'")
+    answer = answer.replace('"',"'") + '\n( 응답시간:' + str(elapsed_time) + ')'
     prequery = prequery.replace('"',"'")
     titles_str = titles_str.replace('"',"'")
     
