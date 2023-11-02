@@ -899,7 +899,7 @@ async def chabot(content: Dict):
         if score > MIN_SCORE:
             rfile_text = doc['rfile_text']
             if rfile_text:
-                 context += rfile_text + '\n\n'
+                 context += rfile_text+'\n['+str(score)+']' + '\n\n'  # 내용과 socore 출력
                 
     if len(context) < 5:
         context = '질문에 맞는 답변을 찾지 못했습니다.'
