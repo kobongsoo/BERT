@@ -74,7 +74,7 @@ llm_model:
 
     #GPT 관련 전역 변수    
     gpt:
-       GPT_TOKEN: 'sk-'           # openai key
+       GPT_TOKEN: ''           # openai key
        GPT_MODEL: "gpt-4" #"gpt-3.5-turbo"  #모델 종류
 
     # BARD 관련 전역 변수

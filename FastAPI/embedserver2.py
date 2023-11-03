@@ -31,6 +31,7 @@ from pydantic import BaseModel
 from fastapi.responses import JSONResponse
 import asyncio
 import threading
+import httpx
     
 # ES 관련
 from elasticsearch import Elasticsearch, helpers
@@ -637,13 +638,14 @@ def generate_text_GPT(prompt, messages):
         temperature=1,  # temperature 0~2 범위 : 작을수록 정형화된 답변, 클수록 유연한 답변(2는 엉뚱한 답변을 하므로, 1.5정도가 좋은것 같음=기본값은=1)
         top_p=0.1, # 기본값은 1 (0.1이라고 하면 10% 토큰들에서 출력 토큰들을 선택한다는 의미)
         frequency_penalty=0.5, # 일반적으로 나오지 않는 단어를 억제하는 정도
-        presence_penalty=0.5, # 동일한 단어나 구문이 반복되는 것을 억제하는 정도
-        stop=["다.","다!"] # . 나오면 중단
+        presence_penalty=0.5 # 동일한 단어나 구문이 반복되는 것을 억제하는 정도
+        #stop=["다.","다!"] # . 나오면 중단
     )
 
     #print(response)
     #print()
-    answer = response['choices'][0]['message']['content'] + '다.' # 뒤에 '다' 붙여줌.
+    #answer = response['choices'][0]['message']['content'] + '다.' # 뒤에 '다' 붙여줌.
+    answer = response['choices'][0]['message']['content']
     return answer
 #------------------------------------------------------------------
 
@@ -743,6 +745,7 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
         query1 = query_split[1]
         #prompt=query1
         prompt, embed_context = make_prompt(docs='', query=query1)   
+        LOGGER.error(f'[search_docs]: prefix: {prefix}\n')
     else:
         query1 = query
         
@@ -923,6 +926,87 @@ async def chabot(content: Dict):
     
     return JSONResponse(content=content)
 
+
+async def call_callback(callback_url, query1):
+    async with httpx.AsyncClient() as client:
+        #api_response = await client.get("https://some-api.com/data")
+        #api_data = api_response.json()
+        
+        start_time = time.time()
+        callbackurl = callback_url
+        query = "답변:" + query1
+        
+        LOGGER.info(f'callback-----query:{query}, callbackurl:{callbackurl}')
+        
+        search_size = 2      # 검색 계수
+        esindex = "qaindex"  # qaindex
+        checkdocs = False     # True = index 검색 / False = index 검색 안하고, 바로 LLM 응답함
+
+        LOGGER.info(f'/callback-----\query:{query}, search_size:{search_size}, esindex:{esindex}, checkdocs:{checkdocs}, LLM_MODEL:{LLM_MODEL}, Q_METHOD:{Q_METHOD}')
+
+        if LLM_MODEL == 0:       # SLLM
+            question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=0, model_key='', model_key1='', model_key2='', qmethod=Q_METHOD, checkdocs=checkdocs)
+        elif LLM_MODEL == 1:     # gpt
+            question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=1, model_key='', model_key1='', model_key2='', qmethod=Q_METHOD, checkdocs=checkdocs)
+        elif LLM_MODEL == 2:     # GPT
+            question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=2, model_key=BARD_TOKEN, model_key1=BARD_1PSIDTS_TOKEN, model_key2=BARD_1PSIDCC_TOKEN, qmethod=Q_METHOD, checkdocs=checkdocs)
+
+        #LOGGER.info(f'/test-----\question:{question}, answer:{answer}')
+
+        # 소요된 시간을 계산합니다.
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+
+        answer += '\n(' + str(elapsed_time) + ')'   # 응답시간 추가
+    
+        callback_response = await client.post(
+            callbackurl,
+            json={
+                "version": "2.0",
+                "template": {
+                    "outputs": [
+                        {
+                            "simpleText": {
+                                "text": answer
+                            }
+                        }
+                    ]
+                }
+            }
+        )
+        
+        LOGGER.info(f"callback_response:{callback_response}")
+
+        if callback_response.status_code == 200:
+            LOGGER.info("Callback 호출 성공")
+        else:
+            LOGGER.info(f"Callback 호출 실패: {callback_response.status_code}")
+        
+        
+@app.post("/chatbot3")
+async def chabot3(content: Dict):
+    query = content["userRequest"]["utterance"]  # 질문
+    callbackurl = content["userRequest"]["callbackUrl"] # callbackurl
+    
+    content1 = content["userRequest"]
+    LOGGER.info(f'/test-----\content1:{content1}')
+    
+    # 비동기 작업을 스케줄링
+    asyncio.create_task(call_callback(callbackurl, query))
+    
+    LOGGER.info(f'chabot3-----query:{query}, callbackurl:{callbackurl}')
+    
+     # 답변 테긋트 설정
+    content = {
+        "version": "2.0",
+        "useCallback": True,
+        "data": {
+           "text" : "답변을 찾는중 이에요😘 \n15초 정도 걸릴것 같아요. 잠시만 기다려주세요!"
+        }
+    }
+    
+    return JSONResponse(content=content)
+   
 #=========================================================
 # 카카오 쳇봇 연동 테스트 2. 
 #=========================================================
@@ -931,13 +1015,11 @@ async def chabot2(content: Dict):
        
     start_time = time.time()
     
-    #user_id = content["userRequest"]["user"]["id"]  # id
     query = content["userRequest"]["utterance"]  # 질문
+    callback_url = content["userRequest"]["callbackUrl"] # callbackurl
+    
     content1 = content["userRequest"]
     LOGGER.info(f'/test-----\content1:{content1}')
-
-    #text = "답변\n" + question 
-    #LOGGER.info(f'/test-----\text:{text}')
 
     search_size = 2      # 검색 계수
     esindex = "qaindex"  # qaindex
