@@ -102,7 +102,8 @@ ES_URL = settings['es']['ES_URL']
 ES_INDEX_FILE = settings['es']['ES_INDEX_FILE'] # 인덱스 파일 경로
 Q_METHOD = settings['es']['Q_METHOD']     # 검색시 ES 스크립트 어떤형식으로 만들지.(0=임베딩이 여러개일때 MAX(기본), 1=임베딩이 여러개일때 평균, 2=임베딩이1개일때)
 BATCH_SIZE = settings['es']['BATCH_SIZE'] # 배치 사이즈 = 20이면 20개씩 ES에 인덱싱함.
-MIN_SCORE = settings['es']['MIN_SCORE']   # 검색 1.30 스코어 이하면 제거
+MIN_SCORE = settings['es']['MIN_SCORE'] # 검색 1.30 스코어 이하면 제거
+UID_MIN_SCORE = settings['es']['UID_MIN_SCORE'] # es_search_uids 함수(후보군 임베딩 구하는 함수)에서 사용
 
 LOGGER.info(f'*ES Settings: ES_URL:{ES_URL}, Q_METHOD:{Q_METHOD}, ES_INDEX_FILE:{ES_INDEX_FILE}, BATCH_SIZE:{BATCH_SIZE}, MIN_SCORE:{MIN_SCORE}')
 
@@ -334,6 +335,58 @@ def index_data(es, df_contexts, doc_sentences:list):
 #---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
+#쿼리에 대해 일반검색해서 임베딩 검색할 후보군 10개 목록 uids를 얻는 함수
+#---------------------------------------------------------------------------
+def es_search_uids(es, esindex:str, size:int=10, data=None):
+    if data is None: #모든 데이터 조회
+        data = {"match_all":{}}
+    else:
+        data = {"match": data}
+        
+    body = {
+        "size": size,
+        "query": data,
+        "_source":{"includes": ["rfile_name","rfile_text"]}
+    }
+    
+    response = None
+    
+    #LOGGER.info(body)
+    response = es.search(index=esindex, body=body)
+    #LOGGER.info(f'response:{response}')
+    
+    rfilename = []
+    count = 0
+    docs = []
+    
+    LOGGER.info(f'\n[es_search_uids]===>')
+    
+    for hit in response["hits"]["hits"]: 
+        tmp = hit["_source"]["rfile_name"]
+
+        # 중복 제거
+        if tmp and tmp not in rfilename:
+            rfilename.append(tmp)
+            doc = {}  #dict 선언
+            score = hit["_score"]
+            if score > UID_MIN_SCORE:  # 6 이상일때만 스코어 계산
+                doc['rfile_name'] = hit["_source"]["rfile_name"]      # contextid 담음
+                doc['rfile_text'] = hit["_source"]["rfile_text"]      # text 담음.
+                doc['score'] = score
+                docs.append(doc)
+                LOGGER.info(f'\t{doc}')
+                count += 1
+
+    #LOGGER.info(f'[es_search_uids] {docs}')
+    
+    uids = []
+    for doc in docs:
+        uids.append(doc['rfile_name'])
+
+    return uids, docs
+#---------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------
 # ES 임베딩 벡터 쿼리 실행 함수
 # - in : esindex=인덱스명, query=쿼리 , search_size=검색출력계수
 # - option: qmethod=0 혹은 1 혹은 2(0=max벡터 구하기, 1=평균벡터 구하기, 2=임베딩벡터가 1개인 경우 (default=0)), uid_list=검색할 uid 리스트(*엠파워에서는 검색할 문서id를 지정해서 검색해야 검색속도가 느리지 않음)
@@ -362,18 +415,25 @@ def es_embed_query(esindex:str, query:str, search_size:int, qmethod:int=0, uids:
         LOGGER.error(f'[es_embed_query] {error}')
         return error, None
         
-    #time.sleep(20)
+   # 후보군 목록이 없으면, es 일반검색 해서 후보군 리스트 뽑아냄.
+    if uids == None:
+        #* es로 쿼리해서 후보군 추출.
+        data = {'rfile_text': query}
+        uids, docs = es_search_uids(es=es,esindex=esindex, size=10, data=data)
+        
+    print(f'*uids:{uids}')
     
-    # LOGGER.info(f'es.info:{es.info()}')
-
+    if len(docs) < 1:
+        return error, docs # 쿼리,  rfilename, rfiletext, 스코어 리턴 
+    
     # 2. 검색 문장 embedding 후 벡터값 
     # 쿼리들에 대해 임베딩 값 구함
     start_embedding_time = time.time()
     embed_query = embedding([query])
     end_embedding_time = time.time() - start_embedding_time
-    print("*embedding time: {:.2f} ms".format(end_embedding_time * 1000)) 
-    print(f'*embed_querys.shape:{embed_query.shape}\n')
-
+    #print("*embedding time: {:.2f} ms".format(end_embedding_time * 1000)) 
+    #print(f'*embed_querys.shape:{embed_query.shape}\n')
+        
     # 3. 쿼리 만듬
     # - 쿼리 1개만 하므로, embed_query[0]으로 입력함.
     if qmethod == 0:
@@ -396,8 +456,6 @@ def es_embed_query(esindex:str, query:str, search_size:int, qmethod:int=0, uids:
             "_source":{"includes": ["rfile_name","rfile_text"]}
         }
     )
-    
-    #LOGGER.info(f'[es_embed_query] response:{response}')
 
     # 5. 결과 리턴
     # - 쿼리 응답 결과값에서 _id, _score, _source 등을 뽑아내고 내림차순 정렬후 결과값 리턴
@@ -422,7 +480,8 @@ def es_embed_query(esindex:str, query:str, search_size:int, qmethod:int=0, uids:
             if count >= search_size:
                 break
                 
-    LOGGER.info(f'[es_embed_query] query:{query} docs:{docs}')
+    LOGGER.info(f'\n[es_embed_query]===>')
+    LOGGER.info(f'\t{docs}')
 
     return error, docs # 쿼리,  rfilename, rfiletext, 스코어 리턴 
 
@@ -623,11 +682,17 @@ def generate_text_GPT(prompt, messages):
     # 따라서 최근 2개 대화만 유지함.
     #if len(messages) >= 2:
     #    messages = messages[len(messages)-2:]  # 최근 2개의 대화만 가져오기
+  
     messages = []  # 무조건 최근대화 초기화
+    #messages.append( {"role": "user", "content": prompt})
     #-----------------------------------------
         
-    # 사용자 메시지 추가
-    messages.append( {"role": "user", "content": prompt})
+    # 메시지 설정
+    messages = [
+            {"role": "system", "content": "답은 간략히 한문장으로 만들어 주세요."}, # 시스템 프롬프트.
+            {"role": "user", "content": prompt}
+        ]
+            
     print(messages)
 
     # ChatGPT-API 호출하기
@@ -728,24 +793,18 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
         model_key = model_key.strip()
         #print(f'model_key:{model_key}')
     
-    LOGGER.info(f'[search_docs] esindex:{esindex}, query:{query}, search_size:{search_size}, llm_model_type:{llm_model_type}, model_key:{model_key}')
+    LOGGER.info(f'\n[search_docs]====>')
+    LOGGER.info(f'\tesindex:{esindex}\nquery:{query}\nsearch_size:{search_size}\nllm_model_type:{llm_model_type}\nmodel_key:{model_key}')
     
-    query_split = query.split('##')
-    prefix = query_split[0]  
     docs = []
-    response:str = '질문에 대한 답을 찾지 못했습니다. 다시 질문해 주세요'
+    response:str = '회사 자료에서는 질문에 답을 찾지 못했습니다.\n질문을 다르게 해보세요.'
     embed_context:str = ''
-    bllm_model_query = True # True이면 llm_model 쿼리함.
+    bFind_docs = True # True이면 회사문서임베딩 찾은 경우
     
     if checkdocs == False: # 회사문서검색 체크하지 않으면 그냥 쿼리 그대로 prompt 설정함.
         query1=query
         #prompt=query1
         prompt, embed_context = make_prompt(docs='', query=query1)   
-    elif prefix == '@':  # 일반쿼리일때는 @## prefix 입력후 질문입력함. 
-        query1 = query_split[1]
-        #prompt=query1
-        prompt, embed_context = make_prompt(docs='', query=query1)   
-        LOGGER.error(f'[search_docs]: prefix: {prefix}\n')
     else:
         query1 = query
         
@@ -764,13 +823,14 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
         
         # prompt 생성    
         prompt, embed_context = make_prompt(docs=docs, query=query1)
+        
         if len(embed_context) < 2:
-            bllm_model_query = False
+            bFind_docs = False
             
-    LOGGER.info(f'[search_docs] prompt:{prompt}, bllm_model_query:{bllm_model_query}')
+    LOGGER.info(f'\tprompt:{prompt}\nbFind_docs:{bFind_docs}')
   
-    # llm_model_query == True일때만 쿼리함.
-    if bllm_model_query == True:
+    # bFind_docs == True일때만 쿼리함.
+    if bFind_docs == True:
         # sllM으로 text 생성
         try:
             if llm_model_type == 0:
@@ -823,27 +883,35 @@ def search_docs(esindex:str, query:str, search_size:int, llm_model_type:int=0, m
             if context == '':
                 context = '**질문과 관련된 회사 자료를 찾지 못했습니다.**'
                 
-            LOGGER.info(f'[search_docs] answer:{answer}')
+            LOGGER.info(f'answer:{answer}')
   
         return query, answer, context
            
     # gpt 혹은 bard일때
     if llm_model_type == 1 or llm_model_type == 2:
         query = query1
-        answer = response
+        #answer = response
+        
         context:str = ''
         
-        '''
         if checkdocs == True:
             if len(docs) > 0:
                 for doc in docs:
                     score = doc['score']
+                    
                     if score > MIN_SCORE:
                         rfile_text = doc['rfile_text']
                         if rfile_text:
-                            context += rfile_text + '\n\n'
-        '''
-        LOGGER.info(f'[search_docs] answer:{answer}')
+                            score -=1
+                            formatted_score = "{:.2f}".format(score)
+                            context += '\n'+rfile_text+'\n[score:'+str(formatted_score)+']' + '\n'  # 내용과 socore 출력
+        
+        if bFind_docs == True:
+            answer = '답변:\n' + response + '\n\n검색내용:' + context
+        else:
+            answer = response
+        
+        LOGGER.info(f'\tanswer:{answer}\n')
         return query, answer, embed_context
     
 #---------------------------------------------------------------------------
@@ -868,7 +936,7 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates") # html 파일이 있는 경로를 지정.
 
 #=========================================================
-# 카카오 쳇봇 연동 테스트 
+# 카카오 쳇봇 연동 테스트 1
 # - 임베딩 비교하여 가장 적합한 문서 리턴
 #=========================================================
 @app.post("/chatbot")
@@ -926,86 +994,6 @@ async def chabot(content: Dict):
     
     return JSONResponse(content=content)
 
-
-async def call_callback(callback_url, query1):
-    async with httpx.AsyncClient() as client:
-        #api_response = await client.get("https://some-api.com/data")
-        #api_data = api_response.json()
-        
-        start_time = time.time()
-        callbackurl = callback_url
-        query = "답변:" + query1
-        
-        LOGGER.info(f'callback-----query:{query}, callbackurl:{callbackurl}')
-        
-        search_size = 2      # 검색 계수
-        esindex = "qaindex"  # qaindex
-        checkdocs = False     # True = index 검색 / False = index 검색 안하고, 바로 LLM 응답함
-
-        LOGGER.info(f'/callback-----\query:{query}, search_size:{search_size}, esindex:{esindex}, checkdocs:{checkdocs}, LLM_MODEL:{LLM_MODEL}, Q_METHOD:{Q_METHOD}')
-
-        if LLM_MODEL == 0:       # SLLM
-            question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=0, model_key='', model_key1='', model_key2='', qmethod=Q_METHOD, checkdocs=checkdocs)
-        elif LLM_MODEL == 1:     # gpt
-            question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=1, model_key='', model_key1='', model_key2='', qmethod=Q_METHOD, checkdocs=checkdocs)
-        elif LLM_MODEL == 2:     # GPT
-            question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=2, model_key=BARD_TOKEN, model_key1=BARD_1PSIDTS_TOKEN, model_key2=BARD_1PSIDCC_TOKEN, qmethod=Q_METHOD, checkdocs=checkdocs)
-
-        #LOGGER.info(f'/test-----\question:{question}, answer:{answer}')
-
-        # 소요된 시간을 계산합니다.
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-
-        answer += '\n(' + str(elapsed_time) + ')'   # 응답시간 추가
-    
-        callback_response = await client.post(
-            callbackurl,
-            json={
-                "version": "2.0",
-                "template": {
-                    "outputs": [
-                        {
-                            "simpleText": {
-                                "text": answer
-                            }
-                        }
-                    ]
-                }
-            }
-        )
-        
-        LOGGER.info(f"callback_response:{callback_response}")
-
-        if callback_response.status_code == 200:
-            LOGGER.info("Callback 호출 성공")
-        else:
-            LOGGER.info(f"Callback 호출 실패: {callback_response.status_code}")
-        
-        
-@app.post("/chatbot3")
-async def chabot3(content: Dict):
-    query = content["userRequest"]["utterance"]  # 질문
-    callbackurl = content["userRequest"]["callbackUrl"] # callbackurl
-    
-    content1 = content["userRequest"]
-    LOGGER.info(f'/test-----\content1:{content1}')
-    
-    # 비동기 작업을 스케줄링
-    asyncio.create_task(call_callback(callbackurl, query))
-    
-    LOGGER.info(f'chabot3-----query:{query}, callbackurl:{callbackurl}')
-    
-     # 답변 테긋트 설정
-    content = {
-        "version": "2.0",
-        "useCallback": True,
-        "data": {
-           "text" : "답변을 찾는중 이에요😘 \n15초 정도 걸릴것 같아요. 잠시만 기다려주세요!"
-        }
-    }
-    
-    return JSONResponse(content=content)
    
 #=========================================================
 # 카카오 쳇봇 연동 테스트 2. 
@@ -1059,6 +1047,98 @@ async def chabot2(content: Dict):
     return JSONResponse(content=content)
     
 #=========================================================
+# 카카오 쳇봇 연동 테스트 3
+# - 콜백함수 정의 : 카카오톡은 응답시간이 5초로 제한되어 있어서, 5초이상 응답이 필요한 경우(LLM 응답은 10~20초) AI 챗봇 설정-콜백API 사용 신청하고 연동해야한다. 
+#=========================================================
+async def call_callback(callback_url, query1):
+    async with httpx.AsyncClient() as client:
+        #api_response = await client.get("https://some-api.com/data")
+        #api_data = api_response.json()
+        
+        start_time = time.time()
+        callbackurl = callback_url
+        #query = "답변:" + query1
+        query = query1
+        LOGGER.info(f'callback-----query:{query}, callbackurl:{callbackurl}')
+        
+        search_size = 3      # 검색 계수
+        esindex = "qaindex"  # qaindex       
+        checkdocs = False     # True = index 검색 / False = index 검색 안하고, 바로 LLM 응답함
+        
+        # prefix에 ? 붙여서 질문하면 index 검색함.
+        prefix_query1 = query1[0]
+        if prefix_query1 == '?':
+            checkdocs = True
+            query = query1[1:]
+
+        #LOGGER.info(f'/callback-----\query:{query}, search_size:{search_size}, esindex:{esindex}, checkdocs:{checkdocs}, LLM_MODEL:{LLM_MODEL}, Q_METHOD:{Q_METHOD}')
+
+        if LLM_MODEL == 0:       # SLLM
+            question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=0, model_key='', model_key1='', model_key2='', qmethod=Q_METHOD, checkdocs=checkdocs)
+        elif LLM_MODEL == 1:     # gpt
+            question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=1, model_key='', model_key1='', model_key2='', qmethod=Q_METHOD, checkdocs=checkdocs)
+        elif LLM_MODEL == 2:     # GPT
+            question, answer, context1 = await async_search_docs(esindex, query, search_size, llm_model_type=2, model_key=BARD_TOKEN, model_key1=BARD_1PSIDTS_TOKEN, model_key2=BARD_1PSIDCC_TOKEN, qmethod=Q_METHOD, checkdocs=checkdocs)
+
+        #LOGGER.info(f'/test-----\question:{question}, answer:{answer}')
+
+        # 소요된 시간을 계산합니다.
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        formatted_elapsed_time = "{:.2f}".format(elapsed_time)
+        answer += '\n(time:' + str(formatted_elapsed_time) + ')'   # 응답시간 추가
+    
+        callback_response = await client.post(
+            callbackurl,
+            json={
+                "version": "2.0",
+                "template": {
+                    "outputs": [
+                        {
+                            "simpleText": {
+                                "text": answer
+                            }
+                        }
+                    ]
+                }
+            }
+        )
+        
+        LOGGER.info(f"callback_response:{callback_response}")
+
+        if callback_response.status_code == 200:
+            LOGGER.info("Callback 호출 성공")
+        else:
+            LOGGER.info(f"Callback 호출 실패: {callback_response.status_code}")
+        
+#=========================================================
+# 카카오 쳇봇 연동 테스트 3
+#=========================================================        
+@app.post("/chatbot3")
+async def chabot3(content: Dict):
+    query = content["userRequest"]["utterance"]  # 질문
+    callbackurl = content["userRequest"]["callbackUrl"] # callbackurl
+    
+    content1 = content["userRequest"]
+    LOGGER.info(f'/chatbot3-----\content1:{content1}')
+    
+    # 비동기 작업을 스케줄링
+    asyncio.create_task(call_callback(callbackurl, query))
+    
+    #LOGGER.info(f'chabot3-----query:{query}, callbackurl:{callbackurl}')
+    
+     # 답변 테긋트 설정
+    content = {
+        "version": "2.0",
+        "useCallback": True,
+        "data": {
+           "text" : "답변 검색 중입니다😘 \n최대 50초 걸릴수 있습니다.\n잠시만 기다려주세요!"
+        }
+    }
+    
+    return JSONResponse(content=content)
+
+#=========================================================
 # 루트=>정보 출력
 # => http://127.0.0.1:9000/
 #=========================================================
@@ -1066,7 +1146,7 @@ async def chabot2(content: Dict):
 async def root():
     return {"서버": "문서임베딩AI API 서버", 
             "*임베딩모델":{"모델경로": MODEL_PATH, "폴링방식((mean=평균값, cls=문장대표값, max=최대값)": POLLING_MODE, "출력차원(128, 0=768)": OUT_DIMENSION,"임베딩방식(0=문장클러스터링, 1=문장평균임베딩, 2=문장임베딩)": EMBEDDING_METHOD, "출력벡터타입('float32', 'float16')": FLOAT_TYPE},
-            "*ES서버":{"URL":ES_URL, "인덱스파일경로": ES_INDEX_FILE, "최소스코어": MIN_SCORE, "배치크기": BATCH_SIZE, "검색스크립트((0=임베딩이 여러개일때 MAX(기본), 1=임베딩이 여러개일때 평균, 2=임베딩이1개일때))": Q_METHOD},
+            "*ES서버":{"URL":ES_URL, "인덱스파일경로": ES_INDEX_FILE, "최소스코어": MIN_SCORE, "후보군 최소스코어:":UID_MIN_SCORE, "배치크기": BATCH_SIZE, "검색스크립트((0=임베딩이 여러개일때 MAX(기본), 1=임베딩이 여러개일때 평균, 2=임베딩이1개일때))": Q_METHOD},
             "*클러스터링":{"클러스터링 가변(True=문장계수에 따라 클러스터링계수를 다르게함)": NUM_CLUSTERS_VARIABLE, "방식(kmeans=k-평균 군집 분석, kmedoids=k-대표값 군집 분석)": CLUSTRING_MODE, "계수": NUM_CLUSTERS, "출력(mean=평균벡터 출력, max=최대값벡터출력)": OUTMODE},
             "*문장전처리":{"제거문장길이(설정길이보다 작은 문장은 제거됨)": REMOVE_SENTENCE_LEN, "중복문장제거(True=중복된문장은 제거됨)": REMOVE_DUPLICATION},
             "*검색":{"*검색비교벡터값": VECTOR_MAG},
@@ -1312,12 +1392,16 @@ async def search_documents(esindex:str,
     search_size = 2
     
     query = form.get("query").strip()
+    prefix_query = query[0]
+           
     prequery = form.get("prequery").strip()
     checkdocsstr = form.get("checkdocs")
     #print(f'==>checkdocsstr :{checkdocsstr}')
-    checkdocs = True
-    if checkdocsstr == None: # 체크버튼 값은 False일때 None으로 들어오고, True이면 on으로 들어옴. 따라서 None으로 들어오면 False 해줌.
-        checkdocs=False
+    
+    # 내용검색 체크버튼 값은 False일때 None으로 들어오고, True이면 on으로 들어옴. 따라서 None으로 들어오면 True 해줌.
+    checkdocs = False
+    if checkdocsstr != None:
+        checkdocs=True
     
     print(f'checkdocs :{checkdocs}')
     
@@ -1329,7 +1413,8 @@ async def search_documents(esindex:str,
     prequery = remove_prequery(prequery, 4)
 
     # 새로운 대화 시도인 경우, 기존 preanswer 초기화 함.
-    if query.startswith("@##새로운 대화"):
+    if query.startswith("새로운 대화"):
+        checkdocs=False
         prequery=""
 
     if LLM_MODEL == 0:       # SLLM

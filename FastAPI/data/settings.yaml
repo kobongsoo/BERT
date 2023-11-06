@@ -18,8 +18,9 @@ es:
   
   Q_METHOD: 2     # 검색시 ES 스크립트 어떤형식으로 만들지.(0=임베딩이 여러개일때 MAX(기본), 1=임베딩이 여러개일때 평균, 2=임베딩이1개일때)
   BATCH_SIZE: 20  # 배치 사이즈 = 20이면 입력된 docs이 20개 이상이면, 최대 20개씩 ES에 인덱싱함.
-  MIN_SCORE: 1.45       # 검색 1.30 스코어 이하면 제거
-
+  MIN_SCORE: 1.35   # 검색 1.30 스코어 이하면 제거
+  UID_MIN_SCORE: 6.0 # 후보군 검색 스코어 6.0 이하면 제거(일치=20)
+  
 # 클러스터링 전역 변수
 custring:
   NUM_CLUSTERS_VARIABLE: True  # **True이면 문장길이에 따라 클러스터링수를 다르게 함, False이면 클러스터링 계수가 고정.
@@ -53,8 +54,10 @@ llm_model:
     model_type: 1 
     
     prompt: # prompt_context: context 가 있을때(검색된 내용이 있을때)
-      prompt_context: '내용에서 질문에 대한 답을 찾아 한문장으로 간단히 요약해 주세요\n질문:{query}\n내용:{context}'
-      prompt_no_context: '질문에 대해 한문장으로 간단히 답변해 주세요.\n질문: {query}'
+      #prompt_context: '내용에서 질문에 대한 답을 찾아 답변하세요. 만약 답이 없으면 "질문에 대한 답을 찾지 못했 습니다." 라고 답변해 주세요.\n질문:{query}\n내용:{context}'
+      prompt_context: '내용에서 질문에 대한 답을 찾아 답변하세요.\n질문:{query}\n내용:{context}'
+      #prompt_no_context: '질문에 대해 한문장으로 간략히 답변해 주세요.\n질문: {query}'
+      prompt_no_context: '{query}'
       
       # 위 프롬프트를 영어로 해봄 
       #prompt_context: 'Please find the answer to the question in the content and briefly summarize it in one sentence.\nquestion:{query}\ncontent:{context}'
@@ -74,8 +77,8 @@ llm_model:
 
     #GPT 관련 전역 변수    
     gpt:
-       GPT_TOKEN: ''           # openai key
-       GPT_MODEL: "gpt-4" #"gpt-3.5-turbo"  #모델 종류
+       GPT_TOKEN: 'sk-'           # openai key
+       GPT_MODEL: "gpt-3.5-turbo" #"gpt-3.5-turbo, gpt-4"  #모델 종류
 
     # BARD 관련 전역 변수
     bard:           

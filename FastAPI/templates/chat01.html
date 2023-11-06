@@ -134,8 +134,8 @@
 		<h2>Q&A</h2>
 		<p>
 		<span style="font-size: 15px; color: black; font-weight: 200; font-family: Arial, sans-serif;">
-		질문을 입력하면 ES에 등록된 내용을 검색하고, 검색된 문서에서 질문에 적합한 내용을 찾아서 답변해줍니다. 검색된 내용이 없으면, 질문에 대해 알아서 답변해줍니다.<br>
-		'내용 검색' 체크하지 않으면 질문에 대해 알아서 답변해줍니다.
+		질문을 입력하면 DB에 등록된 회사 내용을 검색하고, 검색된 내용에서 질문에 적합한 답을 찾아서 응답해줍니다. 검색된 내용이 없으면 "질문에 대한 답을 찾지 못했다"고 응답합니다.<br>
+		*만약 '내용 검색' 체크하지 않으면 해당 질문에 대해서는 DB 내용 검색 없이, LLM 모델이 알아서 일반적인 답변을 해줍니다.
 		</span>
 
 		<!-- /es/qaindex/chat 호출함. 이때 query, prequery 을 POST로 넘겨줌-->
@@ -166,7 +166,7 @@
 			function startNewConversation() {
 				var form = document.querySelector('form');
 				var queryInput = form.querySelector('input[name="query"]');
-				queryInput.value = "@##새로운 대화를 시작합니다.";
+				queryInput.value = "?새로운 대화를 시작합니다.";
 				form.submit();
 			}
 		</script>
