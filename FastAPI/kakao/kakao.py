@@ -28,7 +28,7 @@ from typing_extensions import Annotated
 from fastapi import FastAPI, Query, Cookie, Form, Request, HTTPException, BackgroundTasks
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 import asyncio
 import threading
 import httpx
@@ -42,7 +42,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from utils import seed_everything, GPU_info, mlogging, get_options, create_index, make_docs_df, get_sentences
 from utils import load_embed_model, async_embedding, index_data, async_es_embed_query, async_es_embed_delete
-from utils import async_chat_search, remove_prequery, get_title_with_urllink, make_prompt, generate_text_GPT
+from utils import async_chat_search, remove_prequery, get_title_with_urllink, make_prompt, generate_text_GPT, log_message
 #----------------------------------------------------------------------
 
 # 전역 변수로 선언 => 함수 내부에서 사용할때 global 해줘야 함.
@@ -50,7 +50,7 @@ from utils import async_chat_search, remove_prequery, get_title_with_urllink, ma
 settings = get_options(file_path='./data/settings.yaml')
 assert len(settings) > 2, f'load settings error!!=>len(settigs):{len(settings)}'
 
-LOGGER = mlogging(loggername="kakao", logfilename=settings['LOG_PATH']) # 로그
+#LOGGER = mlogging(loggername="kakao", logfilename=settings['LOG_PATH']) # 로그
 seed_everything(settings['SEED'])  # seed 설정
 DEVICE = settings['GPU']
 if DEVICE == 'auto':
@@ -96,7 +96,7 @@ async def get_vector(sentences: List[str] = Query(..., description="sentences", 
     except Exception as e:
         error = f'async_embedding fail({settings["ES_URL"]})'
         msg = f'{error}=>{e}'
-        LOGGER.error(f'/vectors {msg}')
+        log_message(settings, f'[error] /vectors {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
         
     embeddings_str = [",".join(str(elem) for elem in sublist) for sublist in embeddings]
@@ -125,7 +125,7 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, infilepath:bool=False, create
     titles = Data.titles
     
     ES_URL = settings['ES_URL']
-    LOGGER.info(f'/es/{esindex}/docs start-----\nES_URL:{ES_URL}, esindex:{esindex}, createindex:{createindex}, uids:{uids}, titles:{titles}')
+    log_message(settings, f'[info] /es/{esindex}/docs start-----\nES_URL:{ES_URL}, esindex:{esindex}, createindex:{createindex}, uids:{uids}, titles:{titles}')
 
     # 인자 검사
     if len(documents) < 1:
@@ -138,29 +138,29 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, infilepath:bool=False, create
         error = 'esindex not found'
      
     if error != 'success':
-        LOGGER.error(f'/embed/es {error}')
+        log_message(settings, f'[error] /embed/es {error}')
         raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
     
     # 1.elasticsearch 접속
     try:
         es = Elasticsearch(ES_URL)
-        LOGGER.info(f'/embed/es 1.Elasticsearch connect success=>{ES_URL}')
+        log_message(settings, f'[info] /embed/es 1.Elasticsearch connect success=>{ES_URL}')
     except Exception as e:
         error = f'Elasticsearch connect fail({ES_URL})'
         msg = f'{error}=>{e}'
-        LOGGER.error(f'/embed/es {msg}')
+        log_message(settings, f'[error] /embed/es {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
         
-    #LOGGER.info(f'es.info:{es.info()}')
+    #log_message(settings, f'es.info:{es.info()}')
 
     # 2. 추출된 문서들 불러와서 df로 만듬
     try:              
         df_contexts = make_docs_df(mydocuments=documents, mytitles=titles, myuids=uids, infilepath=infilepath) # myutils/kss_utils.py
-        LOGGER.info(f'/embed/es 2.load_docs success')
+        log_message(f'[info] /embed/es 2.load_docs success')
     except Exception as e:
         error = f'load docs fail'
         msg = f'{error}=>{e}'
-        LOGGER.error(f'/embed/es {msg}')
+        log_message(settings, f'[error] /embed/es {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
                                                                     
     # 3. 문장 추출
@@ -169,22 +169,22 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, infilepath:bool=False, create
                                       remove_sentnece_len=settings['REMOVE_SENTENCE_LEN'], 
                                       remove_duplication=settings['REMOVE_DUPLICATION']) # myutils/kss_utils.py
         
-        LOGGER.info(f'/embed/es 3.get_sentences success=>len(doc_sentences):{len(doc_sentences)}')
+        log_message(settings, f'[info] /embed/es 3.get_sentences success=>len(doc_sentences):{len(doc_sentences)}')
     except Exception as e:
         error = f'get_sentences fail'
         msg = f'{error}=>{e}'
-        LOGGER.error(f'/embed/es {msg}')
+        log_message(settings, f'[error] /embed/es {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
    
     # 4.ES 인덱스 생성
     try:
         ES_INDEX_FILE = settings['ES_INDEX_FILE']
         create_index(es=es, index_file_path=ES_INDEX_FILE, index_name=esindex, create=createindex) # myutils/es_utils.py
-        LOGGER.info(f'/embed/es 4.create_index success=>index_file:{ES_INDEX_FILE}, index_name:{esindex}')
+        log_message(f'[info] /embed/es 4.create_index success=>index_file:{ES_INDEX_FILE}, index_name:{esindex}')
     except Exception as e:
         error = f'create_index fail'
         msg = f'{error}=>{e}'
-        LOGGER.error(f'/embed/es {msg}')
+        log_message(settings, f'[error] /embed/es {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
 
     # 5. index 처리
@@ -196,11 +196,11 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, infilepath:bool=False, create
                    clu_outmode=settings['CLU_OUTMODE'], bi_encoder=BI_ENCODER1, float_type=settings['E_FLOAT_TYPE'],
                    seed=settings['SEED'], batch_size=settings['ES_BATCH_SIZE'])
         
-        LOGGER.info(f'/embed/es 5.index_data success\nend-----\n')
+        log_message(settings, f'[info] /embed/es 5.index_data success\nend-----\n')
     except Exception as e:
         error = f'index_data fail'
         msg = f'{error}=>{e}'
-        LOGGER.error(f'/embed/es {msg}')
+        log_message(settings, f'[error] /embed/es {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
 
 #----------------------------------------------------------------------
@@ -216,11 +216,14 @@ async def search_documents(esindex:str,
                      query: str = Query(..., min_length=1),     # ... 는 필수 입력 이고, min_length=1은 최소값이 1임. 작으면 422 Unprocessable Entity 응답반환됨
                      search_size: int = Query(..., gt=0),       # ... 는 필수 입력 이고, gt=0은 0보다 커야 한다. 작으면 422 Unprocessable Entity 응답반환됨
                      qmethod: int=2,                            # option: qmethod=0 혹은 1(0=max벡터 구하기, 1=평균벡터 구하기 (default=0))
+                     show: int=1                                # 0=dict 형태로 보여줌, 1=txt 형태로 보여줌.
                      ):                          
                     
     error:str = 'success'
     query = query.strip()
-    LOGGER.info(f'\nget /es/{esindex}/docs start-----\nquery:{query}, search_size:{search_size}')
+    log_message(settings, f'\n[info] get /es/{esindex}/docs start-----\nquery:{query}, search_size:{search_size}')
+    
+    min_score = settings['ES_SEARCH_MIN_SCORE']
     
     try:
         # es로 임베딩 쿼리 실행      
@@ -229,13 +232,48 @@ async def search_documents(esindex:str,
     except Exception as e:
         error = f'async_es_embed_query fail'
         msg = f'{error}=>{e}'
-        LOGGER.error(f'get /es/{esindex}/docs {msg}')
+        log_message(settings, f'[error] get /es/{esindex}/docs {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
     
     if error != 'success':
         raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
-            
-    return {"query":query, "docs": docs}
+       
+    context:str = ''
+    response:dict = {}
+    
+    # show ==0 : dict 형태로 출력
+    if show == 0:
+        response = {"query":query, "docs": docs}
+        return response
+    else:
+        for doc in docs:
+            score = doc['score']
+            if score > min_score:
+                rfile_text = doc['rfile_text']
+                if rfile_text:
+                    formatted_score = "{:.2f}".format(score)
+                    rfile_text = rfile_text.replace("\n", "<br>")
+                    context += '<br>'+ rfile_text + '<br>[score:'+str(formatted_score)+']' + '<br>'  # 내용과 socore 출력
+           
+        #response = {"query":query, "docs": context}
+        # HTML 문서 생성
+        html_content = f"""
+        <!DOCTYPE html>
+        <html lang="ko">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+            <title>내용보기</title>
+        </head>
+        <body>
+            <p>Q: {query}<br>{context}</p>
+        </body>
+        </html>
+        """
+
+        return HTMLResponse(content=html_content)
+
+    
 #----------------------------------------------------------------------
 
 #=========================================================
@@ -260,7 +298,7 @@ async def search_documents_uid(esindex:str,
     docs = []
     query = query.strip()
     uids = Data.uids 
-    LOGGER.info(f'\npost /es/{esindex}/docs/uids start-----\nquery:{query}, search_size:{search_size}, len(uids):{len(uids)}')
+    log_message(settings, f'\n[info] post /es/{esindex}/docs/uids start-----\nquery:{query}, search_size:{search_size}, len(uids):{len(uids)}')
 
     
     try:
@@ -271,7 +309,7 @@ async def search_documents_uid(esindex:str,
     except Exception as e:
         error = f'async_es_embed_query fail'
         msg = f'{error}=>{e}'
-        LOGGER.error(f'get /es/{esindex}/docs {msg}')
+        log_message(settings, f'[error] get /es/{esindex}/docs {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
     
     if error != 'success':
@@ -291,7 +329,7 @@ async def delete_documents(esindex:str,
                            uids:str = Query(...,min_length=1)):
     error:int = 0
     uids = uids.strip()
-    LOGGER.info(f't==>delete /es/{esindex}/docs : id:{uids}')
+    log_message(settings, f'[info] t==>delete /es/{esindex}/docs : id:{uids}')
     
     es_url = settings['ES_URL']
     
@@ -300,7 +338,7 @@ async def delete_documents(esindex:str,
     except Exception as e:
         error = f'async_es_embed_delete fail'
         msg = f'{error}=>{e}'
-        LOGGER.error(f'delete /es/{esindex}/docs {msg}')
+        log_message(settings, f'[error] delete /es/{esindex}/docs {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
         
     if error != 0:
@@ -378,7 +416,7 @@ async def search_documents(esindex:str,
     prequery = prequery.replace('"',"'")
     titles_str = titles_str.replace('"',"'")
  
-    LOGGER.info(f'\t==>search_documents: question:{question}, answer:{answer}')
+    log_message(settings, f'[info] \t==>search_documents: question:{question}, answer:{answer}')
     
     return templates.TemplateResponse("chat01.html", {"request": request, "question":question, "answer": answer, "preanswer": prequery, "titles": titles_str})
 
@@ -388,25 +426,26 @@ async def search_documents(esindex:str,
 # 카카오 쳇봇 연동 테스트 3
 # - 콜백함수 정의 : 카카오톡은 응답시간이 5초로 제한되어 있어서, 5초이상 응답이 필요한 경우(LLM 응답은 10~20초) AI 챗봇 설정-콜백API 사용 신청하고 연동해야한다. 
 #=========================================================
-async def call_callback(settings:dict, callback_url:str, query_prompt:str, docs:list):
+async def call_callback(settings:dict, callback_url:str, query:str, prompt:str, docs:list):
     async with httpx.AsyncClient() as client:
         #api_response = await client.get("https://some-api.com/data")
         #api_data = api_response.json()
         assert settings, f'Error:settings is empty'
-        assert query_prompt, f'Error:query_prompt is empty'
+        assert query, f'Error:query_prompt is empty'
         assert callback_url, f'Error:callback_url is empty'
     
         start_time = time.time()
-        callbackurl = callback_url
+        callbackurl:str = callback_url
         #query = "답변:" + query1
         
-        query = query_prompt
-        print(f'\t==>call_callback: query:{query}, callbackurl:{callbackurl}')
+        query:str = query
+        prompt:str = prompt
+        log_message(settings, f'\t[info]==>call_callback: query:{query}, prompt:{prompt}, callbackurl:{callbackurl}')
         
-        gpt_model = settings['GPT_MODEL']
-        system_prompt = settings['SYSTEM_PROMPT']
-        min_score = settings['ES_SEARCH_MIN_SCORE']
-        
+        gpt_model:str = settings['GPT_MODEL']
+        system_prompt:str = settings['SYSTEM_PROMPT']
+        min_score:float = settings['ES_SEARCH_MIN_SCORE']
+        api_server_url:str = settings['API_SERVER_URL']
         #--------------------------------
         # GPT text 생성
         messages = []
@@ -415,7 +454,7 @@ async def call_callback(settings:dict, callback_url:str, query_prompt:str, docs:
         except Exception as e:
             error = f'generate_text_xxx fail=>model:{gpt_model}'
             msg = f'{error}=>{e}'
-            print(f'[search_docs]: {msg}\n')
+            log_message(settings, f'[error]==>call_callback:{msg}\n')
             raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)         
         
         # 소요된 시간을 계산합니다.
@@ -425,9 +464,10 @@ async def call_callback(settings:dict, callback_url:str, query_prompt:str, docs:
         #answer += '\n(time:' + str(formatted_elapsed_time) + ')'   # 응답시간 추가
         
         #--------------------------------
-        # 답변 Text 구성
+        # 검색된 내용 Text 구성
+        
         context:str = ''
-
+        
         # docs가 있으면, 회사문서검색(내용검색)이므로, gpt 응답(response) + 검색내용 해서 리턴함
         if len(docs) > 0:
             for doc in docs:
@@ -438,28 +478,29 @@ async def call_callback(settings:dict, callback_url:str, query_prompt:str, docs:
                     if rfile_text:
                         #score -=1
                         formatted_score = "{:.2f}".format(score)
-                        context += '\n'+rfile_text+' [score:'+str(formatted_score)+']' + '\n'  # 내용과 socore 출력
+                        context += '\n'+rfile_text+'\n[score:'+str(formatted_score)+']' + '\n'  # 내용과 socore 출력
        
-        LOGGER.info(f"\t==>답변: {response}")
         #--------------------------------
+        # 답변 구성 (뒤에 검색 시간 추가)
+        log_message(settings, f"\t==>답변: {response}")
         
-        response += '\n(time:' + str(formatted_elapsed_time) + ')'
+        # weburl = '10.10.4.10:9000/es/qaindex/docs?query='회사창립일은언제?'&search_size=3&qmethod=2&show=1
+        webLinkUrl = api_server_url+'/es/qaindex/docs?query='+query+'&search_size=3&qmethod=2&show=1'
         
         if len(docs) > 0:
-            '''
             template ={
               "version": "2.0",
               "template": {
                 "outputs": [
                   {
                     "textCard": {
-                      "title": "답변입니다",
-                      "description": response,
+                      "title": query,
+                      "description": response + '\n(time:' + str(formatted_elapsed_time) + ')',
                       "buttons": [
                         {
-                          "action": "message",
-                          "label": "관련 내용보기",
-                          "messageText": context
+                          "action": "webLink", #"action": "message", #"action": "webLink",
+                          "label": "내용보기",
+                          "webLinkUrl": webLinkUrl #"messageText": "<.>\nQ: " + query + "A: " + response + "\n" + context #"webLinkUrl": webLinkUrl 
                         }
                       ]
                     }
@@ -467,29 +508,15 @@ async def call_callback(settings:dict, callback_url:str, query_prompt:str, docs:
                 ]
               }
             }
-            '''
-            template = {
-                "version": "2.0",
-                    "template": {
-                        "outputs": [
-                            {
-                                "simpleText": {
-                                    "text": '답변:\n' + response + '\n\n검색내용:' + context
-                                }
-                            }
-                        ]
-                    }
-                }
         else:
-      
             template ={
               "version": "2.0",
               "template": {
                 "outputs": [
                   {
                     "textCard": {
-                      "title": "답변:",
-                      "description": response
+                      "title": query,
+                      "description": response + '\n(time:' + str(formatted_elapsed_time) + ')'
                     }
                   }
                 ]
@@ -502,44 +529,51 @@ async def call_callback(settings:dict, callback_url:str, query_prompt:str, docs:
             json=template
         )
         
-        LOGGER.info(f"\t==>callback_response:{callback_response}")
+        log_message(settings, f"\t[info]==>callback_response:{callback_response}")
 
         if callback_response.status_code == 200:
-            printf(f"call_callback 호출 성공")
+            print(f"call_callback 호출 성공")
         else:
-            printf(f"call_callback 호출 실패: {callback_response.status_code}")
+            log_message(settings, f"[error] call_callback 호출 실패: {callback_response.status_code}")
         
 #=========================================================
 # 카카오 쳇봇 연동 테스트
 #=========================================================        
 @app.post("/chatbot3")
 async def chabot3(content: Dict):
-        
+
+    content1 = content["userRequest"]
+    log_message(settings, f't\[info]==>chatbot3: content1:{content1}')
+    
     assert settings, f'Error:settings is empty'
 
     query1 = content["userRequest"]["utterance"]  # 질문
     callbackurl = content["userRequest"]["callbackUrl"] # callbackurl
     qmethod = settings['ES_Q_METHOD']
     
-    # 로그 초기화 하기 작상 시작
-    global LOGGER
-    LOGGER = None
-    LOGGER = mlogging(loggername="kakao", logfilename=settings['LOG_PATH']) # 로그
-
+ 
     assert query1, f'Error:query1 is empty'
     assert callbackurl, f'Error:callbackurl is empty'
     assert 0 <= qmethod <= 2, 'Error: qmethod should be in the range 0 to 2'
        
-    content1 = content["userRequest"]
-    LOGGER.info(f't\==>chatbot3: content1:{content1}')
-    
-    search_size = 3      # 검색 계수
-    esindex = "qaindex"  # qaindex    
+    search_size:int = 3      # 검색 계수
+    esindex:str = "qaindex"  # qaindex    
    
-    bFind_docs = True   # True이면 회사문서임베딩 찾은 경우
-    content = {}
-    docs = []
+    bFind_docs:bool = True   # True이면 회사문서임베딩 찾은 경우
+    content:dict = {}
+    docs:list = []
+    prompt:str = ''
     
+    # <.> 로 들어오면 아무것도 안하고 useCallback=False로 하고 return
+    if query1.startswith("<.>"):
+        # 답변 설정
+        content = {
+            "version": "2.0",
+            "useCallback": False,
+        }
+          
+        return JSONResponse(content=content)
+        
     # prefix에 ? 붙여서 질문하면 index 검색함.
     checkdocs = False
     prefix_query1 = query1[0]
@@ -558,14 +592,12 @@ async def chabot3(content: Dict):
         except Exception as e:
             error = f'\t==>chatbot3: async_es_embed_query fail'
             msg = f'{error}=>{e}'
-            LOGGER.error(f'get /es/{esindex}/docs {msg}')
+            log_message(f'[error] get /es/{esindex}/docs {msg}')
             raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
                     
         # prompt 생성 => min_score 보다 작은 conext는 제거함.
         prompt, embed_context = make_prompt(settings=settings, docs=docs, query=query)
-        
-        query = prompt # 이때는 query 가 prompt로 설정.
-        
+              
         # 컨텍스트가 없으면. 임베딩을 못찾은 것이므로, bFind_docs=False로 설정
         if len(embed_context) < 2: 
             bFind_docs = False
@@ -577,6 +609,7 @@ async def chabot3(content: Dict):
         answer = "회사 자료에서는 질문에 답을 찾지 못했습니다.\n질문을 다르게 해보세요."
         content = {
             "version": "2.0",
+            "useCallback": False,
             "template": {
                 "outputs": [
                     {
@@ -590,7 +623,7 @@ async def chabot3(content: Dict):
     # 회사문서검색이 아닌경우(checkdocs == False), 혹은 회사문서 검색(checkdocs == True)인데 맞는 내용을 찾은 경우(bFind_docs == True)에는 gpt 콜백 호출함.
     else:
         # 비동기 작업을 스케줄링 콜백 호출
-        asyncio.create_task(call_callback(settings=settings, callback_url=callbackurl, query_prompt=query, docs=docs))
+        asyncio.create_task(call_callback(settings=settings, callback_url=callbackurl, query=query, prompt=prompt, docs=docs))
              
         # 답변 설정
         content = {
@@ -603,3 +636,26 @@ async def chabot3(content: Dict):
           
     return JSONResponse(content=content)
 #----------------------------------------------------------------------
+
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+@app.get("/test")
+def hello():
+    text_content = "안녕하세요.여기는 paris 입니다.<br>참 머진 viewer 죠?"
+
+    # HTML 문서 생성
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>Text Output in HTML</title>
+    </head>
+    <body>
+        <p>{text_content}</p>
+    </body>
+    </html>
+    """
+    
+    return HTMLResponse(content=html_content)

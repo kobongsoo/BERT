@@ -36,8 +36,8 @@ CLU_OUTMODE: "mean"           # 클러스터링후 출력벡터 정의(kmeans �
 REMOVE_SENTENCE_LEN: 8     # 문장 길이가 8이하면 제거 
 REMOVE_DUPLICATION: False  # 중복된 문장 제거(*중복된 문장 제거 안할때 1%정도 정확도 좋음)
     
-#SYSTEM_PROMPT: "답변은 간략히 한문장으로 요약해서 만들어 주세요."  # 시스템 프롬프트
-SYSTEM_PROMPT: "Please summarize your answer briefly in one sentence."
+SYSTEM_PROMPT: "답변은 간략히 한문장으로 해 주세요."  # 시스템 프롬프트
+#SYSTEM_PROMPT: "Please summarize your answer briefly in one sentence."
 
 #prompt_context: '내용에서 질문에 대한 답을 찾아 답변하세요. 만약 답이 없으면 "질문에 대한 답을 찾지 못했 습니다." 라고 답변해 주세요.\n질문:{query}\n내용:{context}'
 PROMPT_CONTEXT: '내용에서 질문에 대한 답을 찾아 답변하세요.\n질문:{query}\n내용:{context}'
@@ -47,3 +47,6 @@ PROMPT_NO_CONTEXT: '{query}'
     
 GPT_TOKEN: 'sk-'           # openai key
 GPT_MODEL: "gpt-3.5-turbo" #"gpt-3.5-turbo, gpt-4"  #모델 종류
+
+# 외부용 도메인 및 IP 입력해야함
+API_SERVER_URL: "https://"  # 뒤에는 / 붙이면 안됨.

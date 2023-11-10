@@ -9,6 +9,29 @@ from tqdm.notebook import tqdm
 from transformers import set_seed
 import yaml # pip install PyYAML
 
+import time
+import pytz
+from datetime import datetime
+#########################################################################################
+# 로그메시지
+#########################################################################################
+def log_message(settings, message:str):
+    
+    folder = settings['LOG_PATH']
+    # 한국 시간대 설정
+    korea_tz = pytz.timezone('Asia/Seoul')
+
+    try:
+        log_file = datetime.now(korea_tz).strftime('log_%Y-%m-%d.log')
+        log_fullpath = folder + log_file
+        
+        with open(log_fullpath, 'a') as log:
+            # 현재 날짜와 시간 가져오기
+            current_time = datetime.now(korea_tz).strftime('%Y-%m-%d %H:%M:%S')
+            log.write(f"[{current_time}]{message}\n")
+    except Exception as e:
+        print(f"An error occurred while log_message: {e}")
+        
 #########################################################################################
 # .yaml 파일 호출
 # -in : file_path = .yaml 파일이 있는 경로
