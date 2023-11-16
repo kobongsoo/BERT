@@ -9,7 +9,7 @@ from elasticsearch import Elasticsearch
 from fastapi import HTTPException
 
 from .es_search import es_embed_query, make_query_script
-from .llm_generate import generate_text_GPT
+from .llm_generate import generate_text_GPT2
 
 #------------------------------------------------------------------------
 # PROMPT 생성
@@ -106,19 +106,19 @@ def chat_search(settings:dict, esindex:str, query:str,
   
     # bFind_docs == True일때만 쿼리함.
     if bFind_docs == True or checkdocs == False:
-        # sllM으로 text 생성
-        try:
-            messages = []
-            response = generate_text_GPT(gpt_model=gpt_model, prompt=prompt, system_prompt=system_prompt, messages=messages)
-        except Exception as e:
+
+        # GPT text 생성
+        if gpt_model.startswith("text-davinci"):
+            response, status = generate_text_davinci(gpt_model=gpt_model, prompt=input_prompt)
+        else:
+            response, status = generate_text_GPT2(gpt_model=gpt_model, prompt=input_prompt, system_prompt=system_prompt, timeout=30) #timeout=30초로 설정
+ 
+        if status != 0:
             error = f'generate_text_xxx fail=>model:{gpt_model}'
             msg = f'{error}=>{e}'
             print(f'[search_docs]: {msg}\n')
             raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
-
-        if error != 'success':
-            raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
-     
+    
     # 리턴 구문 작성
     query = query1
     context:str = ''
