@@ -47,8 +47,6 @@ from utils import generate_text_GPT2, generate_text_davinci
 from utils import IdManager, NaverSearchAPI
 
 #----------------------------------------------------------------------
-
-
 # 전역 변수로 선언 => 함수 내부에서 사용할때 global 해줘야 함.
 # 설정값 settings.yaml 파일 로딩
 settings = get_options(file_path='./data/settings.yaml')
@@ -464,19 +462,27 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
         else:
             input_prompt = query
             
-        log_message(settings, f"\t[call_callback]==>input_prompt: {input_prompt}, system_prompt:{system_prompt}\n")
+        #log_message(settings, f"\t[call_callback]==>input_prompt: {input_prompt}, system_prompt:{system_prompt}\n")
         #--------------------------------
         # GPT text 생성
-        if gpt_model.startswith("text-davinci"):
-            response, status = generate_text_davinci(gpt_model=gpt_model, prompt=input_prompt)
+        if gpt_model.startswith("gpt-"):
+            response, status = generate_text_GPT2(gpt_model=gpt_model, prompt=input_prompt, system_prompt=system_prompt, 
+                                                  stream=True, timeout=40) #timeout=40초로 설정
         else:
-            response, status = generate_text_GPT2(gpt_model=gpt_model, prompt=input_prompt, system_prompt=system_prompt, timeout=30) #timeout=30초로 설정
+            response, status = generate_text_davinci(gpt_model=gpt_model, prompt=input_prompt, stream=True, timeout=40)
             
         if status != 0:
-            query = "응답 실패"
+            if status == 1001: # time out일때
+                query = "응답 시간 초과"
+                response = "AI 응답이 없습니다.잠시 후 다시 시도해 주십시오.\n(" + response + ")"
+            else:
+                query = "응답 에러"
+                response = "AI 에러가 발생하였습니다.잠시 후 다시 시도해 주십시오.\n(" + response + ")"
+                    
             error = f'generate_text_xxx fail=>model:{gpt_model}'
             log_message(settings, f'[call_callback][error]==>call_callback:{error}=>{response}\n')
             docs = []  # docs 초기화
+            
                
         log_message(settings, f"\t[call_callback]==>답변: {response}\n")
         
@@ -484,25 +490,24 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
         end_time = time.time()
         formatted_elapsed_time = "{:.2f}".format(end_time - start_time)
         
-        #--------------------------------
-        # 검색된 내용 카카오톡 쳇봇 Text 구성
-        # weburl = '10.10.4.10:9000/es/qaindex/docs?query='회사창립일은언제?'&search_size=3&qmethod=2&show=1
-        webLinkUrl = api_server_url+'/es/qaindex/docs?query='+query+'&search_size=3&qmethod=2&show=1'
-        
         template = {
             "version": "2.0",
             "template": {
                 "outputs": []
+                }
             }
-        }
-
-        if len(docs) > 0:
+        #--------------------------------
+        # 검색된 내용 카카오톡 쳇봇 Text 구성     
+        if len(docs) > 0:  # 회사문서검색 
+            # weburl = '10.10.4.10:9000/es/qaindex/docs?query='회사창립일은언제?'&search_size=3&qmethod=2&show=1
+            webLinkUrl = api_server_url+'/es/qaindex/docs?query='+query+'&search_size=3&qmethod=2&show=1'
+   
             template["template"]["outputs"].append({
                 "basicCard": {
                     "title": 'Q: ' + query,
                     "description": '(time:' + str(formatted_elapsed_time) + ')\n' + response,
                     "thumbnail": {
-                        "imageUrl": "https://t1.kakaocdn.net/openbuilder/sample/img_001.jpg"
+                        "imageUrl": "https://t1.daumcdn.net/friends/prod/category/M001_friends_ryan1.jpg"
                     },
                     "buttons": [
                         {
@@ -513,7 +518,7 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
                     ]
                 }
             })
-        elif len(naver_links) > 0:
+        elif len(naver_links) > 0: # 웹문서검색 
             template["template"]["outputs"].append({
                 "textCard": {
                     "title": 'Q: ' + query,
@@ -527,10 +532,10 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
                     ]
                 }
             })
-        else:
+        else:  # AI 검색
             template["template"]["outputs"].append({
                 "textCard": {
-                    "title": query,
+                    "title": 'Q: ' + query,
                     "description": '(time:' + str(formatted_elapsed_time) + ')\n' + response
                 }
             })
@@ -600,11 +605,11 @@ async def chabot3(content: Dict):
     id_manager.add("0", user_id) # mode와 user_id 추가
     #-------------------------------------    
     
-    # 사용자 모드가 1이면 ? 붙임.
+    # 사용자 모드가 1이면=>회사문서 검색 ? 붙임.
     user_mode = mode_manager.get_user_mode(user_id)
-    if user_mode == "1":
+    if user_mode == 1:
         query1 = '?' + query1
-    log_message(settings, f't\[chabot3]==>query1:{query1}\n')
+    #log_message(settings, f't\[chabot3]==>query1:{query1}\n')
     #-------------------------------------    
     
     # prefix에 ? 붙여서 질문하면 index 검색함.
@@ -659,32 +664,39 @@ async def chabot3(content: Dict):
  
     if checkdocs == False: 
        
-        try:
-            naver_context, naver_links, naver_error = naver_api.search_naver(query=query)
-        except Exception as e:
-            log_message(settings, f'\t[chatbot3]==>naver_api.search_naver fail=>{e}')
-            # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
-            id_manager.remove_id_all(user_id) # id 제거
-            naver_error = 1001
-        
-        # prompt 구성
-        if naver_error == 0 and len(naver_context) > 10:
-            # text-davinci-003 모델에서, 프롬프트 길이가 총 1772 넘어가면 BadRequest('https://api.openai.com/v1/completions') 에러 남.
-            # 따라서 context 길이가 1730 이상이면 1730까지만 처리함.
-            if len(naver_context) > 1730:
-                naver_context = naver_context[0:1730]
-        
-            prompt = settings['PROMPT_CONTEXT'].format(context=naver_context, query=query)
-            search_str = "웹문서 검색 중.."
-        else:
+        # AI 응답 모드
+        if user_mode == 2:
             prompt = settings['PROMPT_NO_CONTEXT'].format(query=query)  
             search_str = "AI가 답변 생성중.."
+            
+        # 웹문서검색 
+        else:
+            try:
+                naver_context, naver_links, naver_error = naver_api.search_naver(query=query)
+            except Exception as e:
+                log_message(settings, f'\t[chatbot3]==>naver_api.search_naver fail=>{e}')
+                # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
+                id_manager.remove_id_all(user_id) # id 제거
+                naver_error = 1001
+
+            # prompt 구성
+            if naver_error == 0 and len(naver_context) > 10:
+                # text-davinci-003 모델에서, 프롬프트 길이가 총 1772 넘어가면 BadRequest('https://api.openai.com/v1/completions') 에러 남.
+                # 따라서 context 길이가 1730 이상이면 1730까지만 처리함.
+                if len(naver_context) > 1730:
+                    naver_context = naver_context[0:1730]
+
+                prompt = settings['PROMPT_CONTEXT'].format(context=naver_context, query=query)
+                search_str = "웹문서 검색 중.."
+            else:
+                prompt = settings['PROMPT_NO_CONTEXT'].format(query=query)  
+                search_str = "AI가 답변 생성중.."
             
     #----------------------------------------
     # 응답 메시지 출력 및 콜백 호출  
     # 회사문서 검색(checkdocs == True)인데 검색에 맞는 내용을 못찾으면(bFind_docs == False), gpt 콜백 호출하지 않고, 답을 찾지 못했다는 메시지 출력함.       
     if checkdocs == True and bFind_docs == False:
-        answer = "회사 문서에서 질문에 맞는 답을 찾지 못했습니다.\n질문을 자세히 해주세요."
+        answer = "회사문서에서 질문에 맞는 답을 찾지 못했습니다.\n질문을 다시 해주세요."
         content = {
             "version": "2.0",
             "useCallback": False,
@@ -724,56 +736,110 @@ async def chabot3(content: Dict):
     return JSONResponse(content=content)   
 #----------------------------------------------------------------------
 
+@app.post("/searchweb")
+async def chabot3(content: Dict):
+
+    content1 = content["userRequest"]
+    log_message(settings, f't\[searchweb]==>content1:{content1}\n')
+    user_id:str = content["userRequest"]["user"]["id"]
+    
+    assert user_id, f'user_id is empty!'
+    
+    mode_manager.update_user_mode(user_id, 0)  # 해당 사용자의 user_id 모드를 0으로 업데이트
+    
+    title = "웹문서 검색"
+    descript = "질문을 하면 네이버 웹페이지 검색해서AI가 답을 합니다.\n\n질문은 요점만 정확하게 질문 해주세요.\n답변은 최대 40초 걸릴 수 있습니다."
+    template = {
+        "version": "2.0",
+        "template": {
+            "outputs": [
+                {
+                "basicCard": {
+                    "title": title,
+                    "description": descript,
+                    "thumbnail": {
+                        "imageUrl": "https://t1.kakaocdn.net/openbuilder/sample/img_001.jpg"
+                    }
+                 }
+                }
+              ]
+           }
+        }
+    
+    json_response = JSONResponse(content=template)
+    
+    return json_response
+
+#----------------------------------------------------------------------
 @app.post("/searchdoc")
 async def chabot3(content: Dict):
     content1 = content["userRequest"]
     log_message(settings, f't\[searchdoc]==>content1:{content1}\n')
     user_id:str = content["userRequest"]["user"]["id"]
     
-    mode_manager.update_user_mode(user_id, "1") # 해당 사용자의 user_id 업데이트
+    assert user_id, f'user_id is empty!'
     
-    answer = "회사문서를 검색합니다.질문해주세요"
-    content = {
+    mode_manager.update_user_mode(user_id, 1) # 해당 사용자의 user_id 모드를 1로 업데이트
+    
+    title = "회사문서 검색"
+    descript = '''질문을 하면 회사문서를 검색해서 AI가 답을 합니다.\n\n현재는 회사규정만 검색할 수 있습니다\n질문은 회사문서에 맞는 질문을 해주세요.\n답변은 최대 40초 걸릴수 있습니다.
+    '''
+ 
+    template = {
         "version": "2.0",
         "template": {
             "outputs": [
                 {
-                    "simpleText": {
-                        "text": answer
+                "basicCard": {
+                    "title": title,
+                    "description": descript,
+                    "thumbnail": {
+                        "imageUrl": "https://t1.kakaocdn.net/openbuilder/sample/img_001.jpg"
                     }
+                 }
                 }
-            ]
+              ]
+           }
         }
-    }
     
-    json_response = JSONResponse(content=content)
+    json_response = JSONResponse(content=template)
         
     return json_response
-    
+
 #----------------------------------------------------------------------
-@app.post("/searchweb")
+@app.post("/searchai")
 async def chabot3(content: Dict):
 
     content1 = content["userRequest"]
-    log_message(settings, f't\[searchdoc]==>content1:{content1}\n')
+    log_message(settings, f't\[searchai]==>content1:{content1}\n')
     user_id:str = content["userRequest"]["user"]["id"]
     
-    mode_manager.update_user_mode(user_id, "0") # 해당 사용자의 user_id 업데이트
+    assert user_id, f'user_id is empty!'
     
-    answer = "웹문서를 검색합니다.질문해주세요"
-    content = {
+    mode_manager.update_user_mode(user_id, 2) # 해당 사용자의 user_id 모드를 2로 업데이트
+    
+    title = "AI 응답 모드"
+    descript = '''질문을 하면 AI가 알아서 답변을 해줍니다.\n\n질문은 요점만 정확하게 해주세요.\n답변은 최대 40초 걸릴수 있습니다.
+    '''
+        
+    template = {
         "version": "2.0",
         "template": {
             "outputs": [
                 {
-                    "simpleText": {
-                        "text": answer
+                "basicCard": {
+                    "title": title,
+                    "description": descript,
+                    "thumbnail": {
+                        "imageUrl": "https://t1.kakaocdn.net/openbuilder/sample/img_001.jpg"
                     }
+                 }
                 }
-            ]
+              ]
+           }
         }
-    }
-    
-    json_response = JSONResponse(content=content)
+        
+    json_response = JSONResponse(content=template)
     
     return json_response
+#----------------------------------------------------------------------

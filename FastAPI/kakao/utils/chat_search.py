@@ -108,10 +108,11 @@ def chat_search(settings:dict, esindex:str, query:str,
     if bFind_docs == True or checkdocs == False:
 
         # GPT text 생성
-        if gpt_model.startswith("text-davinci"):
-            response, status = generate_text_davinci(gpt_model=gpt_model, prompt=input_prompt)
+        if gpt_model.startswith("gpt-"):
+            response, status = generate_text_GPT2(gpt_model=gpt_model, prompt=input_prompt, system_prompt=system_prompt, 
+                                                  stream=True, timeout=40) #timeout=40초로 설정
         else:
-            response, status = generate_text_GPT2(gpt_model=gpt_model, prompt=input_prompt, system_prompt=system_prompt, timeout=30) #timeout=30초로 설정
+            response, status = generate_text_davinci(gpt_model=gpt_model, prompt=input_prompt, stream=True, timeout=40)
  
         if status != 0:
             error = f'generate_text_xxx fail=>model:{gpt_model}'

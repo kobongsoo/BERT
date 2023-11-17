@@ -119,6 +119,8 @@ def generate_text_GPT2(gpt_model:str, prompt:str, system_prompt:str="",
             timeout=timeout  # Set your desired timeout in seconds
         )
         
+        print(response)
+        
         # 스트림 아닐때
         if stream == False:
             response.raise_for_status()  # Raise an HTTPError for bad responses
