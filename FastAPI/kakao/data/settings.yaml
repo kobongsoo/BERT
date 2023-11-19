@@ -41,7 +41,7 @@ PROMPT_CONTEXT: '{context}\n\nQ:{query}?.간단히 답해줘. A:'   # 내용(컨
 PROMPT_NO_CONTEXT: 'Q:{query}?. 간단히 답해줘.A:'             # 일반 질문 프롬프트
     
 GPT_TOKEN: 'sk-'           # openai key
-GPT_MODEL: "gpt-3.5-turbo-1106" #모델 종류 : text-davinci-003, gpt-3.5-turbo, gpt-4, gpt-3.5-turbo-1106
+GPT_MODEL: "gpt-" #모델 종류 : text-davinci-003, gpt-3.5-turbo, gpt-4, gpt-3.5-turbo-1106
 
 # 외부용 도메인 및 IP 입력해야함
 API_SERVER_URL: "https://"  # 뒤에는 / 붙이면 안됨.
