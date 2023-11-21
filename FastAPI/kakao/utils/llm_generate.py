@@ -60,7 +60,7 @@ def generate_text_davinci(gpt_model:str, prompt:str,
         # 소요된 시간을 계산합니다.
         end_time = time.time()
         elapsed_time = "{:.2f}".format(end_time - start_time)
-        print(f'time:{elapsed_time}, answer:{answer}')
+        #print(f'time:{elapsed_time}, answer:{answer}')
         
         return answer, error
     except Timeout:
@@ -132,12 +132,12 @@ def generate_text_GPT2(gpt_model:str, prompt:str, system_prompt:str="",
                 if event.data != '[DONE]':
                     chunk = json.loads(event.data)['choices'][0].get('delta', {}).get('content', '')
                     answer += chunk
-                    print(chunk)
+                    #print(chunk)
                     
         # 소요된 시간을 계산합니다.
         end_time = time.time()
         elapsed_time = "{:.2f}".format(end_time - start_time)
-        print(f'time:{elapsed_time}')
+        #print(f'time:{elapsed_time}')
         
         return answer, error
     except Timeout:

@@ -45,6 +45,7 @@ from utils import load_embed_model, async_embedding, index_data, async_es_embed_
 from utils import async_chat_search, remove_prequery, get_title_with_urllink, make_prompt, log_message
 from utils import generate_text_GPT2, generate_text_davinci
 from utils import IdManager, NaverSearchAPI
+from utils import sqliteDB
 
 #----------------------------------------------------------------------
 # 전역 변수로 선언 => 함수 내부에서 사용할때 global 해줘야 함.
@@ -71,8 +72,8 @@ gpt_model = settings['GPT_MODEL']  #"gpt-4"#"gpt-3.5-turbo" #gpt-4-0314
 # chabot3함수에서 중복 질문 방지를 위한 id 관리 클래스 초기화
 id_manager = IdManager()
 
-# 현재 사용자 mode가 뭔지 확인(0=일반검색, 1=회사검색)
-mode_manager = IdManager()
+# 현재 사용자 mode가 뭔지 확인(0=회사문서검색, 1=웹문서검색, 2=AI응답모드)
+userdb = sqliteDB('./data/kakao.db')
 
 # 네이버 검색 클래스 초기화
 naver_api = NaverSearchAPI(client_id=settings['NAVER_CLIENT_ID'], client_secret=settings['NAVER_CLINET_SECRET'])
@@ -449,8 +450,10 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
         assert query, f'Error:query_prompt is empty'
         assert callbackurl, f'Error:callbackurl is empty'
     
+        callbackurl1 = callbackurl
+        
         start_time = time.time()
-        log_message(settings, f'\t[call_callback]==>call_callback: query:{query}, prompt:{prompt}, callbackurl:{callbackurl}, user_id:{user_id}\n')
+        log_message(settings, f'\t[call_callback]==>call_callback: query:{query}, prompt:{prompt}, callbackurl:{callbackurl1}, user_id:{user_id}\n')
            
         gpt_model:str = settings['GPT_MODEL']
         system_prompt:str = settings['SYSTEM_PROMPT']
@@ -474,10 +477,10 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
         if status != 0:
             if status == 1001: # time out일때
                 query = "응답 시간 초과"
-                response = "AI 응답이 없습니다. 잠시 후 다시 시도해 주십시오.\n(" + response + ")"
+                response = "⚠️AI 응답이 없습니다. 잠시 후 다시 질문해 주세요.\n(" + response + ")"
             else:
                 query = "응답 에러"
-                response = "AI 에러가 발생하였습니다. 잠시 후 다시 시도해 주십시오.\n(" + response + ")"
+                response = "⚠️AI 에러가 발생하였습니다. 잠시 후 다시 질문해 주세요.\n(" + response + ")"
                     
             error = f'generate_text_xxx fail=>model:{gpt_model}'
             log_message(settings, f'[call_callback][error]==>call_callback:{error}=>{response}\n')
@@ -523,8 +526,8 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
                     "buttons": [
                         {
                             "action": "webLink",
-                            "label": f"내용보기{i+1}",
-                            "webLinkUrl": naver_links[i]
+                            "label": f"내용보기{i+1} ({naver_links[i]['score']})",
+                            "webLinkUrl": naver_links[i]['link']
                         } for i in range(min(3, len(naver_links)))
                     ]
                 }
@@ -539,16 +542,16 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
         #----------------------------------------
         # 콜백 url로 anwer 값 전송
         callback_response = await client.post(
-            callbackurl,
+            callbackurl1,
             json=template
         )
                 
         if callback_response.status_code == 200:
-            log_message(settings, f"\t[call_callback]call_callback 호출 성공\ncallbackurl:{callbackurl}\n")
+            log_message(settings, f"\t[call_callback]call_callback 호출 성공\ncallbackurl:{callbackurl1}\n")
         else:
-            log_message(settings, f"\t[call_callback][error] call_callback 호출 실패: {callback_response.status_code}\ncallbackurl:{callbackurl}\n")
+            log_message(settings, f"\t[call_callback][error] call_callback 호출 실패: {callback_response.status_code}\ncallbackurl:{callbackurl1}\n")
         
-        await asyncio.sleep(1)
+        #await asyncio.sleep(1)
         
         # id_manager 에 id 제거
         # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
@@ -602,9 +605,9 @@ async def chabot3(content: Dict):
     id_manager.add("0", user_id) # mode와 user_id 추가
     #-------------------------------------    
     
-    # 사용자 모드가 1이면=>회사문서 검색 ? 붙임.
-    user_mode = mode_manager.get_user_mode(user_id)
-    if user_mode == 1:
+    # 사용자 모드가 0이면=>회사문서 검색 ? 붙임.
+    user_mode = userdb.select_user_mode(user_id)
+    if user_mode == 0:
         query1 = '?' + query1
     #log_message(settings, f't\[chabot3]==>query1:{query1}\n')
     #-------------------------------------    
@@ -630,7 +633,7 @@ async def chabot3(content: Dict):
     # 회사 문서(인덱싱 데이터) 검색
     if checkdocs == True:
         
-        search_str = "회사문서🔍검색 중.."
+        search_str = "회사문서🔍검색 완료.답변 대기중.."
         try:
             # es로 임베딩 쿼리 실행      
             error_str, docs = await async_es_embed_query(settings=settings, esindex=esindex, query=query, 
@@ -664,14 +667,19 @@ async def chabot3(content: Dict):
         # AI 응답 모드
         if user_mode == 2:
             prompt = settings['PROMPT_NO_CONTEXT'].format(query=query)  
-            search_str = "🤖AI가 답변 생성중.."
+            search_str = "🤖AI 답변 대기중.."
             
         # 웹문서검색 
         else:
             try:
-                naver_context, naver_links, naver_error = naver_api.search_naver(query=query, display=5)
+                naver_context, naver_links, naver_error = naver_api.search_naver_ex(query=query, 
+                                                                                    bi_encoder=BI_ENCODER1, 
+                                                                                    float_type="float32",
+                                                                                    classification=['webkr', 'news'], 
+                                                                                    display=7, top_k=7)
+                
             except Exception as e:
-                log_message(settings, f'\t[chatbot3]==>naver_api.search_naver fail=>{e}')
+                log_message(settings, f'\t[chatbot3]==>naver_api.search_naver_ex fail=>{e}')
                 # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
                 id_manager.remove_id_all(user_id) # id 제거
                 naver_error = 1001
@@ -684,16 +692,16 @@ async def chabot3(content: Dict):
                     naver_context = naver_context[0:1730]
 
                 prompt = settings['PROMPT_CONTEXT'].format(context=naver_context, query=query)
-                search_str = "웹문서🔍검색 중.."
+                search_str = "웹문서🔍검색 완료.답변 대기중.."
             else:
                 prompt = settings['PROMPT_NO_CONTEXT'].format(query=query)  
-                search_str = "AI가🤖답변 생성중.."
+                search_str = "웹문서🔍검색 없음.답변 대기중.."
             
     #----------------------------------------
     # 응답 메시지 출력 및 콜백 호출  
     # 회사문서 검색(checkdocs == True)인데 검색에 맞는 내용을 못찾으면(bFind_docs == False), gpt 콜백 호출하지 않고, 답을 찾지 못했다는 메시지 출력함.       
     if checkdocs == True and bFind_docs == False:
-        answer = "회사문서에서❓질문에 맞는 답을 찾지 못했습니다.\n🔍검색에 맞게❓질문을 다시 해 주십시오."
+        answer = "⚠️질문에 맞는 회사문서 내용을🔍찾지 못했습니다.질문을 다르게 해 보세요."
         content = {
             "version": "2.0",
             "useCallback": False,
@@ -732,7 +740,60 @@ async def chabot3(content: Dict):
     
     return JSONResponse(content=content)   
 #----------------------------------------------------------------------
+@app.post("/searchdoc")
+async def searchdoc(content: Dict):
+    content1 = content["userRequest"]
+    log_message(settings, f't\[searchdoc]==>content1:{content1}\n')
+    user_id:str = content["userRequest"]["user"]["id"]
+    
+    assert user_id, f'user_id is empty!'
 
+    #-----------------------------------------------------------
+    # id_manager 에 id가 존재하면 '이전 질문 처리중'이므로, return 시킴
+    # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 해당 user_id 가 있는지 검색
+    if id_manager.check_id_exists(user_id):
+        log_message(settings, f't\[searchdoc]==>이전 질문 처리중:{user_id}\n')
+        return
+    #-----------------------------------------------------------
+    userdb.insert_user_mode(user_id, 0) # 해당 사용자의 user_id 모드를 0로 업데이트
+    
+    title = "📃회사문서 검색"
+    descript = '''질문을 하면 회사문서를🔍검색해서🤖AI가 답을 합니다.\n\n지금은 모코엠시스 '2023년 회사규정' 만🔍검색할 수 있습니다.(추후 업데이트 예정..)\n\n질문을 하면 답변은 최대⏰40초 걸릴 수 있고,간혹💤엉뚱한 답변도 합니다.\n\n[내용보기]를 누르면 검색한 회사규정💬내용을 볼 수 있습니다.
+    '''
+ 
+    template = {
+        "version": "2.0",
+        "template": {
+            "outputs": [
+                {
+                "basicCard": {
+                    "title": title,
+                    "description": descript,
+                    "thumbnail": {
+                        "imageUrl": "https://t1.daumcdn.net/friends/prod/category/M001_friends_ryan1.jpg"
+                    },
+                    "buttons": [
+                    {
+                      "action":  "message",
+                      "label": "출장시 숙박비는?",
+                      "messageText": "출장시 숙박비는?"
+                    },
+                    {
+                      "action":  "message",
+                      "label": "야근 식대는 얼마?",
+                      "messageText": "야근 식대는 얼마?"
+                    }
+                  ]
+                 }
+                }
+              ]
+           }
+        }
+    
+    json_response = JSONResponse(content=template)
+        
+    return json_response
+#----------------------------------------------------------------------
 @app.post("/searchweb")
 async def chabot3(content: Dict):
 
@@ -749,14 +810,14 @@ async def chabot3(content: Dict):
         log_message(settings, f't\[searchweb]==>이전 질문 처리중:{user_id}\n')
         return
     #-----------------------------------------------------------
-    mode_manager.update_user_mode(user_id, 0)  # 해당 사용자의 user_id 모드를 0으로 업데이트
+    userdb.insert_user_mode(user_id, 1) # 해당 사용자의 user_id 모드를 1로 업데이트
     
     # https://t1.daumcdn.net/friends/prod/category/M001_friends_ryan1.jpg
     # https://t1.kakaocdn.net/openbuilder/sample/img_001.jpg
     # https://t1.kakaocdn.net/openbuilder/sample/img_002.jpg
     # https://t1.kakaocdn.net/openbuilder/sample/img_003.jpg
     title = "🌐웹문서 검색"
-    descript = "❓질문을 하면 네이버 웹페이지🔍검색해서🤖AI가 답을 합니다.\n\n❓질문은 요점만 정확하게 해주세요.\n답변은 최대⏰40초 걸릴 수 있습니다."
+    descript = "질문을 하면 네이버 뉴스나 웹페이지🔍검색해서🤖AI가 답을 합니다.\n\n질문은 요점만🔆정확하게 해주세요.답변은 최대⏰40초 걸릴 수 있고,간혹💤엉뚱한 답변도 합니다.\n\n[내용보기] 버튼을 클릭하면 검색한 뉴스나 웹페이지🌐URL로 연결됩니다."
     template = {
         "version": "2.0",
         "template": {
@@ -767,7 +828,19 @@ async def chabot3(content: Dict):
                     "description": descript,
                     "thumbnail": {
                         "imageUrl": "https://t1.daumcdn.net/friends/prod/category/M001_friends_ryan1.jpg"
+                    },
+                    "buttons": [
+                    {
+                      "action":  "message",
+                      "label": "제주 가을 추천 장소 5개",
+                      "messageText": "제주 가을 추천 장소 5개"
+                    },
+                    {
+                      "action":  "message",
+                      "label": "2023년 한국야구 우승팀은?",
+                      "messageText": "2023년 한국야구 우승팀은?"
                     }
+                  ]
                  }
                 }
               ]
@@ -776,49 +849,6 @@ async def chabot3(content: Dict):
     
     json_response = JSONResponse(content=template)
     
-    return json_response
-
-#----------------------------------------------------------------------
-@app.post("/searchdoc")
-async def searchdoc(content: Dict):
-    content1 = content["userRequest"]
-    log_message(settings, f't\[searchdoc]==>content1:{content1}\n')
-    user_id:str = content["userRequest"]["user"]["id"]
-    
-    assert user_id, f'user_id is empty!'
-
-    #-----------------------------------------------------------
-    # id_manager 에 id가 존재하면 '이전 질문 처리중'이므로, return 시킴
-    # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 해당 user_id 가 있는지 검색
-    if id_manager.check_id_exists(user_id):
-        log_message(settings, f't\[searchdoc]==>이전 질문 처리중:{user_id}\n')
-        return
-    #-----------------------------------------------------------
-    mode_manager.update_user_mode(user_id, 1) # 해당 사용자의 user_id 모드를 1로 업데이트
-    
-    title = "📃회사문서 검색"
-    descript = '''❓질문을 하면 회사문서를🔍검색해서🤖AI가 답을 합니다.\n\n현재는 회사규정만 검색할 수 있습니다\n질문은 회사문서에 맞는s❓질문만 해주세요.\n답변은 최대⏰40초 걸릴 수 있습니다.
-    '''
- 
-    template = {
-        "version": "2.0",
-        "template": {
-            "outputs": [
-                {
-                "basicCard": {
-                    "title": title,
-                    "description": descript,
-                    "thumbnail": {
-                        "imageUrl": "https://t1.daumcdn.net/friends/prod/category/M001_friends_ryan1.jpg"
-                    }
-                 }
-                }
-              ]
-           }
-        }
-    
-    json_response = JSONResponse(content=template)
-        
     return json_response
 
 #----------------------------------------------------------------------
@@ -839,10 +869,10 @@ async def searchai(content: Dict):
         return
     #-----------------------------------------------------------
     
-    mode_manager.update_user_mode(user_id, 2) # 해당 사용자의 user_id 모드를 2로 업데이트
+    userdb.insert_user_mode(user_id, 2) # 해당 사용자의 user_id 모드를 2로 업데이트
     
     title = "🤖AI 응답 모드"
-    descript = '''❓질문을 하면🤖AI가 알아서 답변을 해줍니다.\n\n❓질문은 요점만 정확하게 해주세요.\n답변은 최대⏰40초 걸릴수 있습니다.
+    descript = '''질문을 하면🤖AI가 알아서 답변을 해줍니다.\n\n질문은 요점을🔆정확하게 해주세요.\n답변은 최대⏰40초 걸릴 수 있으며,간혹💤엉뚱한 답변도 합니다.
     '''
         
     template = {
@@ -855,7 +885,19 @@ async def searchai(content: Dict):
                     "description": descript,
                     "thumbnail": {
                         "imageUrl": "https://t1.daumcdn.net/friends/prod/category/M001_friends_ryan1.jpg"
+                    },
+                    "buttons": [
+                    {
+                      "action":  "message",
+                      "label": "봄을 주제로 시를 써줘",
+                      "messageText": "봄을 주제로 시를 써줘"
+                    },
+                    {
+                      "action":  "message",
+                      "label": "스승의날 감사편지 만들어줘",
+                      "messageText": "스승의날 감사편지 만들어줘"
                     }
+                  ]
                  }
                 }
               ]

@@ -1,7 +1,7 @@
 # 환경 관련
 LOG_PATH: './log/kakao'  # 로그경로
 SEED: 111               # **seed 값 (**변경하면, 기존 임베딩벡터값과 다른 값이 나옴)
-GPU: 'cpu'              # 'auto'=gpu서버면 gpu, 아니면 cpu, 'cpu'=무조건 CPU로 동작 (소문자)
+GPU: 'auto'              # 'auto'=gpu서버면 gpu, 아니면 cpu, 'cpu'=무조건 CPU로 동작 (소문자)
 
 # 임베딩 변수
 E_MODEL_PATH: '../../../data11/model/kpf-sbert-v1.1' # 모델 경로
