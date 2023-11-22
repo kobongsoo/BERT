@@ -37,8 +37,8 @@ REMOVE_SENTENCE_LEN: 8     # 문장 길이가 8이하면 제거
 REMOVE_DUPLICATION: False  # 중복된 문장 제거(*중복된 문장 제거 안할때 1%정도 정확도 좋음)
     
 SYSTEM_PROMPT: "" # "답은 2줄로 요약해주세요."           # 시스템 프롬프트
-PROMPT_CONTEXT: '{context}\n\nQ:{query}?.요약해 줘.\nA:'   # 내용(컨텍스트)이 있을때 내용에 대해 질문할때 프롬프트
-PROMPT_NO_CONTEXT: 'Q:{query}?. 요약해 줘.\nA:'             # 일반 질문 프롬프트
+PROMPT_CONTEXT: '{context}\n\nQ:{query}?.간단히 답해줘. A:'   # 내용(컨텍스트)이 있을때 내용에 대해 질문할때 프롬프트
+PROMPT_NO_CONTEXT: 'Q:{query}?. 간단히 답해줘.A:'             # 일반 질문 프롬프트
     
 GPT_TOKEN: 'sk-'           # openai key
 GPT_MODEL: "" #모델 종류 : text-davinci-003, gpt-3.5-turbo, gpt-4, gpt-3.5-turbo-1106

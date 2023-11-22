@@ -540,6 +540,7 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
                     "description": '(time:' + str(formatted_elapsed_time) + ')\n' + response
                 }
             })
+        
         #----------------------------------------
         # 콜백 url로 anwer 값 전송
         callback_response = await client.post(
@@ -558,7 +559,7 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
         # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
         id_manager.remove_id_all(user_id) # id 제거
 
-        return
+        return callback_response
 #=========================================================
 # 카카오 쳇봇 연동 테스트
 #=========================================================        
@@ -675,7 +676,7 @@ async def chabot3(content: Dict):
         else:
             try:
                 # 네이버 검색
-                naver_contexts, naver_error = naver_api.search_naver(query=query, display=4)
+                naver_contexts, naver_error = naver_api.search_naver(query=query, classification=['webkr', 'blog', 'news'], display=4)
             except Exception as e:
                 log_message(settings, f'\t[chatbot3]==>naver_api.search_naver_ex fail=>{e}')
                 # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
@@ -706,7 +707,7 @@ async def chabot3(content: Dict):
     # 회사문서 검색(checkdocs == True)인데 검색에 맞는 내용을 못찾으면(bFind_docs == False), gpt 콜백 호출하지 않고, 답을 찾지 못했다는 메시지 출력함.       
     if checkdocs == True and bFind_docs == False:
         answer = "⚠️질문에 맞는 회사문서 내용을🔍찾지 못했습니다. 질문을 다르게 해 보세요."
-        content = {
+        template = {
             "version": "2.0",
             "useCallback": False,
             "template": {
@@ -726,13 +727,10 @@ async def chabot3(content: Dict):
  
     # 회사문서검색이 아닌경우(checkdocs == False), 혹은 회사문서 검색(checkdocs == True)인데 맞는 내용을 찾은 경우(bFind_docs == True)에는 gpt 콜백 호출함.
     else:
-        # 비동기 작업을 스케줄링 콜백 호출
-        task = asyncio.create_task(call_callback(settings=settings, user_id=user_id, callbackurl=callbackurl, 
-                                                 query=query, prompt=prompt, docs=docs, naver_links=naver_links))
              
         # 답변 설정
         text = f"{search_str}"
-        content = {
+        template = {
             "version": "2.0",
             "useCallback": True,
             "data": {
@@ -740,9 +738,25 @@ async def chabot3(content: Dict):
             }
         }
         
-    log_message(settings, f"\t[chabot3]==>content:{content}\ncallbackurl: {callbackurl}\n")      
-    
-    return JSONResponse(content=content)   
+    json_response = JSONResponse(content=template)
+    log_message(settings, f"\t[chabot3]==>status_code:{json_response.status_code}\ncallbackurl: {callbackurl}\n")      
+        
+    if json_response.status_code == 200:
+         # 비동기 작업을 스케줄링 콜백 호출
+        task = asyncio.create_task(call_callback(settings=settings, user_id=user_id, callbackurl=callbackurl, 
+                                                 query=query, prompt=prompt, docs=docs, naver_links=naver_links))
+    else:
+        template = {
+            "version": "2.0",
+            "useCallback": False,
+            "data": {
+                "text" : f"응답 에러 발생\nerror:{json_response.status_code}"
+            }
+        }
+        json_response1 = JSONResponse(content=template)
+        return json_response1
+   
+    return json_response
 #----------------------------------------------------------------------
 @app.post("/searchdoc")
 async def searchdoc(content: Dict):

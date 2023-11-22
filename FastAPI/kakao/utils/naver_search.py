@@ -38,6 +38,9 @@ class NaverSearchAPI:
             if findtext:
                 text = findtext[0].get_text()
                 text = text.replace('/n/n', '')  # /n/n 치환
+                
+                if len(text) > 512:
+                    text = text[0:512]
                 return text.strip()
             else:
                 return text
