@@ -439,7 +439,8 @@ async def search_documents(esindex:str,
 #=========================================================
 async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, prompt:str, docs:list, naver_links:list):
     async with httpx.AsyncClient() as client:
-        #await asyncio.sleep(1)
+        
+        await asyncio.sleep(1)
         
         error:str = ''
         errormsg:str = ''
@@ -470,9 +471,9 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
         # GPT text 생성
         if gpt_model.startswith("gpt-"):
             response, status = generate_text_GPT2(gpt_model=gpt_model, prompt=input_prompt, system_prompt=system_prompt, 
-                                                  stream=True, timeout=40) #timeout=40초로 설정
+                                                  stream=True, timeout=20) #timeout=20초면 2번 돌게 되므로 총 40초 대기함
         else:
-            response, status = generate_text_davinci(gpt_model=gpt_model, prompt=input_prompt, stream=True, timeout=40)
+            response, status = generate_text_davinci(gpt_model=gpt_model, prompt=input_prompt, stream=True, timeout=20)
             
         if status != 0:
             if status == 1001: # time out일때
@@ -526,8 +527,8 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
                     "buttons": [
                         {
                             "action": "webLink",
-                            "label": f"내용보기{i+1} ({naver_links[i]['score']})",
-                            "webLinkUrl": naver_links[i]['link']
+                            "label": f"내용보기{i+1}",
+                            "webLinkUrl": naver_links[i]
                         } for i in range(min(3, len(naver_links)))
                     ]
                 }
@@ -578,6 +579,7 @@ async def chabot3(content: Dict):
       
     qmethod:int = settings['ES_Q_METHOD']
     system_prompt:str = settings['SYSTEM_PROMPT']
+    gpt_model:str = settings['GPT_MODEL']
     
     assert query1, f'Error:query1 is empty'
     assert user_id, f'Error:user_id is empty'
@@ -633,7 +635,7 @@ async def chabot3(content: Dict):
     # 회사 문서(인덱싱 데이터) 검색
     if checkdocs == True:
         
-        search_str = "회사문서🔍검색 완료.답변 대기중.."
+        search_str = "회사문서🔍검색 완료. 답변 대기중.."
         try:
             # es로 임베딩 쿼리 실행      
             error_str, docs = await async_es_embed_query(settings=settings, esindex=esindex, query=query, 
@@ -672,36 +674,38 @@ async def chabot3(content: Dict):
         # 웹문서검색 
         else:
             try:
-                naver_context, naver_links, naver_error = naver_api.search_naver_ex(query=query, 
-                                                                                    bi_encoder=BI_ENCODER1, 
-                                                                                    float_type="float32",
-                                                                                    classification=['webkr', 'news'], 
-                                                                                    display=7, top_k=7)
-                
+                # 네이버 검색
+                naver_contexts, naver_error = naver_api.search_naver(query=query, display=4)
             except Exception as e:
                 log_message(settings, f'\t[chatbot3]==>naver_api.search_naver_ex fail=>{e}')
                 # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
                 id_manager.remove_id_all(user_id) # id 제거
                 naver_error = 1001
 
-            # prompt 구성
-            if naver_error == 0 and len(naver_context) > 10:
+            # prompt 와 link 구성
+            if len(naver_contexts) > 0:
+                for idx, con in enumerate(naver_contexts):
+                    naver_context += con['descript']+'\n\n'
+                    if idx < 4:
+                        naver_links.append(con['link'])
+                    
                 # text-davinci-003 모델에서, 프롬프트 길이가 총 1772 넘어가면 BadRequest('https://api.openai.com/v1/completions') 에러 남.
                 # 따라서 context 길이가 1730 이상이면 1730까지만 처리함.
-                if len(naver_context) > 1730:
-                    naver_context = naver_context[0:1730]
+                if gpt_model.startswith("text-"):
+                    if len(naver_context) > 1730:
+                        naver_context = naver_context[0:1730]
 
                 prompt = settings['PROMPT_CONTEXT'].format(context=naver_context, query=query)
-                search_str = "웹문서🔍검색 완료.답변 대기중.."
+                search_str = "웹문서🔍검색 완료. 답변 대기중.."
             else:
                 prompt = settings['PROMPT_NO_CONTEXT'].format(query=query)  
-                search_str = "웹문서🔍검색 없음.답변 대기중.."
+                search_str = "웹문서🔍검색 없음. 답변 대기중.."
             
     #----------------------------------------
     # 응답 메시지 출력 및 콜백 호출  
     # 회사문서 검색(checkdocs == True)인데 검색에 맞는 내용을 못찾으면(bFind_docs == False), gpt 콜백 호출하지 않고, 답을 찾지 못했다는 메시지 출력함.       
     if checkdocs == True and bFind_docs == False:
-        answer = "⚠️질문에 맞는 회사문서 내용을🔍찾지 못했습니다.질문을 다르게 해 보세요."
+        answer = "⚠️질문에 맞는 회사문서 내용을🔍찾지 못했습니다. 질문을 다르게 해 보세요."
         content = {
             "version": "2.0",
             "useCallback": False,
@@ -758,7 +762,7 @@ async def searchdoc(content: Dict):
     userdb.insert_user_mode(user_id, 0) # 해당 사용자의 user_id 모드를 0로 업데이트
     
     title = "📃회사문서 검색"
-    descript = '''질문을 하면 회사문서를🔍검색해서🤖AI가 답을 합니다.\n\n지금은 모코엠시스 '2023년 회사규정' 만🔍검색할 수 있습니다.(추후 업데이트 예정..)\n\n질문을 하면 답변은 최대⏰40초 걸릴 수 있고,간혹💤엉뚱한 답변도 합니다.\n\n[내용보기]를 누르면 검색한 회사규정💬내용을 볼 수 있습니다.
+    descript = '''질문을 하면 회사문서를🔍검색해서🤖AI가 답을 합니다.\n\n지금은 모코엠시스 '2023년 회사규정' 만🔍검색할 수 있습니다.(추후 업데이트 예정..)\n\n질문을 하면 답변은 최대⏰30초 걸릴 수 있고,간혹💤엉뚱한 답변도 합니다.\n\n[내용보기]를 누르면 검색한 회사규정💬내용을 볼 수 있습니다.
     '''
  
     template = {
@@ -817,7 +821,7 @@ async def chabot3(content: Dict):
     # https://t1.kakaocdn.net/openbuilder/sample/img_002.jpg
     # https://t1.kakaocdn.net/openbuilder/sample/img_003.jpg
     title = "🌐웹문서 검색"
-    descript = "질문을 하면 네이버 뉴스나 웹페이지🔍검색해서🤖AI가 답을 합니다.\n\n질문은 요점만🔆정확하게 해주세요.답변은 최대⏰40초 걸릴 수 있고,간혹💤엉뚱한 답변도 합니다.\n\n[내용보기] 버튼을 클릭하면 검색한 뉴스나 웹페이지🌐URL로 연결됩니다."
+    descript = "질문을 하면 네이버 뉴스나 웹페이지🔍검색해서🤖AI가 답을 합니다.\n\n질문은 요점만🔆정확하게 해주세요.답변은 최대⏰30초 걸릴 수 있고,간혹💤엉뚱한 답변도 합니다.\n\n[내용보기] 버튼을 클릭하면 검색한 뉴스나 웹페이지🌐URL로 연결됩니다."
     template = {
         "version": "2.0",
         "template": {
@@ -832,8 +836,8 @@ async def chabot3(content: Dict):
                     "buttons": [
                     {
                       "action":  "message",
-                      "label": "제주 가을 추천 장소 5개",
-                      "messageText": "제주 가을 추천 장소 5개"
+                      "label": "제주 봄 추천 장소 5개",
+                      "messageText": "제주 봄 추천 장소 5개"
                     },
                     {
                       "action":  "message",
@@ -872,7 +876,7 @@ async def searchai(content: Dict):
     userdb.insert_user_mode(user_id, 2) # 해당 사용자의 user_id 모드를 2로 업데이트
     
     title = "🤖AI 응답 모드"
-    descript = '''질문을 하면🤖AI가 알아서 답변을 해줍니다.\n\n질문은 요점을🔆정확하게 해주세요.\n답변은 최대⏰40초 걸릴 수 있으며,간혹💤엉뚱한 답변도 합니다.
+    descript = '''질문을 하면🤖AI가 알아서 답변을 해줍니다.\n\n질문은 요점을🔆정확하게 해주세요.\n답변은 최대⏰30초 걸릴 수 있으며,간혹💤엉뚱한 답변도 합니다.
     '''
         
     template = {
