@@ -19,7 +19,7 @@ ES_INDEX_FILE: './data/mpower10u_768d_1.json'
 ES_Q_METHOD: 2     # 검색시 ES 스크립트 어떤형식으로 만들지.(0=임베딩이 여러개일때 MAX(기본), 1=임베딩이 여러개일때 평균, 2=임베딩이1개일때)
 ES_BATCH_SIZE: 20  # 배치 사이즈 = 20이면 입력된 docs이 20개 이상이면, 최대 20개씩 ES에 인덱싱함.
 ES_SEARCH_MIN_SCORE: 0.95   # 검색 1.30 스코어 이하면 제거
-ES_UID_MIN_SCORE: 10.0 # 후보군 검색 스코어 xx 이하면 제거(일치=20)
+ES_UID_MIN_SCORE: 5.0 # 후보군 검색 스코어 xx 이하면 제거 => 안녕하세요 검색하면 1.1 정도 검색됨
   
 # 검색할때 ES 벡터 크기 값(임의이 값지정) =>벡터의 크기는 각 구성 요소의 제곱 합의 제곱근으로 정의된다.. 
 # 예를 들어, 벡터 [1, 2, 3]의 크기는 sqrt(1^2 + 2^2 + 3^2) 즉, 3.7416이 된다.
@@ -37,8 +37,8 @@ REMOVE_SENTENCE_LEN: 8     # 문장 길이가 8이하면 제거
 REMOVE_DUPLICATION: False  # 중복된 문장 제거(*중복된 문장 제거 안할때 1%정도 정확도 좋음)
     
 SYSTEM_PROMPT: "" # "답은 2줄로 요약해주세요."           # 시스템 프롬프트
-PROMPT_CONTEXT: '{context}\n\nQ:{query}?. 요약해줘. A:'   # 내용(컨텍스트)이 있을때 내용에 대해 질문할때 프롬프트
-PROMPT_NO_CONTEXT: 'Q:{query}?. 요약해줘.A:'             # 일반 질문 프롬프트
+PROMPT_CONTEXT: '{context}\n\nQ:{query}?.요약해줘. A:'   # 내용(컨텍스트)이 있을때 내용에 대해 질문할때 프롬프트
+PROMPT_NO_CONTEXT: 'Q:{query}?.요약해줘. A:'             # 일반 질문 프롬프트
     
 GPT_TOKEN: 'sk-'           # openai key
 GPT_MODEL: "gpt-" #모델 종류 : text-davinci-003, gpt-3.5-turbo, gpt-4, gpt-3.5-turbo-1106

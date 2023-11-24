@@ -528,7 +528,7 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
         # 검색된 내용 카카오톡 쳇봇 Text 구성     
         if user_mode == 0:  # 회사문서검색 
             # weburl = '10.10.4.10:9000/es/qaindex/docs?query='회사창립일은언제?'&search_size=3&qmethod=2&show=1
-            webLinkUrl = api_server_url+'/es/qaindex/docs?query='+query+'&search_size=3&qmethod=2&show=1'
+            webLinkUrl = api_server_url+'/es/qaindex/docs?query='+query+'&search_size=4&qmethod=2&show=1'
    
             template["template"]["outputs"].append({
                 "textCard": {
@@ -611,7 +611,7 @@ async def chabot3(content: Dict):
     assert callbackurl, f'Error:callbackurl is empty'
     assert 0 <= qmethod <= 2, 'Error: qmethod should be in the range 0 to 2'
        
-    search_size:int = 3      # 검색 계수
+    search_size:int = 4      # 회사문서 검색 계수
     esindex:str = "qaindex"  # qaindex    
    
     bFind_docs:bool = True   # True이면 회사문서임베딩 찾은 경우
@@ -821,6 +821,7 @@ async def chabot3(content: Dict):
                 "text" : f"응답 에러 발생\nerror:{json_response.status_code}"
             }
         }
+        id_manager.remove_id_all(user_id) # id 제거
         json_response1 = JSONResponse(content=template)
         return json_response1
    
