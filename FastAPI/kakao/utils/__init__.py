@@ -6,6 +6,7 @@ from .sklearn_utils import *
 
 from .es_model import *
 from .es_embed import *
+from .es_embed_text import *
 from .es_search import *
 from .es_delete import *
 

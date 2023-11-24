@@ -24,7 +24,7 @@ import pandas as pd
 #query = f"DELETE FROM user_mode WHERE id = '{id}'"
 #db.execute(query)
 #--------------------------------------------------------------------------------
-class sqliteDB:
+class SqliteDB:
     def __init__(self, dbname:str):
         assert dbname, f'dbname is empty'
         

@@ -43,7 +43,7 @@ def create_index(es, index_file_path:str, index_name:str, create:bool = True):
             
         print(f'new create index=>index_file:{index_file_path}, index_name:{index_name}')
 #---------------------------------------------------------------------------
-
+     
 #------------------------------------------------------------------------------------------------------------------------------
 # 입력 text(리스트)에 대한 embed vector 생성 후 배열로 리턴함
 # - in : model=모델 인스턴스

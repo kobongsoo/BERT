@@ -40,24 +40,23 @@ from elasticsearch import Elasticsearch, helpers
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning) 
 
-from utils import seed_everything, GPU_info, mlogging, get_options, create_index, make_docs_df, get_sentences
+from utils import create_index, make_docs_df, get_sentences
 from utils import load_embed_model, async_embedding, index_data, async_es_embed_query, async_es_embed_delete
-from utils import async_chat_search, remove_prequery, get_title_with_urllink, make_prompt, log_message
+from utils import async_chat_search, remove_prequery, get_title_with_urllink, make_prompt
 from utils import generate_text_GPT2, generate_text_davinci
-from utils import IdManager, NaverSearchAPI
-from utils import sqliteDB
+from utils import IdManager, NaverSearchAPI, ES_Embed_Text, MyUtils, SqliteDB
 
 #----------------------------------------------------------------------
 # 전역 변수로 선언 => 함수 내부에서 사용할때 global 해줘야 함.
 # 설정값 settings.yaml 파일 로딩
-settings = get_options(file_path='./data/settings.yaml')
-assert len(settings) > 2, f'load settings error!!=>len(settigs):{len(settings)}'
 
-#LOGGER = mlogging(loggername="kakao", logfilename=settings['LOG_PATH']) # 로그
-seed_everything(settings['SEED'])  # seed 설정
+myutils = MyUtils(yam_file_path='./data/settings.yaml')
+settings = myutils.get_options()
+assert len(settings) > 2, f'load settings error!!=>len(settigs):{len(settings)}'
+myutils.seed_everything()  # seed 설정
 DEVICE = settings['GPU']
 if DEVICE == 'auto':
-    DEVICE = GPU_info() # GPU 혹은 CPU
+    DEVICE = myutils.GPU_info() # GPU 혹은 CPU
     
 # 임베딩 모델 로딩
 WORD_EMBDDING_MODEL1, BI_ENCODER1 = load_embed_model(settings['E_MODEL_PATH'], settings['E_POLLING_MODE'], settings['E_OUT_DIMENSION'], DEVICE)
@@ -73,10 +72,20 @@ gpt_model = settings['GPT_MODEL']  #"gpt-4"#"gpt-3.5-turbo" #gpt-4-0314
 id_manager = IdManager()
 
 # 현재 사용자 mode가 뭔지 확인(0=회사문서검색, 1=웹문서검색, 2=AI응답모드)
-userdb = sqliteDB('./data/kakao.db')
+userdb = SqliteDB('./data/kakao.db')
 
 # 네이버 검색 클래스 초기화
 naver_api = NaverSearchAPI(client_id=settings['NAVER_CLIENT_ID'], client_secret=settings['NAVER_CLINET_SECRET'])
+
+# 지난대화 저장 
+mapping = myutils.get_mapping_esindex() # es mapping index 가져옴.
+
+# 회사문서검색 이전 답변 저장.(순서대로 회사검색, 웹문서검색, AI응답답변)
+index_name:str = "preanswer"
+preanswer_embed_classification:list = ["company", "web", "ai"]  
+# es 임베딩 생성
+preanswer_embed = ES_Embed_Text(es_url=settings['ES_URL'], index_name=index_name, mapping=mapping, 
+                              bi_encoder=BI_ENCODER1, float_type=settings["E_FLOAT_TYPE"], uid_min_score=0.10)
 #---------------------------------------------------------------------------
 
 # http://10.10.4.10:9002/docs=>swagger UI, http://10.10.4.10:9000/redoc=>ReDoc UI 각각 비활성화 하려면
@@ -108,7 +117,7 @@ async def get_vector(sentences: List[str] = Query(..., description="sentences", 
     except Exception as e:
         error = f'async_embedding fail({settings["ES_URL"]})'
         msg = f'{error}=>{e}'
-        log_message(settings, f'[error] /vectors {msg}')
+        myutils.log_message(f'[error] /vectors {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
         
     embeddings_str = [",".join(str(elem) for elem in sublist) for sublist in embeddings]
@@ -137,7 +146,7 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, infilepath:bool=False, create
     titles = Data.titles
     
     ES_URL = settings['ES_URL']
-    log_message(settings, f'[info] /es/{esindex}/docs start-----\nES_URL:{ES_URL}, esindex:{esindex}, createindex:{createindex}, uids:{uids}, titles:{titles}')
+    myutils.log_message(f'[info] /es/{esindex}/docs start-----\nES_URL:{ES_URL}, esindex:{esindex}, createindex:{createindex}, uids:{uids}, titles:{titles}')
 
     # 인자 검사
     if len(documents) < 1:
@@ -150,29 +159,29 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, infilepath:bool=False, create
         error = 'esindex not found'
      
     if error != 'success':
-        log_message(settings, f'[error] /embed/es {error}')
+        myutils.log_message(f'[error] /embed/es {error}')
         raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
     
     # 1.elasticsearch 접속
     try:
         es = Elasticsearch(ES_URL)
-        log_message(settings, f'[info] /embed/es 1.Elasticsearch connect success=>{ES_URL}')
+        myutils.log_message(f'[info] /embed/es 1.Elasticsearch connect success=>{ES_URL}')
     except Exception as e:
         error = f'Elasticsearch connect fail({ES_URL})'
         msg = f'{error}=>{e}'
-        log_message(settings, f'[error] /embed/es {msg}')
+        myutils.log_message(f'[error] /embed/es {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
         
-    #log_message(settings, f'es.info:{es.info()}')
+    #myutils.log_message(settings, f'es.info:{es.info()}')
 
     # 2. 추출된 문서들 불러와서 df로 만듬
     try:              
         df_contexts = make_docs_df(mydocuments=documents, mytitles=titles, myuids=uids, infilepath=infilepath) # myutils/kss_utils.py
-        log_message(f'[info] /embed/es 2.load_docs success')
+        myutils.log_message(f'[info] /embed/es 2.load_docs success')
     except Exception as e:
         error = f'load docs fail'
         msg = f'{error}=>{e}'
-        log_message(settings, f'[error] /embed/es {msg}')
+        myutils.log_message(f'[error] /embed/es {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
                                                                     
     # 3. 문장 추출
@@ -181,22 +190,22 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, infilepath:bool=False, create
                                       remove_sentnece_len=settings['REMOVE_SENTENCE_LEN'], 
                                       remove_duplication=settings['REMOVE_DUPLICATION']) # myutils/kss_utils.py
         
-        log_message(settings, f'[info] /embed/es 3.get_sentences success=>len(doc_sentences):{len(doc_sentences)}')
+        myutils.log_message(f'[info] /embed/es 3.get_sentences success=>len(doc_sentences):{len(doc_sentences)}')
     except Exception as e:
         error = f'get_sentences fail'
         msg = f'{error}=>{e}'
-        log_message(settings, f'[error] /embed/es {msg}')
+        myutils.log_message(f'[error] /embed/es {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
    
     # 4.ES 인덱스 생성
     try:
         ES_INDEX_FILE = settings['ES_INDEX_FILE']
         create_index(es=es, index_file_path=ES_INDEX_FILE, index_name=esindex, create=createindex) # myutils/es_utils.py
-        log_message(f'[info] /embed/es 4.create_index success=>index_file:{ES_INDEX_FILE}, index_name:{esindex}')
+        myutils.log_message(f'[info] /embed/es 4.create_index success=>index_file:{ES_INDEX_FILE}, index_name:{esindex}')
     except Exception as e:
         error = f'create_index fail'
         msg = f'{error}=>{e}'
-        log_message(settings, f'[error] /embed/es {msg}')
+        myutils.log_message(f'[error] /embed/es {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
 
     # 5. index 처리
@@ -208,11 +217,11 @@ def embed_documents(esindex:str, Data:DocsEmbedIn, infilepath:bool=False, create
                    clu_outmode=settings['CLU_OUTMODE'], bi_encoder=BI_ENCODER1, float_type=settings['E_FLOAT_TYPE'],
                    seed=settings['SEED'], batch_size=settings['ES_BATCH_SIZE'])
         
-        log_message(settings, f'[info] /embed/es 5.index_data success\nend-----\n')
+        myutils.log_message(f'[info] /embed/es 5.index_data success\nend-----\n')
     except Exception as e:
         error = f'index_data fail'
         msg = f'{error}=>{e}'
-        log_message(settings, f'[error] /embed/es {msg}')
+        myutils.log_message(f'[error] /embed/es {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
 
 #----------------------------------------------------------------------
@@ -233,7 +242,7 @@ async def search_documents(esindex:str,
                     
     error:str = 'success'
     query = query.strip()
-    log_message(settings, f'\n[info] get /es/{esindex}/docs start-----\nquery:{query}, search_size:{search_size}')
+    myutils.log_message(f'\n[info] get /es/{esindex}/docs start-----\nquery:{query}, search_size:{search_size}')
     
     min_score = settings['ES_SEARCH_MIN_SCORE']
     
@@ -244,7 +253,7 @@ async def search_documents(esindex:str,
     except Exception as e:
         error = f'async_es_embed_query fail'
         msg = f'{error}=>{e}'
-        log_message(settings, f'[error] get /es/{esindex}/docs {msg}')
+        myutils.log_message(f'[error] get /es/{esindex}/docs {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
     
     if error != 'success':
@@ -310,7 +319,7 @@ async def search_documents_uid(esindex:str,
     docs = []
     query = query.strip()
     uids = Data.uids 
-    log_message(settings, f'\n[info] post /es/{esindex}/docs/uids start-----\nquery:{query}, search_size:{search_size}, len(uids):{len(uids)}')
+    myutils.log_message(f'\n[info] post /es/{esindex}/docs/uids start-----\nquery:{query}, search_size:{search_size}, len(uids):{len(uids)}')
 
     try:
         # es로 임베딩 쿼리 실행
@@ -320,7 +329,7 @@ async def search_documents_uid(esindex:str,
     except Exception as e:
         error = f'async_es_embed_query fail'
         msg = f'{error}=>{e}'
-        log_message(settings, f'[error] get /es/{esindex}/docs {msg}')
+        myutils.log_message(f'[error] get /es/{esindex}/docs {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
     
     if error != 'success':
@@ -340,7 +349,7 @@ async def delete_documents(esindex:str,
                            uids:str = Query(...,min_length=1)):
     error:int = 0
     uids = uids.strip()
-    log_message(settings, f'[info] t==>delete /es/{esindex}/docs : id:{uids}')
+    myutils.log_message(f'[info] t==>delete /es/{esindex}/docs : id:{uids}')
     
     es_url = settings['ES_URL']
     
@@ -349,7 +358,7 @@ async def delete_documents(esindex:str,
     except Exception as e:
         error = f'async_es_embed_delete fail'
         msg = f'{error}=>{e}'
-        log_message(settings, f'[error] delete /es/{esindex}/docs {msg}')
+        myutils.log_message(f'[error] delete /es/{esindex}/docs {msg}')
         raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
         
     if error != 0:
@@ -427,7 +436,7 @@ async def search_documents(esindex:str,
     prequery = prequery.replace('"',"'")
     titles_str = titles_str.replace('"',"'")
  
-    log_message(settings, f'[info] \t==>search_documents: question:{question}, answer:{answer}')
+    myutils.log_message(f'[info] \t==>search_documents: question:{question}, answer:{answer}')
     
     return templates.TemplateResponse("chat01.html", {"request": request, "question":question, "answer": answer, "preanswer": prequery, "titles": titles_str})
 
@@ -451,10 +460,19 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
         assert query, f'Error:query_prompt is empty'
         assert callbackurl, f'Error:callbackurl is empty'
     
+        user_mode = 2      # AI 응답모드 
+        if len(naver_links) > 0:  # 웹문서검색
+            user_mode=1
+        elif len(docs) > 0:       # 회사문서검색
+            user_mode=0
+             
         callbackurl1 = callbackurl
         
         start_time = time.time()
-        log_message(settings, f'\t[call_callback]==>call_callback: query:{query}, prompt:{prompt}, callbackurl:{callbackurl1}, user_id:{user_id}\n')
+        prompt1 = prompt
+        if len(prompt) > 100:
+            prompt1 = prompt[0:99]
+        myutils.log_message(f'\t[call_callback]==>call_callback: user_mode:{user_mode},query:{query}, prompt:{prompt1}, callbackurl:{callbackurl1}, user_id:{user_id}\n')
            
         gpt_model:str = settings['GPT_MODEL']
         system_prompt:str = settings['SYSTEM_PROMPT']
@@ -466,7 +484,7 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
         else:
             input_prompt = query
             
-        #log_message(settings, f"\t[call_callback]==>input_prompt: {input_prompt}, system_prompt:{system_prompt}\n")
+        #myutils.log_message(f"\t[call_callback]==>input_prompt: {input_prompt}, system_prompt:{system_prompt}\n")
         #--------------------------------
         # GPT text 생성
         if gpt_model.startswith("gpt-"):
@@ -474,8 +492,15 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
                                                   stream=True, timeout=20) #timeout=20초면 2번 돌게 되므로 총 40초 대기함
         else:
             response, status = generate_text_davinci(gpt_model=gpt_model, prompt=input_prompt, stream=True, timeout=20)
-            
-        if status != 0:
+         
+        # GPT text 생성 성공이면=>질문과 답변을 저정해둠.
+        if status == 0:
+            res, status1 = preanswer_embed.delete_insert_doc(doc={'answer':query, 'response':response},
+                                                             classification=preanswer_embed_classification[user_mode])
+             # 로그만 남기고 진행
+            if status1 != 0:
+                myutils.log_message(f'[call_callback][error]==>insert_doc:{res}\n')
+        else:
             if status == 1001: # time out일때
                 query = "응답 시간 초과"
                 response = "⚠️AI 응답이 없습니다. 잠시 후 다시 질문해 주세요.\n(" + response + ")"
@@ -484,11 +509,10 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
                 response = "⚠️AI 에러가 발생하였습니다. 잠시 후 다시 질문해 주세요.\n(" + response + ")"
                     
             error = f'generate_text_xxx fail=>model:{gpt_model}'
-            log_message(settings, f'[call_callback][error]==>call_callback:{error}=>{response}\n')
+            myutils.log_message(f'[call_callback][error]==>call_callback:{error}=>{response}\n')
             docs = []  # docs 초기화
-            
-               
-        log_message(settings, f"\t[call_callback]==>답변: {response}\n")
+             
+        myutils.log_message(f"\t[call_callback]==>답변: {response}\n")
         
         # 소요된 시간을 계산합니다.
         end_time = time.time()
@@ -502,7 +526,7 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
             }
         #--------------------------------
         # 검색된 내용 카카오톡 쳇봇 Text 구성     
-        if len(docs) > 0:  # 회사문서검색 
+        if user_mode == 0:  # 회사문서검색 
             # weburl = '10.10.4.10:9000/es/qaindex/docs?query='회사창립일은언제?'&search_size=3&qmethod=2&show=1
             webLinkUrl = api_server_url+'/es/qaindex/docs?query='+query+'&search_size=3&qmethod=2&show=1'
    
@@ -519,7 +543,7 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
                     ]
                 }
             })
-        elif len(naver_links) > 0: # 웹문서검색 
+        elif user_mode == 1: # 웹문서검색 
             template["template"]["outputs"].append({
                 "textCard": {
                     "title": '🌐' + query,
@@ -549,9 +573,9 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
         )
                 
         if callback_response.status_code == 200:
-            log_message(settings, f"\t[call_callback]call_callback 호출 성공\ncallbackurl:{callbackurl1}\n")
+            myutils.log_message(f"\t[call_callback]call_callback 호출 성공\ncallbackurl:{callbackurl1}\n[end]==============\n")
         else:
-            log_message(settings, f"\t[call_callback][error] call_callback 호출 실패: {callback_response.status_code}\ncallbackurl:{callbackurl1}\n")
+            myutils.log_message(f"\t[call_callback][error] call_callback 호출 실패: {callback_response.status_code}\ncallbackurl:{callbackurl1}\n[end]==============\n")
         
         #await asyncio.sleep(1)
         
@@ -569,14 +593,14 @@ async def chabot3(content: Dict):
     #await asyncio.sleep(1)
     
     global settings
-    settings = get_options(file_path='./data/settings.yaml')
+    settings = myutils.get_options()
     content1 = content["userRequest"]
-    log_message(settings, f't\[chabot3]==>content1:{content1}\n')
+    myutils.log_message(f'[start]==============\nt\[chabot3]==>content1:{content1}\n')
     
     query1:str = content["userRequest"]["utterance"]  # 질문
     callbackurl:str = content["userRequest"]["callbackUrl"] # callbackurl
     user_id:str = content["userRequest"]["user"]["id"]
-    log_message(settings, f't\[chabot3]==>user_id:{user_id}\n')
+    #myutils.log_message(f't\[chabot3]==>user_id:{user_id}\n')
       
     qmethod:int = settings['ES_Q_METHOD']
     system_prompt:str = settings['SYSTEM_PROMPT']
@@ -600,58 +624,103 @@ async def chabot3(content: Dict):
     # id_manager 에 id가 존재하면 '이전 질문 처리중'이므로, return 시킴
     # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 해당 user_id 가 있는지 검색
     if id_manager.check_id_exists(user_id):
-        log_message(settings, f't\[chabot3]==>이전 질문 처리중:{user_id}\n')
+        myutils.log_message(f't\[chabot3]==>이전 질문 처리중:{user_id}\n')
         return
     
     # id_manager 에 id 추가
     # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위해 user_id 추가함.
     id_manager.add("0", user_id) # mode와 user_id 추가
-    #-------------------------------------    
     
-    # 사용자 모드가 0이면=>회사문서 검색 ? 붙임.
+    # 사용자 모드(0=회사문서검색, 1=웹문서검색, 2=AI응답모드) 얻어옴.
     user_mode = userdb.select_user_mode(user_id)
-    if user_mode == 0:
-        query1 = '?' + query1
-    #log_message(settings, f't\[chabot3]==>query1:{query1}\n')
-    #-------------------------------------    
-    
-    # prefix에 ? 붙여서 질문하면 index 검색함.
-    checkdocs = False
+    #-----------------------------------------------------------
+    # prefix에 ? 붙여서 질문하면 이전 질문 검색 안함.
+    preanswer_search = True
     prefix_query1 = query1[0]
     if prefix_query1 == '?':
-        checkdocs = True
         query = query1[1:]
+        preanswer_search = False
     else:
         query = query1     
-        
+    #-------------------------------------     
     # 쿼리 길이가 1보다 작으면 return 시킴.
     if len(query) < 1:
-        log_message(settings, f'\t[chatbot3]==>query is empty=>query1:{query}')
+        myutils.log_message(f'\t[chatbot3]==>query is empty=>query1:{query}')
         # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
         id_manager.remove_id_all(user_id) # id 제거
         return
     #-------------------------------------
+    
+    #-------------------------------------
+    # 이전 질문 검색(회사문서검색=0, 웹문서검색=1) 일때만 
+    if preanswer_search == True: 
+        preanswer_docs = preanswer_embed.embed_search(query=query, classification=preanswer_embed_classification[user_mode])
+        
+        if len(preanswer_docs) > 0:
+            preanswer_score = preanswer_docs[0]['score']
+            preanswer_response = preanswer_docs[0]['response']
+            preanswer = preanswer_docs[0]['answer']
+            preanswer_id = preanswer_docs[0]['_id']
+            myutils.log_message(f'\t[chatbot3]==>이전질문:{preanswer}(score:{preanswer_score}, id:{preanswer_id})\n이전답변:{preanswer_response}')
+
+            # 1.85 이상일때만 이전 답변 보여줌.
+            if preanswer_score >= 1.80:  
+                if user_mode == 0:
+                    query1 = f'📃{query}'
+                elif user_mode == 1:
+                    query1 = f'🌐{query}'
+                else:
+                    query1 = f'🤖{query}'
+                        
+                # 정확도 스코어 구함
+                formatted_preanswer_score = "100"
+                if preanswer_score < 2.0:
+                    formatted_preanswer_score = "{:.1f}".format((preanswer_score-1)*100)
+                    
+                template = {
+                    "version": "2.0",
+                    "useCallback": False,
+                    "template": {
+                        "outputs": [
+                        {
+                            "textCard": {
+                                "title": query1,
+                                "description": f'💬예전 질문과 답변입니다. (정확도:{formatted_preanswer_score}%)\nQ:{preanswer}\n{preanswer_response}'
+                            }
+                        }
+                      ],
+                        "quickReplies": [
+                        {
+                            "messageText": '?'+query,
+                            "action": "message",
+                            "label": "다시 검색.."
+                        }
+                      ]
+                    }
+                }
+
+                json_response = JSONResponse(content=template)
+
+                # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
+                id_manager.remove_id_all(user_id) # id 제거
+
+                return json_response
+        
+    #------------------------------------
     search_str:str = ""
     
     # 회사 문서(인덱싱 데이터) 검색
-    if checkdocs == True:
+    if user_mode == 0:
         
-        search_str = "회사문서🔍검색 완료. 답변 대기중.."
         try:
             # es로 임베딩 쿼리 실행      
             error_str, docs = await async_es_embed_query(settings=settings, esindex=esindex, query=query, 
-                                                     search_size=search_size, bi_encoder=BI_ENCODER1, qmethod=qmethod)
-        except Exception as e:
-            log_message(settings, f'\t[chatbot3]==>async_es_embed_query fail=>{e}')
-            # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
-            id_manager.remove_id_all(user_id) # id 제거
-            return   
-        
-        # prompt 생성 => min_score 보다 작은 conext는 제거함.
-        try:
+                                                         search_size=search_size, bi_encoder=BI_ENCODER1, qmethod=qmethod)
+             # prompt 생성 => min_score 보다 작은 conext는 제거함.
             prompt, embed_context = make_prompt(settings=settings, docs=docs, query=query)
+            
         except Exception as e:
-            log_message(settings, f'\t[chatbot3]==>make_prompt fail=>{e}')
+            myutils.log_message(f'\t[chatbot3]==>async_es_embed_query fail=>{e}')
             # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
             id_manager.remove_id_all(user_id) # id 제거
             return   
@@ -659,53 +728,52 @@ async def chabot3(content: Dict):
         # 컨텍스트가 없으면. 임베딩을 못찾은 것이므로, bFind_docs=False로 설정
         if len(embed_context) < 2: 
             bFind_docs = False
+            
+        search_str = "회사문서🔍검색 완료. 답변 대기중.."
     #-------------------------------------
     # 네이버 검색
     naver_error:int = 0
     naver_context:str = ''
     naver_links:list=[]
  
-    if checkdocs == False: 
-       
-        # AI 응답 모드
-        if user_mode == 2:
-            prompt = settings['PROMPT_NO_CONTEXT'].format(query=query)  
-            search_str = "🤖AI 답변 대기중.."
-            
-        # 웹문서검색 
-        else:
-            try:
-                # 네이버 검색
-                naver_contexts, naver_error = naver_api.search_naver(query=query, classification=['webkr', 'blog', 'news'], display=4)
-            except Exception as e:
-                log_message(settings, f'\t[chatbot3]==>naver_api.search_naver_ex fail=>{e}')
-                # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
-                id_manager.remove_id_all(user_id) # id 제거
-                naver_error = 1001
+    if user_mode == 1:
+        try:
+            # 네이버 검색
+            naver_contexts, naver_error = naver_api.search_naver(query=query, classification=['webkr', 'blog', 'news'], display=4)
+        except Exception as e:
+            myutils.log_message(f'\t[chatbot3]==>naver_api.search_naver_ex fail=>{e}')
+            # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
+            id_manager.remove_id_all(user_id) # id 제거
+            naver_error = 1001
 
-            # prompt 와 link 구성
-            if len(naver_contexts) > 0:
-                for idx, con in enumerate(naver_contexts):
-                    naver_context += con['descript']+'\n\n'
-                    if idx < 4:
-                        naver_links.append(con['link'])
+        # prompt 와 link 구성
+        if len(naver_contexts) > 0:
+            for idx, con in enumerate(naver_contexts):
+                naver_context += con['descript']+'\n\n'
+                if idx < 4:
+                    naver_links.append(con['link'])
                     
-                # text-davinci-003 모델에서, 프롬프트 길이가 총 1772 넘어가면 BadRequest('https://api.openai.com/v1/completions') 에러 남.
-                # 따라서 context 길이가 1730 이상이면 1730까지만 처리함.
-                if gpt_model.startswith("text-"):
-                    if len(naver_context) > 1730:
-                        naver_context = naver_context[0:1730]
+            # text-davinci-003 모델에서, 프롬프트 길이가 총 1772 넘어가면 BadRequest('https://api.openai.com/v1/completions') 에러 남.
+            # 따라서 context 길이가 1730 이상이면 1730까지만 처리함.
+            if gpt_model.startswith("text-") and len(naver_context) > 1730:
+                naver_context = naver_context[0:1730]
 
-                prompt = settings['PROMPT_CONTEXT'].format(context=naver_context, query=query)
-                search_str = "웹문서🔍검색 완료. 답변 대기중.."
-            else:
-                prompt = settings['PROMPT_NO_CONTEXT'].format(query=query)  
-                search_str = "웹문서🔍검색 없음. 답변 대기중.."
+            prompt = settings['PROMPT_CONTEXT'].format(context=naver_context, query=query)
+            search_str = "웹문서🔍검색 완료. 답변 대기중.."
+        else:
+            prompt = settings['PROMPT_NO_CONTEXT'].format(query=query)  
+            search_str = "웹문서🔍검색 없음. 답변 대기중.."
             
     #----------------------------------------
+    # AI 응답 모드
+    if user_mode == 2:
+        prompt = settings['PROMPT_NO_CONTEXT'].format(query=query)  
+        search_str = "🤖AI 답변 대기중.."
+    #----------------------------------------
+    
     # 응답 메시지 출력 및 콜백 호출  
-    # 회사문서 검색(checkdocs == True)인데 검색에 맞는 내용을 못찾으면(bFind_docs == False), gpt 콜백 호출하지 않고, 답을 찾지 못했다는 메시지 출력함.       
-    if checkdocs == True and bFind_docs == False:
+    # 회사문서 검색(user_mode==0 )인데 검색에 맞는 내용을 못찾으면(bFind_docs == False), gpt 콜백 호출하지 않고, 답을 찾지 못했다는 메시지 출력함.       
+    if user_mode==0 and bFind_docs == False:
         answer = "⚠️질문에 맞는 회사문서 내용을🔍찾지 못했습니다. 질문을 다르게 해 보세요."
         template = {
             "version": "2.0",
@@ -725,7 +793,7 @@ async def chabot3(content: Dict):
         # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
         id_manager.remove_id_all(user_id) # id 제거
  
-    # 회사문서검색이 아닌경우(checkdocs == False), 혹은 회사문서 검색(checkdocs == True)인데 맞는 내용을 찾은 경우(bFind_docs == True)에는 gpt 콜백 호출함.
+    # 회사문서검색이 아닌경우(user_mode==0 ), 혹은 회사문서 검색(user_mode==0 )인데 맞는 내용을 찾은 경우(bFind_docs == True)에는 gpt 콜백 호출함.
     else:
              
         # 답변 설정
@@ -739,7 +807,7 @@ async def chabot3(content: Dict):
         }
         
     json_response = JSONResponse(content=template)
-    log_message(settings, f"\t[chabot3]==>status_code:{json_response.status_code}\ncallbackurl: {callbackurl}\n")      
+    myutils.log_message(f"\t[chabot3]==>status_code:{json_response.status_code}\ncallbackurl: {callbackurl}\n")      
         
     if json_response.status_code == 200:
          # 비동기 작업을 스케줄링 콜백 호출
@@ -758,27 +826,31 @@ async def chabot3(content: Dict):
    
     return json_response
 #----------------------------------------------------------------------
-@app.post("/searchdoc")
-async def searchdoc(content: Dict):
-    content1 = content["userRequest"]
-    log_message(settings, f't\[searchdoc]==>content1:{content1}\n')
-    user_id:str = content["userRequest"]["user"]["id"]
-    
-    assert user_id, f'user_id is empty!'
 
-    #-----------------------------------------------------------
+def set_userinfo(content, user_mode:int):
+    myutils.log_message(f't\[searchdoc]==>content1:{content}\n')
+    user_id:str = content["user"]["id"]
+    if user_id.strip()=="":
+        return 1001
+    
     # id_manager 에 id가 존재하면 '이전 질문 처리중'이므로, return 시킴
     # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 해당 user_id 가 있는지 검색
     if id_manager.check_id_exists(user_id):
-        log_message(settings, f't\[searchdoc]==>이전 질문 처리중:{user_id}\n')
+        myutils.log_message(f't\[searchdoc]==>이전 질문 처리중:{user_id}\n')
+        return 1002
+
+    userdb.insert_user_mode(user_id, user_mode) # 해당 사용자의 user_id 모드를 0로 업데이트
+    return 0
+ 
+#-----------------------------------------------------------
+@app.post("/searchdoc")
+async def searchdoc(content: Dict):
+    if set_userinfo(content=content["userRequest"], user_mode=0) != 0:
         return
-    #-----------------------------------------------------------
-    userdb.insert_user_mode(user_id, 0) # 해당 사용자의 user_id 모드를 0로 업데이트
-    
+
     title = "📃회사문서 검색"
     descript = '''질문을 하면 회사문서를🔍검색해서🤖AI가 답을 합니다.\n\n지금은 모코엠시스 '2023년 회사규정' 만🔍검색할 수 있습니다.(추후 업데이트 예정..)\n\n질문을 하면 답변은 최대⏰30초 걸릴 수 있고,간혹💤엉뚱한 답변도 합니다.\n\n[내용보기]를 누르면 검색한 회사규정💬내용을 볼 수 있습니다.
     '''
- 
     template = {
         "version": "2.0",
         "template": {
@@ -814,21 +886,8 @@ async def searchdoc(content: Dict):
 #----------------------------------------------------------------------
 @app.post("/searchweb")
 async def chabot3(content: Dict):
-
-    content1 = content["userRequest"]
-    log_message(settings, f't\[searchweb]==>content1:{content1}\n')
-    user_id:str = content["userRequest"]["user"]["id"]
-    
-    assert user_id, f'user_id is empty!'
-    
-    #-----------------------------------------------------------
-    # id_manager 에 id가 존재하면 '이전 질문 처리중'이므로, return 시킴
-    # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 해당 user_id 가 있는지 검색
-    if id_manager.check_id_exists(user_id):
-        log_message(settings, f't\[searchweb]==>이전 질문 처리중:{user_id}\n')
+    if set_userinfo(content=content["userRequest"], user_mode=1) != 0:
         return
-    #-----------------------------------------------------------
-    userdb.insert_user_mode(user_id, 1) # 해당 사용자의 user_id 모드를 1로 업데이트
     
     # https://t1.daumcdn.net/friends/prod/category/M001_friends_ryan1.jpg
     # https://t1.kakaocdn.net/openbuilder/sample/img_001.jpg
@@ -872,27 +931,12 @@ async def chabot3(content: Dict):
 #----------------------------------------------------------------------
 @app.post("/searchai")
 async def searchai(content: Dict):
-
-    content1 = content["userRequest"]
-    log_message(settings, f't\[searchai]==>content1:{content1}\n')
-    user_id:str = content["userRequest"]["user"]["id"]
-    
-    assert user_id, f'user_id is empty!'
-    
-    #-----------------------------------------------------------
-    # id_manager 에 id가 존재하면 '이전 질문 처리중'이므로, return 시킴
-    # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 해당 user_id 가 있는지 검색
-    if id_manager.check_id_exists(user_id):
-        log_message(settings, f't\[searchai]==>이전 질문 처리중:{user_id}\n')
+    if set_userinfo(content=content["userRequest"], user_mode=2) != 0:
         return
-    #-----------------------------------------------------------
-    
-    userdb.insert_user_mode(user_id, 2) # 해당 사용자의 user_id 모드를 2로 업데이트
     
     title = "🤖AI 응답 모드"
     descript = '''질문을 하면🤖AI가 알아서 답변을 해줍니다.\n\n질문은 요점을🔆정확하게 해주세요.\n답변은 최대⏰30초 걸릴 수 있으며,간혹💤엉뚱한 답변도 합니다.
     '''
-        
     template = {
         "version": "2.0",
         "template": {
