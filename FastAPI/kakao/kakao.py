@@ -763,7 +763,9 @@ async def chabot3(content: Dict):
     
     # 사용자 모드(0=회사본문검색, 1=웹문서검색, 2=AI응답모드, 5=URL 요약) 얻어옴.
     user_mode = userdb.select_user_mode(user_id)
-    
+    if user_mode == -1:
+        user_mode = 0
+        
     # 쿼리가 url 이면 사용자 모드는 5(URL 요약)로 설정
     if webscraping.is_url(query) == True and query_format == "":
         user_mode = 5        
@@ -1188,9 +1190,9 @@ async def setting(content: Dict):
     #myutils.log_message(f"\t[setting]==>setting:{setting}\n")
     
     user_mode=userdb.select_user_mode(user_id=user_id)
-    if user_mode >= -1:
-        user_moe_str = user_mode_list[user_mode]
-        
+    if user_mode == -1:
+        user_mode = 0
+    user_mode_str = user_mode_list[user_mode]
     
     if setting != -1 and setting['site']:
         search_site = setting['site']
@@ -1200,7 +1202,7 @@ async def setting(content: Dict):
         pre_answer_str:str = '검색안함'
         
     linkurl = f'{api_server_url}/setting/form?user_id={user_id}'
-    descript = f'🧒 사용자ID: {user_id}\n\n🕹 현재 동작모드: {user_moe_str}\n💬 에전유사 질문검색: {pre_answer_str}\n🌐 웹검색 사이트: {search_site}\n\n예전유사 질문검색, 웹검색 사이트 변경을 원하시면 설정하기를 눌러 변경해 주세요.'
+    descript = f'🧒 사용자ID: {user_id}\n\n🕹 현재 동작모드: {user_mode_str}\n💬 에전유사 질문검색: {pre_answer_str}\n🌐 웹검색 사이트: {search_site}\n\n예전유사 질문검색, 웹검색 사이트 변경을 원하시면 설정하기를 눌러 변경해 주세요.'
     
     template = {
         "version": "2.0",

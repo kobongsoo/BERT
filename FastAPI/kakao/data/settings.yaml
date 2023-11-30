@@ -40,7 +40,7 @@ SYSTEM_PROMPT: "" # "답은 2줄로 요약해주세요."           # 시스템 �
 PROMPT_CONTEXT: '{context}\n\nQ:{query}?.요약해줘. A:'   # 내용(컨텍스트)이 있을때 내용에 대해 질문할때 프롬프트
 PROMPT_NO_CONTEXT: 'Q:{query}?.요약해줘. A:'             # 일반 질문 프롬프트
     
-GPT_TOKEN: 'sk-'           # openai key
+GPT_TOKEN: ''           # openai key
 GPT_MODEL: "" #모델 종류 : text-davinci-003, gpt-3.5-turbo, gpt-4, gpt-3.5-turbo-1106
 
 # 외부용 도메인 및 IP 입력해야함
