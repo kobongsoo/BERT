@@ -14,7 +14,13 @@ import os
 import platform
 import pandas as pd
 import numpy as np
+import random
 from tqdm.notebook import tqdm
+
+# mpowerai
+from os import sys
+sys.path.append('./mpowerai')
+from pympower.classes.mshaai import MShaAI
 
 # os가 윈도우면 from eunjeon import Mecab 
 if platform.system() == 'Windows':
@@ -44,7 +50,7 @@ from utils import create_index, make_docs_df, get_sentences
 from utils import load_embed_model, async_embedding, index_data, async_es_embed_query, async_es_embed_delete
 from utils import async_chat_search, remove_prequery, get_title_with_urllink, make_prompt
 from utils import generate_text_GPT2, generate_text_davinci
-from utils import IdManager, NaverSearchAPI, ES_Embed_Text, MyUtils, SqliteDB
+from utils import IdManager, NaverSearchAPI, GoogleSearchAPI, ES_Embed_Text, MyUtils, SqliteDB, WebScraping
 
 #----------------------------------------------------------------------
 # 전역 변수로 선언 => 함수 내부에서 사용할때 global 해줘야 함.
@@ -71,21 +77,59 @@ gpt_model = settings['GPT_MODEL']  #"gpt-4"#"gpt-3.5-turbo" #gpt-4-0314
 # chabot3함수에서 중복 질문 방지를 위한 id 관리 클래스 초기화
 id_manager = IdManager()
 
-# 현재 사용자 mode가 뭔지 확인(0=회사문서검색, 1=웹문서검색, 2=AI응답모드)
+# 현재 사용자 mode가 뭔지 확인(0=회사본문검색, 1=웹문서검색, 2=AI응답모드)
 userdb = SqliteDB('./data/kakao.db')
+#userdb.execute('CREATE TABLE search_site(user_id TEXT, site TEXT)')  # 맨처음 table 생성해야함
 
 # 네이버 검색 클래스 초기화
 naver_api = NaverSearchAPI(client_id=settings['NAVER_CLIENT_ID'], client_secret=settings['NAVER_CLINET_SECRET'])
 
+# 구글 검색 클래스 초기화
+google_api = GoogleSearchAPI(api_key=settings['GOOGLE_API_KEY'], search_engine_id=settings['GOOGLE_SEARCH_ENGINE_ID'])
+
 # 지난대화 저장 
 mapping = myutils.get_mapping_esindex() # es mapping index 가져옴.
 
-# 회사문서검색 이전 답변 저장.(순서대로 회사검색, 웹문서검색, AI응답답변)
+# 회사본문검색 이전 답변 저장.(순서대로 회사검색, 웹문서검색, AI응답답변)
 index_name:str = "preanswer"
 preanswer_embed_classification:list = ["company", "web", "ai"]  
 # es 임베딩 생성
 preanswer_embed = ES_Embed_Text(es_url=settings['ES_URL'], index_name=index_name, mapping=mapping, 
                               bi_encoder=BI_ENCODER1, float_type=settings["E_FLOAT_TYPE"], uid_min_score=0.10)
+
+# url 웹스크래핑
+webscraping = WebScraping()
+shaai = MShaAI() # mpowerai(synap 문서필터)
+#---------------------------------------------------------------------------
+# url 스크래핑 한후 synap으로 문서내용 추출하는 함수 
+# url: 추출할 url(문서url 혹은 웹페이지), srcfilepath: url 다운로드후 저장할 파일경로, tarfilepath: synap으로 내용 추출후 저장할 파일 경로
+def scraping_web(url:str, srcfilepath:str, tarfilepath:str):
+    assert url ,f'url is empty'
+    assert srcfilepath ,f'srcfilepath is empty'
+    assert tarfilepath ,f'tarfilepath is empty'
+    
+    error:int = 0
+    text:str = ""
+    
+    try:
+        error = webscraping.url_download(url=url, filepath=srcfilepath) # url 다운로드
+    except Exception as e:
+        print(f'url_download error=>{e}')
+        error = 1002
+        return text, error
+    
+    if error == 0:
+        try:
+            shaai.extract(srcPath=srcfilepath, tgtPath=tarfilepath)   # srcPath 경로 문서내용추출후 tgtPath파일로 저장
+            
+            text = webscraping.readlines_file(filepath=tarfilepath, min_len=20) # 파일 한줄씩 읽어와서 text로 리턴
+            if len(text) > 4000:
+                text = text[0:3999]
+        except Exception as e:
+            print(f'extract error=>{e}')
+            error = 1002
+    
+    return text, error
 #---------------------------------------------------------------------------
 
 # http://10.10.4.10:9002/docs=>swagger UI, http://10.10.4.10:9000/redoc=>ReDoc UI 각각 비활성화 하려면
@@ -441,12 +485,46 @@ async def search_documents(esindex:str,
     return templates.TemplateResponse("chat01.html", {"request": request, "question":question, "answer": answer, "preanswer": prequery, "titles": titles_str})
 
 #----------------------------------------------------------------------
+# 유사한 쿼리 quickReplies 추가하기 위한 코드 
+def similar_query(preanswer_docs:list, template:dict):
+    for idx, pdocs in enumerate(preanswer_docs):
+        if idx == 0:
+            continue
+            
+        if preanswer_docs[idx]['answer'] and preanswer_docs[1]['score']:            
+            preanswer_score = preanswer_docs[idx]['score']
+            if preanswer_score > 1.60:  # 1.60 이상일때만 유사한 질문을 보여줌
+                additional_structure = {
+                    "messageText": preanswer_docs[idx]['answer'],
+                    "action": "message",
+                    "label": f"{preanswer_docs[idx]['answer']}({myutils.get_es_format_score(preanswer_score)}%)"
+                }
 
+                template["template"]["quickReplies"].append(additional_structure)
+
+# 심플 text 템플릿 
+def simpletext_template(text:str, usercallback:bool=False):
+    template = {
+            "version": "2.0",
+            "useCallback": usercallback,
+            "template": {
+                "outputs": [
+                    {
+                        "simpleText": {
+                            "text": text
+                        }
+                    }
+                ]
+            }
+        }
+    
+    return template
+    
 #=========================================================
 # 카카오 쳇봇 연동 테스트 3
 # - 콜백함수 정의 : 카카오톡은 응답시간이 5초로 제한되어 있어서, 5초이상 응답이 필요한 경우(LLM 응답은 10~20초) AI 챗봇 설정-콜백API 사용 신청하고 연동해야한다. 
 #=========================================================
-async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, prompt:str, docs:list, naver_links:list):
+async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:str, query:str, prompt:str, docs:list, s_best_contexts:list):
     async with httpx.AsyncClient() as client:
         
         await asyncio.sleep(1)
@@ -460,19 +538,13 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
         assert query, f'Error:query_prompt is empty'
         assert callbackurl, f'Error:callbackurl is empty'
     
-        user_mode = 2      # AI 응답모드 
-        if len(naver_links) > 0:  # 웹문서검색
-            user_mode=1
-        elif len(docs) > 0:       # 회사문서검색
-            user_mode=0
-             
         callbackurl1 = callbackurl
         
         start_time = time.time()
         prompt1 = prompt
         if len(prompt) > 100:
             prompt1 = prompt[0:99]
-        myutils.log_message(f'\t[call_callback]==>call_callback: user_mode:{user_mode},query:{query}, prompt:{prompt1}, callbackurl:{callbackurl1}, user_id:{user_id}\n')
+        myutils.log_message(f'\t[call_callback]==>call_callback: user_mode:{user_mode},query:{query}, prompt:{prompt1}({len(prompt)}), callbackurl:{callbackurl1}, user_id:{user_id}\n')
            
         gpt_model:str = settings['GPT_MODEL']
         system_prompt:str = settings['SYSTEM_PROMPT']
@@ -494,12 +566,14 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
             response, status = generate_text_davinci(gpt_model=gpt_model, prompt=input_prompt, stream=True, timeout=20)
          
         # GPT text 생성 성공이면=>질문과 답변을 저정해둠.
+        preanswer_docs:list=[]
         if status == 0:
-            res, status1 = preanswer_embed.delete_insert_doc(doc={'answer':query, 'response':response},
-                                                             classification=preanswer_embed_classification[user_mode])
-             # 로그만 남기고 진행
-            if status1 != 0:
-                myutils.log_message(f'[call_callback][error]==>insert_doc:{res}\n')
+            if user_mode != 5:
+                res, preanswer_docs, status1 = preanswer_embed.delete_insert_doc(doc={'answer':query, 'response':response},
+                                                                           classification=preanswer_embed_classification[user_mode])
+                 # 로그만 남기고 진행
+                if status1 != 0:
+                    myutils.log_message(f'[call_callback][error]==>insert_doc:{res}\n')
         else:
             if status == 1001: # time out일때
                 query = "응답 시간 초과"
@@ -518,15 +592,26 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
         end_time = time.time()
         formatted_elapsed_time = "{:.2f}".format(end_time - start_time)
         
+        label_str:str = "다시 검색.."
+        if user_mode == 5:
+            label_str = "다시 요약.."
+            
         template = {
             "version": "2.0",
             "template": {
-                "outputs": []
+                "outputs": [],
+                "quickReplies": [
+                        {
+                            "messageText": '?'+query,
+                            "action": "message",
+                            "label": label_str
+                        }
+                      ]
                 }
             }
         #--------------------------------
         # 검색된 내용 카카오톡 쳇봇 Text 구성     
-        if user_mode == 0:  # 회사문서검색 
+        if user_mode == 0:  # 회사본문검색 
             # weburl = '10.10.4.10:9000/es/qaindex/docs?query='회사창립일은언제?'&search_size=3&qmethod=2&show=1
             webLinkUrl = api_server_url+'/es/qaindex/docs?query='+query+'&search_size=4&qmethod=2&show=1'
    
@@ -551,42 +636,58 @@ async def call_callback(settings:dict, user_id:str, callbackurl:str, query:str, 
                     "buttons": [
                         {
                             "action": "webLink",
-                            "label": f"내용보기{i+1}",
-                            "webLinkUrl": naver_links[i]
-                        } for i in range(min(3, len(naver_links)))
+                            "label": f"{s_best_contexts[i]['title'][:12]}.." if len(s_best_contexts[i]['title']) > 12 else f"{s_best_contexts[i]['title']}",
+                            "webLinkUrl": s_best_contexts[i]['link']
+                        } for i in range(min(3, len(s_best_contexts)))
                     ]
                 }
             })
-        else:  # AI 검색
+        elif user_mode == 2:  # AI 검색
             template["template"]["outputs"].append({
                 "textCard": {
                     "title": '🤖' + query,
                     "description": '(time:' + str(formatted_elapsed_time) + ')\n' + response
                 }
             })
+        elif user_mode == 5: # URL 요약
+            template["template"]["outputs"].append({
+                "textCard": {
+                    "title": '💫' + query,
+                    "description": '(time:' + str(formatted_elapsed_time) + ')\n' + response
+                }
+            })
+            
+        # 유사한 질문이 있으면 추가
+        #myutils.log_message(f"\t[call_callback]preanswer_docs\n{preanswer_docs}\n")
+        similar_query(preanswer_docs=preanswer_docs, template=template)
         
         #----------------------------------------
-        # 콜백 url로 anwer 값 전송
-        callback_response = await client.post(
-            callbackurl1,
-            json=template
-        )
+        for i in range(3):
+            # 콜백 url로 anwer 값 전송
+            callback_response = await client.post(
+                callbackurl1,
+                json=template
+            )
                 
-        if callback_response.status_code == 200:
-            myutils.log_message(f"\t[call_callback]call_callback 호출 성공\ncallbackurl:{callbackurl1}\n[end]==============\n")
-        else:
-            myutils.log_message(f"\t[call_callback][error] call_callback 호출 실패: {callback_response.status_code}\ncallbackurl:{callbackurl1}\n[end]==============\n")
-        
-        #await asyncio.sleep(1)
-        
+            if callback_response.status_code == 200:
+                myutils.log_message(f"\t[call_callback]call_callback 호출 성공\ncallbackurl:{callbackurl1}\n")
+                break
+            else:  # 실패면 1초 대기했다가 다시 전송해봄
+                myutils.log_message(f"\t[call_callback][error] call_callback 호출 실패(count:{i}): {callback_response.status_code}\ncallbackurl:{callbackurl1}\n")
+                await asyncio.sleep(1)
+                continue
+        #----------------------------------------
         # id_manager 에 id 제거
         # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
         id_manager.remove_id_all(user_id) # id 제거
-
+        #----------------------------------------
+        
+        myutils.log_message(f"\t[call_callback][end]==============\n")
+ 
         return callback_response
 #=========================================================
 # 카카오 쳇봇 연동 테스트
-#=========================================================        
+#=========================================================                     
 @app.post("/chatbot3")
 async def chabot3(content: Dict):
 
@@ -601,6 +702,11 @@ async def chabot3(content: Dict):
     callbackurl:str = content["userRequest"]["callbackUrl"] # callbackurl
     user_id:str = content["userRequest"]["user"]["id"]
     #myutils.log_message(f't\[chabot3]==>user_id:{user_id}\n')
+    
+    # 쿼리가 이미지인지 파악하기 위해 type을 얻어옴.'params': {'surface': 'Kakaotalk.plusfriend', 'media': {'type': 'image', 'url':'https://xxxx'}...}
+    query_format:str = ""
+    if 'media' in content["userRequest"]['params'] and 'type' in content["userRequest"]['params']['media']:
+        query_format = content["userRequest"]['params']['media']['type']
       
     qmethod:int = settings['ES_Q_METHOD']
     system_prompt:str = settings['SYSTEM_PROMPT']
@@ -611,10 +717,10 @@ async def chabot3(content: Dict):
     assert callbackurl, f'Error:callbackurl is empty'
     assert 0 <= qmethod <= 2, 'Error: qmethod should be in the range 0 to 2'
        
-    search_size:int = 4      # 회사문서 검색 계수
+    search_size:int = 4      # 회사본문 검색 계수
     esindex:str = "qaindex"  # qaindex    
    
-    bFind_docs:bool = True   # True이면 회사문서임베딩 찾은 경우
+    bFind_docs:bool = True   # True이면 회사본문임베딩 찾은 경우
     content:dict = {}
     docs:list = []
     prompt:str = ''
@@ -626,16 +732,20 @@ async def chabot3(content: Dict):
     if id_manager.check_id_exists(user_id):
         myutils.log_message(f't\[chabot3]==>이전 질문 처리중:{user_id}\n')
         return
+    #-----------------------------------------------------------
+    # 동영상이나 이미지 입력은 차단
+    if query_format != "":
+        template = simpletext_template(text = f'⚠️이미지나 동영상은 입력 할수 없습니다.')
+        json_response = JSONResponse(content=template)
+        return json_response
+    #-----------------------------------------------------------
     
-    # id_manager 에 id 추가
-    # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위해 user_id 추가함.
+    # id_manager 에 id 추가.  응답 처리중에는 다른 질문할수 없도록 lock 기능을 위해 user_id 추가함.
     id_manager.add("0", user_id) # mode와 user_id 추가
     
-    # 사용자 모드(0=회사문서검색, 1=웹문서검색, 2=AI응답모드) 얻어옴.
-    user_mode = userdb.select_user_mode(user_id)
     #-----------------------------------------------------------
     # prefix에 ? 붙여서 질문하면 이전 질문 검색 안함.
-    preanswer_search = True
+    preanswer_search = True   # True=이전질문 검색함.
     prefix_query1 = query1[0]
     if prefix_query1 == '?':
         query = query1[1:]
@@ -651,9 +761,27 @@ async def chabot3(content: Dict):
         return
     #-------------------------------------
     
+    # 사용자 모드(0=회사본문검색, 1=웹문서검색, 2=AI응답모드, 5=URL 요약) 얻어옴.
+    user_mode = userdb.select_user_mode(user_id)
+    
+    # 쿼리가 url 이면 사용자 모드는 5(URL 요약)로 설정
+    if webscraping.is_url(query) == True and query_format == "":
+        user_mode = 5        
+        
+    #------------------------------------
+    # 설정 값 얻어옴
+    setting = userdb.select_setting(user_id=user_id) # 해당 사용자의 site, preanswer 등을 얻어옴
+    s_site:str = "naver" # 웹검색 사이트 기본은 네이버 
+    e_preanswer:int = 1  # 예전 유사질문 검색 (기본은 허용)
+    
+    if setting != -1:
+        s_site = setting.get('site', s_site)
+        e_preanswer = setting.get('preanswer', e_preanswer)
+        
+    #myutils.log_message(f'\t[chatbot3]==>s_site:{s_site},  e_preanswer:{e_preanswer}')
     #-------------------------------------
-    # 이전 질문 검색(회사문서검색=0, 웹문서검색=1) 일때만 
-    if preanswer_search == True: 
+    # 이전 질문 검색(회사본문검색=0, 웹문서검색=1) 일때만 
+    if preanswer_search == True and user_mode < 5 and e_preanswer == 1: 
         preanswer_docs = preanswer_embed.embed_search(query=query, classification=preanswer_embed_classification[user_mode])
         
         if len(preanswer_docs) > 0:
@@ -662,8 +790,8 @@ async def chabot3(content: Dict):
             preanswer = preanswer_docs[0]['answer']
             preanswer_id = preanswer_docs[0]['_id']
             myutils.log_message(f'\t[chatbot3]==>이전질문:{preanswer}(score:{preanswer_score}, id:{preanswer_id})\n이전답변:{preanswer_response}')
-
-            # 1.85 이상일때만 이전 답변 보여줌.
+                
+            # 1.80 이상일때만 이전 답변 보여줌.
             if preanswer_score >= 1.80:  
                 if user_mode == 0:
                     query1 = f'📃{query}'
@@ -673,10 +801,8 @@ async def chabot3(content: Dict):
                     query1 = f'🤖{query}'
                         
                 # 정확도 스코어 구함
-                formatted_preanswer_score = "100"
-                if preanswer_score < 2.0:
-                    formatted_preanswer_score = "{:.1f}".format((preanswer_score-1)*100)
-                    
+                formatted_preanswer_score = myutils.get_es_format_score(preanswer_score)
+                     
                 template = {
                     "version": "2.0",
                     "useCallback": False,
@@ -685,7 +811,7 @@ async def chabot3(content: Dict):
                         {
                             "textCard": {
                                 "title": query1,
-                                "description": f'💬예전 질문과 답변입니다. (정확도:{formatted_preanswer_score}%)\nQ:{preanswer}\n{preanswer_response}'
+                                "description": f'💬예전 질문과 답변입니다. (유사도:{formatted_preanswer_score}%)\nQ:{preanswer}\n{preanswer_response}'
                             }
                         }
                       ],
@@ -698,17 +824,20 @@ async def chabot3(content: Dict):
                       ]
                     }
                 }
-
+                
+                # 유사한 질문이 있으면 추가
+                similar_query(preanswer_docs=preanswer_docs, template=template)
+                  
                 json_response = JSONResponse(content=template)
 
                 # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
                 id_manager.remove_id_all(user_id) # id 제거
 
-                return json_response
-        
+                return json_response       
+ 
     #------------------------------------
+    # 설정 값 얻어옴 
     search_str:str = ""
-    
     # 회사 문서(인덱싱 데이터) 검색
     if user_mode == 0:
         
@@ -729,40 +858,50 @@ async def chabot3(content: Dict):
         if len(embed_context) < 2: 
             bFind_docs = False
             
-        search_str = "회사문서🔍검색 완료. 답변 대기중.."
+        search_str = "🔍회사본문검색 완료. 답변 대기중.."
     #-------------------------------------
     # 네이버 검색
-    naver_error:int = 0
-    naver_context:str = ''
-    naver_links:list=[]
- 
+    s_error:int = 0
+    s_context:str = ''
+    s_best_contexts:list = []
+    
     if user_mode == 1:
+        s_contexts:list = []   
+        s_str:str = "네이버"
         try:
-            # 네이버 검색
-            naver_contexts, naver_error = naver_api.search_naver(query=query, classification=['webkr', 'blog', 'news'], display=4)
+            if s_site == "naver":
+                # 네이버 검색
+                classification=['webkr', 'blog', 'news']
+                # 랜덤하게 2개 선택
+                #selected_items = random.sample(classification, 2)
+                random.shuffle(classification)  #랜덤하게 3개 섞음
+                s_contexts, s_best_contexts, s_error = naver_api.search_naver(query=query, classification=classification, start=random.randint(1, 2), display=8)
+            else: # 구글 검색
+                s_contexts, s_best_contexts, s_error = google_api.search_google(query=query, page=2) # page=2이면 20개 검색
+                s_str = "구글"
+                
         except Exception as e:
-            myutils.log_message(f'\t[chatbot3]==>naver_api.search_naver_ex fail=>{e}')
+            myutils.log_message(f'\t[chatbot3]==>naver_api.search_naver fail=>{e}')
             # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
             id_manager.remove_id_all(user_id) # id 제거
-            naver_error = 1001
-
-        # prompt 와 link 구성
-        if len(naver_contexts) > 0:
-            for idx, con in enumerate(naver_contexts):
-                naver_context += con['descript']+'\n\n'
-                if idx < 4:
-                    naver_links.append(con['link'])
-                    
+            s_error = 1001
+       
+        # prompt 구성
+        if len(s_contexts) > 0 and s_error == 0:
+            for idx, con in enumerate(s_contexts):
+                if con['descript'] and con['link']:
+                    s_context += con['descript']+'\n\n'
+                               
             # text-davinci-003 모델에서, 프롬프트 길이가 총 1772 넘어가면 BadRequest('https://api.openai.com/v1/completions') 에러 남.
             # 따라서 context 길이가 1730 이상이면 1730까지만 처리함.
-            if gpt_model.startswith("text-") and len(naver_context) > 1730:
-                naver_context = naver_context[0:1730]
+            if gpt_model.startswith("text-") and len(s_context) > 1730:
+                s_context = s_context[0:1730]
 
-            prompt = settings['PROMPT_CONTEXT'].format(context=naver_context, query=query)
-            search_str = "웹문서🔍검색 완료. 답변 대기중.."
+            prompt = settings['PROMPT_CONTEXT'].format(context=s_context, query=query)
+            search_str = f"🔍{s_str}검색 완료. 답변 대기중.."
         else:
             prompt = settings['PROMPT_NO_CONTEXT'].format(query=query)  
-            search_str = "웹문서🔍검색 없음. 답변 대기중.."
+            search_str = f"🔍{s_str}검색 없음. 답변 대기중.."
             
     #----------------------------------------
     # AI 응답 모드
@@ -770,30 +909,50 @@ async def chabot3(content: Dict):
         prompt = settings['PROMPT_NO_CONTEXT'].format(query=query)  
         search_str = "🤖AI 답변 대기중.."
     #----------------------------------------
-    
+    # URL 모드
+    if user_mode == 5:
+        srcfilepath = './tmp/'+str(user_id)+'.url' # 파일경로는 userid.url로 함.
+        tarfilepath = './tmp/'+str(user_id)+'.mpower'
+        
+        # tmp 폴더가 없으면 생성합니다.
+        if not os.path.exists('./tmp'):
+            os.makedirs('./tmp')
+        
+        context, error = scraping_web(url=query, srcfilepath=srcfilepath, tarfilepath=tarfilepath)
+        if len(context) > 300:
+            if len(context) > 4000:
+                context = context[0:3999]
+            
+            prompt = f'{context}\n\nQ:위 내용을 요약해줘. A:'
+            search_str = "💫URL 내용 요약중.."
+        else:
+            if len(context) == 0:
+                answer = f"⚠️URL 검출된 내용이 없습니다..URL을 다시 입력해주세요."
+            elif len(context) < 301:
+                answer = f"⚠️URL 검출된 내용이 너무 적어서 요약할 수 없습니다.. (길이:{len(context)})\n내용:\n{context}"
+            else:
+                answer = f"⚠️URL 내용 검출 실패..URL을 다시 입력해주세요.\n(error:{error})"
+            
+            template = simpletext_template(text = answer)
+            
+            # id_manager 에 id 제거
+            # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
+            id_manager.remove_id_all(user_id) # id 제거
+            
+            json_response = JSONResponse(content=template)
+            return json_response
+    #----------------------------------------
     # 응답 메시지 출력 및 콜백 호출  
-    # 회사문서 검색(user_mode==0 )인데 검색에 맞는 내용을 못찾으면(bFind_docs == False), gpt 콜백 호출하지 않고, 답을 찾지 못했다는 메시지 출력함.       
+    # 회사본문검색(user_mode==0 )인데 검색에 맞는 내용을 못찾으면(bFind_docs == False), gpt 콜백 호출하지 않고, 답을 찾지 못했다는 메시지 출력함.       
     if user_mode==0 and bFind_docs == False:
-        answer = "⚠️질문에 맞는 회사문서 내용을🔍찾지 못했습니다. 질문을 다르게 해 보세요."
-        template = {
-            "version": "2.0",
-            "useCallback": False,
-            "template": {
-                "outputs": [
-                    {
-                        "simpleText": {
-                            "text": answer
-                        }
-                    }
-                ]
-            }
-        }
+        answer = "⚠️질문에 맞는 회사본문내용을🔍찾지 못했습니다. 질문을 다르게 해 보세요."
+        template = simpletext_template(text = answer)
         
         # id_manager 에 id 제거
         # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
         id_manager.remove_id_all(user_id) # id 제거
  
-    # 회사문서검색이 아닌경우(user_mode==0 ), 혹은 회사문서 검색(user_mode==0 )인데 맞는 내용을 찾은 경우(bFind_docs == True)에는 gpt 콜백 호출함.
+    # 검색이 아닌경우(user_mode==0 ), 혹은 회사본문검색(user_mode==0 )인데 맞는 내용을 찾은 경우(bFind_docs == True)에는 gpt 콜백 호출함.
     else:
              
         # 답변 설정
@@ -805,31 +964,30 @@ async def chabot3(content: Dict):
                 "text" : text
             }
         }
-        
-    json_response = JSONResponse(content=template)
-    myutils.log_message(f"\t[chabot3]==>status_code:{json_response.status_code}\ncallbackurl: {callbackurl}\n")      
-        
-    if json_response.status_code == 200:
-         # 비동기 작업을 스케줄링 콜백 호출
-        task = asyncio.create_task(call_callback(settings=settings, user_id=user_id, callbackurl=callbackurl, 
-                                                 query=query, prompt=prompt, docs=docs, naver_links=naver_links))
-    else:
-        template = {
-            "version": "2.0",
-            "useCallback": False,
-            "data": {
-                "text" : f"응답 에러 발생\nerror:{json_response.status_code}"
-            }
-        }
+    #----------------------------------------
+    call:bool = False
+    for i in range(3):
+        json_response = JSONResponse(content=template)
+        if json_response.status_code == 200:
+             # 비동기 작업을 스케줄링 콜백 호출
+            task = asyncio.create_task(call_callback(settings=settings, user_id=user_id, user_mode=user_mode,callbackurl=callbackurl, 
+                                                     query=query, prompt=prompt, docs=docs, s_best_contexts=s_best_contexts))
+            
+            myutils.log_message(f"\t[chabot3]==>성공: status_code:{json_response.status_code}\ncallbackurl: {callbackurl}\n")  
+            call = True
+            break
+        else:
+            myutils.log_message(f"\t[chabot3]==>실패(count:{i}): status_code:{json_response.status_code}\ncallbackurl: {callbackurl}\n")    
+            continue
+    
+    if call == False:
         id_manager.remove_id_all(user_id) # id 제거
-        json_response1 = JSONResponse(content=template)
-        return json_response1
    
     return json_response
 #----------------------------------------------------------------------
 
 def set_userinfo(content, user_mode:int):
-    myutils.log_message(f't\[searchdoc]==>content1:{content}\n')
+    myutils.log_message(f't\[searchdoc]==>content:{content}\n')
     user_id:str = content["user"]["id"]
     if user_id.strip()=="":
         return 1001
@@ -849,8 +1007,8 @@ async def searchdoc(content: Dict):
     if set_userinfo(content=content["userRequest"], user_mode=0) != 0:
         return
 
-    title = "📃회사문서 검색"
-    descript = '''질문을 하면 회사문서를🔍검색해서🤖AI가 답을 합니다.\n\n지금은 모코엠시스 '2023년 회사규정' 만🔍검색할 수 있습니다.(추후 업데이트 예정..)\n\n질문을 하면 답변은 최대⏰30초 걸릴 수 있고,간혹💤엉뚱한 답변도 합니다.\n\n[내용보기]를 누르면 검색한 회사규정💬내용을 볼 수 있습니다.
+    title = "📃회사본문검색\n질문을 하면 회사본문내용를🔍검색해서 모아이가 답을 합니다."
+    descript = '''지금은 모코엠시스 2023년 '회사규정'과 '회사소개' 관련만🔍검색할 수 있습니다.(업데이트 예정..)\n\n[내용보기]를 누르면 검색한 💬회사본문내용을 볼 수 있습니다.
     '''
     template = {
         "version": "2.0",
@@ -861,13 +1019,13 @@ async def searchdoc(content: Dict):
                     "title": title,
                     "description": descript,
                     "thumbnail": {
-                        "imageUrl": "https://t1.daumcdn.net/friends/prod/category/M001_friends_ryan1.jpg"
+                        "imageUrl": "http://k.kakaocdn.net/dn/eLnYje/btsA5fPdyHO/fOkPDdHMY6616CNYFiHNkK/2x1.jpg"
                     },
                     "buttons": [
                     {
                       "action":  "message",
-                      "label": "출장시 숙박비는?",
-                      "messageText": "출장시 숙박비는?"
+                      "label": "출장시 숙박비는 얼마?",
+                      "messageText": "출장시 숙박비는 얼마?"
                     },
                     {
                       "action":  "message",
@@ -890,12 +1048,15 @@ async def chabot3(content: Dict):
     if set_userinfo(content=content["userRequest"], user_mode=1) != 0:
         return
     
-    # https://t1.daumcdn.net/friends/prod/category/M001_friends_ryan1.jpg
-    # https://t1.kakaocdn.net/openbuilder/sample/img_001.jpg
-    # https://t1.kakaocdn.net/openbuilder/sample/img_002.jpg
-    # https://t1.kakaocdn.net/openbuilder/sample/img_003.jpg
-    title = "🌐웹문서 검색"
-    descript = "질문을 하면 네이버 뉴스나 웹페이지🔍검색해서🤖AI가 답을 합니다.\n\n질문은 요점만🔆정확하게 해주세요.답변은 최대⏰30초 걸릴 수 있고,간혹💤엉뚱한 답변도 합니다.\n\n[내용보기] 버튼을 클릭하면 검색한 뉴스나 웹페이지🌐URL로 연결됩니다."
+   # http://k.kakaocdn.net/dn/bUP0MS/btsA7RAx01M/sSR0gN6O0kzXN1l66pYvMk/2x1.jpg => 메인
+   # http://k.kakaocdn.net/dn/nm41W/btsA9g0UbzW/Fvz12wrGK2duYyLCww2o21/2x1.jpg => URL 입력 요약
+   # http://k.kakaocdn.net/dn/eLnYje/btsA5fPdyHO/fOkPDdHMY6616CNYFiHNkK/2x1.jpg => 회사본문검색
+   # http://k.kakaocdn.net/dn/bqkjxi/btsA9V3gT5i/JRbnnpxeoxG6ok4H3rX9Tk/2x1.jpg => 웹검색
+   # http://k.kakaocdn.net/dn/bbRJLT/btsBb5xrDyJ/cOKisJNsExLV77kHBTOTHk/2x1.jpg => AI응답모드
+   # http://k.kakaocdn.net/dn/lGVgi/btsA5hTJGUL/tUo5HnahK3aMGO9XJ49t21/2x1.jpg => 설정
+   # http://k.kakaocdn.net/dn/bRDZcJ/btsA9TqM29J/N79nlPR6shWiNuOycmsG1k/2x1.jpg=>피드벡
+    title = "🌐웹검색\n질문을 하면 네이버,구글🔍검색해서 모아이가 답을 합니다."
+    descript = "답변은 최대⏰30초 걸릴 수 있고,종종 엉뚱한 답변도 합니다.\n\n버튼을 클릭하면 검색한 🌐URL로 연결됩니다."
     template = {
         "version": "2.0",
         "template": {
@@ -905,13 +1066,13 @@ async def chabot3(content: Dict):
                     "title": title,
                     "description": descript,
                     "thumbnail": {
-                        "imageUrl": "https://t1.daumcdn.net/friends/prod/category/M001_friends_ryan1.jpg"
+                        "imageUrl": "http://k.kakaocdn.net/dn/bqkjxi/btsA9V3gT5i/JRbnnpxeoxG6ok4H3rX9Tk/2x1.jpg"
                     },
                     "buttons": [
                     {
                       "action":  "message",
-                      "label": "제주 봄 추천 장소 5개",
-                      "messageText": "제주 봄 추천 장소 5개"
+                      "label": "제주도 봄 여행코스 추천",
+                      "messageText": "제주도 봄 여행코스 추천"
                     },
                     {
                       "action":  "message",
@@ -935,8 +1096,8 @@ async def searchai(content: Dict):
     if set_userinfo(content=content["userRequest"], user_mode=2) != 0:
         return
     
-    title = "🤖AI 응답 모드"
-    descript = '''질문을 하면🤖AI가 알아서 답변을 해줍니다.\n\n질문은 요점을🔆정확하게 해주세요.\n답변은 최대⏰30초 걸릴 수 있으며,간혹💤엉뚱한 답변도 합니다.
+    title = "🤖AI 응답 모드\n질문을 하면 모아이가 알아서 답변을 해줍니다."
+    descript = '''답변은 최대⏰30초 걸릴 수 있으며,종종 엉뚱한 답변도 합니다.
     '''
     template = {
         "version": "2.0",
@@ -947,18 +1108,116 @@ async def searchai(content: Dict):
                     "title": title,
                     "description": descript,
                     "thumbnail": {
-                        "imageUrl": "https://t1.daumcdn.net/friends/prod/category/M001_friends_ryan1.jpg"
+                        "imageUrl": "http://k.kakaocdn.net/dn/bbRJLT/btsBb5xrDyJ/cOKisJNsExLV77kHBTOTHk/2x1.jpg"
                     },
                     "buttons": [
                     {
                       "action":  "message",
-                      "label": "봄을 주제로 시를 써줘",
-                      "messageText": "봄을 주제로 시를 써줘"
+                      "label": "봄을 주제로 노래가사 써줘",
+                      "messageText": "봄을 주제로 노래가사 써줘"
                     },
                     {
                       "action":  "message",
-                      "label": "스승의날 감사편지 만들어줘",
-                      "messageText": "스승의날 감사편지 만들어줘"
+                      "label": "AI 강의 목차 만들어줘",
+                      "messageText": "AI 강의 목차 만들어줘"
+                    }
+                  ]
+                 }
+                }
+              ]
+           }
+        }
+        
+    json_response = JSONResponse(content=template)    
+    return json_response
+#----------------------------------------------------------------------
+# setting 관련
+@app.post("/setting/save")
+async def setting_save(request: Request): 
+    
+    form = await request.form()
+    user_id = form.get("user_id")
+    search_site = form.get("search_engine")
+    pre_answer = form.get("preanswer")
+    
+    #myutils.log_message(f"\t[setting]==>setting_save=>pre_answer:{pre_answer}/{type(pre_answer)}\n")
+    
+    # 변경값으로 셋팅.
+    error = userdb.insert_setting(user_id=user_id, site=search_site, preanswer=int(pre_answer)) # 해당 사용자의 user_id site를 업데이트
+    setting_success:bool = False
+    if error == 0:
+        setting_success = True
+    else:
+        myutils.log_message(f"\t[setting]==>setting_save fail!\n")
+        
+    return templates.TemplateResponse("setting.html", {"request": request, "user_id":user_id, "search_site": search_site, 
+                                                       "pre_answer": int(pre_answer), "setting_success": setting_success })
+    
+# setting.html 로딩    
+@app.get("/setting/form")
+async def setting_form(request:Request, user_id:str):
+    
+    assert user_id, f'user_id is empty'
+    setting = userdb.select_setting(user_id=user_id) # 해당 사용자의 site를 얻어옴
+    
+    search_site:str = "naver" # 웹검색 사이트 (기본은 naver)
+    pre_answer=1   # 예전 유사 질문 검색(기본=1(검색함))
+    if setting != -1 and setting['site']:
+        search_site = setting['site']
+        pre_answer = setting['preanswer']
+        
+    #myutils.log_message(f"\t[setting]==>setting_form=>user_id:{user_id}, search_site:{search_site}, preanswer:{pre_answer}\n")
+    
+    return templates.TemplateResponse("setting.html", {"request": request, "user_id":user_id, 
+                                                       "search_site": search_site, "pre_answer":pre_answer})
+
+@app.post("/setting")
+async def setting(content: Dict):
+    user_id:str = content["userRequest"]["user"]["id"]
+    assert user_id, f'user_id is empty'
+    
+    api_server_url:str = settings['API_SERVER_URL']
+    
+    search_site:str = "naver" # 웹검색 사이트 (기본은 naver)
+    pre_answer=1   # 예전 유사 질문 검색(기본=1(검색함))
+    pre_answer_str:str = '검색함'
+    user_mode_list:list = ['회사본문검색(1)','웹검색(2)','AI응답모드(3)']   
+    user_mode_str:str = "없음"
+    
+    setting = userdb.select_setting(user_id=user_id) # 해당 사용자의 site를 얻어옴
+    #myutils.log_message(f"\t[setting]==>setting:{setting}\n")
+    
+    user_mode=userdb.select_user_mode(user_id=user_id)
+    if user_mode >= -1:
+        user_moe_str = user_mode_list[user_mode]
+        
+    
+    if setting != -1 and setting['site']:
+        search_site = setting['site']
+        pre_answer = setting['preanswer']
+     
+    if pre_answer != 1:
+        pre_answer_str:str = '검색안함'
+        
+    linkurl = f'{api_server_url}/setting/form?user_id={user_id}'
+    descript = f'🧒 사용자ID: {user_id}\n\n🕹 현재 동작모드: {user_moe_str}\n💬 에전유사 질문검색: {pre_answer_str}\n🌐 웹검색 사이트: {search_site}\n\n예전유사 질문검색, 웹검색 사이트 변경을 원하시면 설정하기를 눌러 변경해 주세요.'
+    
+    template = {
+        "version": "2.0",
+        "template": {
+            "outputs": [
+                {
+                "basicCard": {
+                    "title": "사용자정보 & 설정",
+                    "description": descript,
+                    "thumbnail": {
+                        "imageUrl": "http://k.kakaocdn.net/dn/lGVgi/btsA5hTJGUL/tUo5HnahK3aMGO9XJ49t21/2x1.jpg"
+                    },
+                    "buttons": [
+                    {
+                        "action": "webLink",
+                        "label": "⚙️설정하기",
+                        "webLinkUrl": linkurl
                     }
                   ]
                  }
@@ -968,6 +1227,5 @@ async def searchai(content: Dict):
         }
         
     json_response = JSONResponse(content=template)
-    
     return json_response
 #----------------------------------------------------------------------

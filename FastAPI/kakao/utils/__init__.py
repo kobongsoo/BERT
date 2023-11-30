@@ -15,8 +15,12 @@ from .chat_search import *
 
 from .llm_generate import *
 
-from . naver_search import *
+from .naver_search import *
+from .google_search import *
 from .translate_utils import *
 
 from .sqlitedb import *
+
+from .web_scraping import *
+
 

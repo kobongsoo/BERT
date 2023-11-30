@@ -8,9 +8,17 @@ import torch
 import numpy as np
 import urllib.request
 import requests
-from utils import embedding
+from .es_embed import embedding
+from .web_scraping import WebScraping
+
 from sentence_transformers import util
 from bs4 import BeautifulSoup
+import random
+import string
+
+def generate_random_string(length):
+    letters = string.ascii_letters
+    return ''.join(random.choice(letters) for _ in range(length))
 
 class NaverSearchAPI:
     def __init__(self, client_id:str, client_secret:str):
@@ -19,33 +27,46 @@ class NaverSearchAPI:
         
         self.client_id = client_id
         self.client_secret = client_secret
+        
+        # url 링크에, 티스토리, 지식인,유튜브, 책,디시인사이드,에펨코리아,루리엡,더쿠,클리앙,엠엘비파크,인스티즈,오늘의유머의 검색결과는 제거하도록 했습니다.
+        # 출처:https://blog.zarathu.com/posts/2023-02-15-searchapi-with-python/
+        self.Trash_Link = ["a-ha.io","tistory", "kin", "youtube", "book", "dcinside", "fmkorea", "ruliweb", "theqoo", "clien", "mlbpark", "instiz", "todayhumor"] 
 
+        self.webscraping = WebScraping()
+        
     def find_descript(self, descript, contexts):
         for context in contexts:
             if descript in context['descript']:
                 return True
         return False
     
-    def get_text_navernews(self, url:str):
+    def get_text_navernews(self, url:str, filepath:str=""):
         assert url, f'url is empty'
         text: str = ""
         
-        if url.startswith("https://n.news.naver.com/"):
-            response = requests.get(url)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            findtext = soup.find_all(name='div', class_='_article_body')
-            
-            if findtext:
-                text = findtext[0].get_text()
-                text = text.replace('/n/n', '')  # /n/n 치환
-                
-                if len(text) > 512:
-                    text = text[0:512]
-                return text.strip()
+        try:
+            if url.startswith("https://n.news.naver.com/"):
+                response = requests.get(url)
+                soup = BeautifulSoup(response.text, 'html.parser')
+                findtext = soup.find_all(name='div', class_='_article_body')
+
+                if findtext:
+                    text = findtext[0].get_text()
+                    text = text.replace('/n/n', '')  # /n/n 치환
+
+                    if len(text) > 1025:
+                        text = text[0:1024]
+                    return text.strip()
+                else:
+                    return text
             else:
+                #text = self.webscraping.scraping(url=url, min_len=100)
+                #if len(text) > 1025:
+                #    text = text[0:1024]
                 return text
-        else:
-            return text
+        except Exception as e:
+            print(f'get_text_navernews=>error:{e}')
+            return ""
 
     def normalize2(self, text:str, removelen:int=8):
         out:str = ""
@@ -78,20 +99,19 @@ class NaverSearchAPI:
     # - blog:블로그, news:뉴스, webkr: 웹문서, kin : 지식인,  encyc : 백과사전, doc:전문자료
     # - display=10 : 10개 검색
     #=================================================
-    def search_naver(self, query:str, classification:list=['news', 'webkr', 'blog'], display:int=10):
+    def search_naver(self, query:str, classification:list=['news', 'webkr', 'blog'], start:int=1, display:int=10):
         assert query, f'query is empty'
 
         links:list = []
         contexts:list = []
- 
+        best_contexts:list = []
         encText = urllib.parse.quote(query)
         
         for classi in classification:
             if classi == "webkr":
-                url = f"https://openapi.naver.com/v1/search/{classi}?query={encText}&display={display}"
+                url = f"https://openapi.naver.com/v1/search/{classi}?query={encText}&start={start}&display={display}"
             else:
-                url = f"https://openapi.naver.com/v1/search/{classi}?query={encText}&display={display}&sort=date"  # sort=date : 날짜순 정렬, sort=sim 정확도순
-      
+                url = f"https://openapi.naver.com/v1/search/{classi}?query={encText}&start={start}&display={display}&sort=sim"  # sort=date : 날짜순 정렬, sort=sim 정확도순
             request = urllib.request.Request(url)
             request.add_header("X-Naver-Client-Id", self.client_id)
             request.add_header("X-Naver-Client-Secret", self.client_secret)
@@ -105,11 +125,24 @@ class NaverSearchAPI:
     
                 #print(response_dict)
                 #print()
-                for res in response_dict['items']:
+            
+                #file_path = f'./webscraptmp/{generate_random_string(10)}.tmp'
+                #print(file_path)
+                
+                for idx, res in enumerate(response_dict['items']):
+                    
                     context:dict={}
+                    
+                    link = res['link']
+                    
+                    # link url에 출처가 신뢰도가 낮은 사이트의 정보라면 데이터프레임에 저장하지 않고 넘어갑니다. 
+                    if any(trash in link for trash in self.Trash_Link):
+                        #print(f'pass=>link:{link}')
+                        continue
+                        
+                    context['link'] = link    
                     title = res['title']
                     descript = res['description']
-                    context['link'] = res['link']
                     context['score'] = "0"                  
 
                     title = self.normalize(title)
@@ -120,20 +153,47 @@ class NaverSearchAPI:
                         continue
                         
                     context['title'] = title
-
+                    context['descript'] = descript
+                    
+                    # idx == 0 일때가 가장 best한 검색결과이므로 best_contexts에 저장해둠.
+                    if idx == 0:
+                        best_contexts.append(context)
+                        
+                    '''
                     # naver뉴스 웹크롤링해서 내용이 있으면 descript에 저장
-                    text = self.get_text_navernews(res['link'])
-                    if text:
-                        context['descript'] = text
+                    if classi == "news":
+                        text = self.get_text_navernews(url=link)
+                        #print(f'classi:{classi} =>text:{text}')
+                        if text:
+                            context['descript'] = text
+                        else:
+                            context['descript'] = descript
                     else:
                         context['descript'] = descript
-                    
+                    '''
+                    '''
+                    # web인경우 웹스크롤링해서 내용이 있으면 descript에 저장        
+                    elif classi == "webkr":
+                        text = self.webscraping.scraping(url=link, min_len=100)
+                        #print(f'classi:{classi} =>text:{text}')
+                        if text:
+                            if len(text) > 1025:
+                                text = text[0:1024]
+                            context['descript'] = descript+'\n' + text
+                        else:
+                            context['descript'] = descript
+                    else:
+                        context['descript'] = descript
+                     
+                    print(context['descript'])
+                    print()
+                    '''  
                     contexts.append(context)
             else:
                 print("Error Code:" + rescode)
-                return "", rescode
+                return "", "", rescode
 
-        return contexts, 0
+        return contexts, best_contexts, 0
      
     #=================================================
     # 네이버 검색 API 확장
@@ -199,7 +259,7 @@ class NaverSearchAPI:
                     links1.append(link)
 
                     # naver뉴스 웹크롤링해서 내용이 있으면 descript에 저장
-                    text = self.get_text_navernews(res['link'])
+                    text = self.get_text_navernews(res['link'], filepath='./test.tmp')
                     if text:
                         descripts.append(text)
                     else:

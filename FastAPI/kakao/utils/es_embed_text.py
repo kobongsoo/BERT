@@ -198,7 +198,7 @@ class ES_Embed_Text:
         response = self.es.search(
             index=self.index_name,
             body={
-                "size": 1,
+                "size": 3,
                 "query": script_query,
                 "_source":{"includes": ["answer","response"]}
             }
@@ -244,7 +244,7 @@ class ES_Embed_Text:
         assert classification, f'classification is empty'
         
         if len(doc1) < 1:
-            return 'doc is empty', 1001
+            return 'doc is empty', '',1001
         
         try:
             # 인덱스 생성
@@ -252,7 +252,7 @@ class ES_Embed_Text:
             
             answer = doc1['answer'].strip()
             if len(answer) < 1:
-                return 'answer is empty', 1001
+                return 'answer is empty', '',1001
             
             '''
             # 해당 질문과 완전 동일한 질문이 있는지 검색(term 으로 검색)
@@ -279,7 +279,7 @@ class ES_Embed_Text:
             response = self.es.search(
                 index=self.index_name,
                 body={
-                    "size": 1,
+                    "size": 3,
                     "query": script_query,
                     "_source":{"includes": ["answer","response"]}
                 }
@@ -306,9 +306,19 @@ class ES_Embed_Text:
             doc1['classification'] = classification
             res = self.insert(doc=doc1, doc_type="_doc")
             print(f'\t==>[delete_insert_doc]=>self.insert=>res:{res}')
-            return res, 0
+            
+            # 유사한 질문들을 추출함.
+            preanswer_docs:list = []
+            for hit in response["hits"]["hits"]: 
+                pre_doc = {}
+                pre_doc['score'] = hit['_score']
+                pre_doc['answer'] = hit["_source"]["answer"]
+                pre_doc['response'] = hit["_source"]["response"]
+                preanswer_docs.append(pre_doc)
+                
+            return res, preanswer_docs, 0
         
         except Exception as e:
             error = 1002
             msg = f'delete_insert_doc:=>{e}'
-            return msg, error
+            return msg, preanswer_docs, error

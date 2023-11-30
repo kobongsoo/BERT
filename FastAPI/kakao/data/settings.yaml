@@ -41,11 +41,19 @@ PROMPT_CONTEXT: '{context}\n\nQ:{query}?.요약해줘. A:'   # 내용(컨텍스�
 PROMPT_NO_CONTEXT: 'Q:{query}?.요약해줘. A:'             # 일반 질문 프롬프트
     
 GPT_TOKEN: 'sk-'           # openai key
-GPT_MODEL: "gpt-" #모델 종류 : text-davinci-003, gpt-3.5-turbo, gpt-4, gpt-3.5-turbo-1106
+GPT_MODEL: "" #모델 종류 : text-davinci-003, gpt-3.5-turbo, gpt-4, gpt-3.5-turbo-1106
 
 # 외부용 도메인 및 IP 입력해야함
 API_SERVER_URL: "https://"  # 뒤에는 / 붙이면 안됨.
 
-# 네이버 검색 서비스 이용
+# 검색 타입 (0=네이버 검색 / 1= 구글검색)
+WEB_SEARCH_TYPE: 1
+
+# 네이버 검색 API 이용
 NAVER_CLIENT_ID: ""
 NAVER_CLINET_SECRET: ""
+
+# GOOGLE SEARCH API
+# => https://programmablesearchengine.google.com/controlpanel/all
+GOOGLE_API_KEY: ""
+GOOGLE_SEARCH_ENGINE_ID: ""
