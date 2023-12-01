@@ -141,7 +141,7 @@ class SqliteDB:
         df = pd.read_sql_query(dbquery, self.conn)
 
         if len(df) > 0:
-            print(df['site'])
+            #print(df['site'])
             
             response:dict={}
             response['id']=df['id'][0]
@@ -160,7 +160,7 @@ class SqliteDB:
         
         try:
             res = self.select_setting(user_id)
-            print(f'[insert_setting]=>res:{res}')
+            #print(f'[insert_setting]=>res:{res}')
             
             if res == -1: # 없으면 추가
                 dbquery = f"INSERT INTO setting (id, site, preanswer) VALUES ('{user_id}', '{site}', {preanswer})"

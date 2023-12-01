@@ -10,15 +10,11 @@ import urllib.request
 import requests
 from .es_embed import embedding
 from .web_scraping import WebScraping
-
+from .utils import generate_random_string
 from sentence_transformers import util
 from bs4 import BeautifulSoup
 import random
 import string
-
-def generate_random_string(length):
-    letters = string.ascii_letters
-    return ''.join(random.choice(letters) for _ in range(length))
 
 class NaverSearchAPI:
     def __init__(self, client_id:str, client_secret:str):
@@ -30,7 +26,7 @@ class NaverSearchAPI:
         
         # url 링크에, 티스토리, 지식인,유튜브, 책,디시인사이드,에펨코리아,루리엡,더쿠,클리앙,엠엘비파크,인스티즈,오늘의유머의 검색결과는 제거하도록 했습니다.
         # 출처:https://blog.zarathu.com/posts/2023-02-15-searchapi-with-python/
-        self.Trash_Link = ["a-ha.io","tistory", "kin", "youtube", "book", "dcinside", "fmkorea", "ruliweb", "theqoo", "clien", "mlbpark", "instiz", "todayhumor"] 
+        #self.Trash_Link = ["a-ha.io","tistory", "kin", "youtube", "book", "dcinside", "fmkorea", "ruliweb", "theqoo", "clien", "mlbpark", "instiz", "todayhumor"] 
 
         self.webscraping = WebScraping()
         
@@ -84,6 +80,11 @@ class NaverSearchAPI:
         if text:
             text = text.replace('<b>', '')  # <b> 치환
             text = text.replace('</b>', '') # </b> 치환
+            text = re.sub(r'&gt;', '>', text)
+            text = re.sub(r'&lt;', '<', text)
+            text = re.sub(r'&quot;', '', text)
+            text = re.sub(r'&nbsp;', ' ', text)
+            text = re.sub(r'&amp;', '&', text)
 
             # 한글,영문,숫자,.,,.(),[],{} 아니면 제거
             #text_filter = re.compile('[^ㄱ-ㅎㅏ-ㅣ가-힣a-zA-Z0-9,\.\?\!\"\'-()\[\]\{\}]')
@@ -110,6 +111,8 @@ class NaverSearchAPI:
         for classi in classification:
             if classi == "webkr":
                 url = f"https://openapi.naver.com/v1/search/{classi}?query={encText}&start={start}&display={display}"
+            elif classi == "news":
+                url = f"https://openapi.naver.com/v1/search/{classi}?query={encText}&start={start}&display={display}&sort=date"  # 뉴스는 날짜순 정렬
             else:
                 url = f"https://openapi.naver.com/v1/search/{classi}?query={encText}&start={start}&display={display}&sort=sim"  # sort=date : 날짜순 정렬, sort=sim 정확도순
             request = urllib.request.Request(url)
@@ -136,9 +139,9 @@ class NaverSearchAPI:
                     link = res['link']
                     
                     # link url에 출처가 신뢰도가 낮은 사이트의 정보라면 데이터프레임에 저장하지 않고 넘어갑니다. 
-                    if any(trash in link for trash in self.Trash_Link):
+                    #if any(trash in link for trash in self.Trash_Link):
                         #print(f'pass=>link:{link}')
-                        continue
+                        #continue
                         
                     context['link'] = link    
                     title = res['title']

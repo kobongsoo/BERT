@@ -10,6 +10,134 @@ from elasticsearch import Elasticsearch
 from .es_embed import embedding
 
 #---------------------------------------------------------------------------
+# ES 평균 쿼리 스크립트 구성
+# => 1문서당 10개의 벡터가 있는 경우 10개의 벡터 유사도 평균 구하는 스크립트
+# => 아래 make_max_query_script 보다 엄청 정확도 떨어짐. (max=83%, avg=50%)
+# -in: query_vector = 1차원 임베딩 벡터 (예: [10,10,1,1, ....]
+# -in: vectornum : ES 인덱스 벡터 수
+#---------------------------------------------------------------------------
+def make_avg_query_script(query_vector, vectornum:int=10, vectormag:float=0.8, uid_list:list=None)->str:
+    # 문단별 10개의 벡터와 쿼리벡터를 서로 비교하여 유사도를 구하고, 10개를 구한 유사도의 평균을 최종 유사도로 지정하여 가장 유사한 문서 출력
+    # => return 스코어는 음수(-0.212345)가 될수 없으므로, 음수가 나오면 0으로 리턴.
+    # => script """ 안에 코드는 java 임.
+    # => "queryVectorMag": 0.1905 일때 100% 일치하는 값은 9.98임(즉 10점 만점임)
+    
+    # uid_list가 있는 경우에는 해당하는 목록만 검색함
+    if uid_list:
+        query = { "bool" :{ "must": [ { "terms": { "rfile_name": uid_list } } ] } }
+    else: # uid_list가 있는 경우에는 해당하는 목록만 검색함
+        query = { "match_all" : {} }
+        
+    script_query = {
+        "script_score":{
+            "query":query,
+                "script":{
+                    "source": """
+                      float avg_score = 0;
+                      float total_score = 0;
+                      for(int i = 1; i <= params.VectorNum; i++) 
+                      {
+                          float[] v = doc['vector'+i].vectorValue; 
+                          float vm = doc['vector'+i].magnitude;  
+                          
+                          if (v[0] != 0)
+                          {
+                              float dotProduct = 0;
+
+                              for(int j = 0; j < v.length; j++) 
+                              {
+                                  dotProduct += v[j] * params.queryVector[j];
+                              }
+
+                              float score = dotProduct / (vm * (float) params.queryVectorMag);
+                              
+                              if (score < 0) 
+                              {
+                                  score = 0
+                              }
+                              total_score += score;
+                          }
+                      }
+                      avg_score = total_score / params.VectorNum;
+                      if (avg_score < 0) {
+                        avg_score = 0;
+                      }
+                      return avg_score
+                    """,
+                "params": 
+                {
+                  "queryVector": query_vector,  # 벡터임베딩값 설정
+                  "queryVectorMag": vectormag,  # 벡터 크기
+                  "VectorNum": vectornum        # 벡터 수 설정
+                }
+            }
+        }
+    }
+    
+    return script_query
+#---------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------
+# ES MAX 쿼리 스크립트 구성
+# => 1문서당 10개의 벡터 중에서 가장 유사도가 큰 1개의 벡터 유사도 측정하는 쿼리
+# -in: query_vector = 1차원 임베딩 벡터 (예: [10,10,1,1, ....]
+# -in: vectornum : ES 인덱스 벡터 수
+#---------------------------------------------------------------------------
+def make_max_query_script(query_vector, vectornum:int=10, vectormag:float=0.8, uid_list:list=None)->str:
+    # 문단별 10개의 벡터와 쿼리벡터를 서로 비교하여 최대값 갖는 문단들중 가장 유사한  문단 출력
+    # => script """ 안에 코드는 java 임.
+    # => "queryVectorMag": 0.1905 일때 100% 일치하는 값은 9.98임(즉 10점 만점임)
+                        
+    # uid_list가 있는 경우에는 해당하는 목록만 검색함
+    if uid_list:
+        query = { "bool" :{ "must": [ { "terms": { "rfile_name": uid_list } } ] } }
+    else: # uid_list가 있는 경우에는 해당하는 목록만 검색함
+        query = { "match_all" : {} }
+    
+    script_query = {
+        "script_score":{
+             "query":query,
+                "script":{
+                    "source": """
+                      float max_score = 0;
+                      for(int i = 1; i <= params.VectorNum; i++) 
+                      {
+                          float[] v = doc['vector'+i].vectorValue; 
+                          float vm = doc['vector'+i].magnitude;  
+                          
+                          if (v[0] != 0)
+                          {
+                              float dotProduct = 0;
+
+                              for(int j = 0; j < v.length; j++) 
+                              {
+                                  dotProduct += v[j] * params.queryVector[j];
+                              }
+
+                              float score = dotProduct / (vm * (float) params.queryVectorMag);
+
+                              if(score > max_score) 
+                              {
+                                  max_score = score;
+                              }
+                            }
+                      }
+                      return max_score
+                    """,
+                "params": 
+                {
+                  "queryVector": query_vector,  # 벡터임베딩값 설정
+                  "queryVectorMag": vectormag,  # 벡터 크기
+                  "VectorNum": vectornum        # 벡터 수 설정
+                }
+            }
+        }
+    }
+    
+    return script_query
+#---------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------
 # ES 기본 vector 쿼리 구성
 #---------------------------------------------------------------------------
 def make_query_script(query_vector, uid_list:list=None)->str:
@@ -53,8 +181,8 @@ def es_search_uids(es, esindex:str, uid_min_score:int, size:int=10, data=None):
     response = None
     response = es.search(index=esindex, body=body)
     
-    print(f'uid_min_score:{uid_min_score}')
-    print(f'res:{response}')
+    print(f'=>후보군uid_min_score:{uid_min_score}')
+    print(f'=>후보군 list:{response}\n')
     
     rfilename = []
     count = 0
@@ -101,7 +229,8 @@ def es_embed_query(settings:dict, esindex:str, query:str,
     uid_min_score = settings['ES_UID_MIN_SCORE']
     vector_mgr = settings['ES_SEARCH_VECTOR_MAG']
     float_type = settings['E_FLOAT_TYPE']
-    
+    vector_num = settings['NUM_CLUSTERS']
+      
     # 1.elasticsearch 접속
     es = Elasticsearch(es_url)   
     
@@ -110,21 +239,25 @@ def es_embed_query(settings:dict, esindex:str, query:str,
     elif search_size < 1:
         error = 'search_size < 1'
     elif not es.indices.exists(esindex):
-         error = 'esindex is not exist'
+        error = 'esindex is not exist'
     elif qmethod < 0 or qmethod > 2:
         error = 'qmenthod is not variable'
-    
+    elif vector_num < 1:
+        error = 'vector_num is not variable'
+        
     if error != 'success':
         return error, None
-        
+   
+    #print(f'vector_num: {type(vector_num)}/{vector_num}')
+
     # 후보군 목록이 없으면, es 일반검색 해서 후보군 리스트 뽑아냄.
     docs = []
     if uids == None:
         #* es로 쿼리해서 후보군 추출.
         data = {'rfile_text': query}
-        uids, docs = es_search_uids(es=es,esindex=esindex, uid_min_score=uid_min_score, size=10, data=data)
+        uids, docs = es_search_uids(es=es, esindex=esindex, uid_min_score=uid_min_score, size=10, data=data)
         
-    print(f'\t==>es_embed_query:uids:{uids}, qmethod: {qmethod}')
+    #print(f'\t==>es_embed_query:uids:{uids}, qmethod: {qmethod}')
     
     if len(uids) < 1:
         return error, docs # 쿼리,  rfilename, rfiletext, 스코어 리턴 
@@ -140,13 +273,13 @@ def es_embed_query(settings:dict, esindex:str, query:str,
     # 3. 쿼리 만듬
     # - 쿼리 1개만 하므로, embed_query[0]으로 입력함.
     if qmethod == 0:
-        script_query = make_max_query_script(query_vector=embed_query[0], vectormag=vector_mgr, vectornum=10, uid_list=uids) # max 쿼리를 만듬.
+        script_query = make_max_query_script(query_vector=embed_query[0], vectormag=vector_mgr, vectornum=int(vector_num), uid_list=uids) # max 쿼리를 만듬.
     elif qmethod == 1:
-        script_query = make_avg_query_script(query_vector=embed_query[0], vectormag=vector_mgr, vectornum=10, uid_list=uids) # 평균 쿼리를 만듬.
+        script_query = make_avg_query_script(query_vector=embed_query[0], vectormag=vector_mgr, vectornum=int(vector_num), uid_list=uids) # 평균 쿼리를 만듬.
     else:
         script_query = make_query_script(query_vector=embed_query[0], uid_list=uids) # 임베딩 벡터가 1개인경우=>기본 쿼리 만듬.
         
-    #print(script_query)
+    #print(f'script_query:{script_query}')
     #print()
 
     # 4. 실제 ES로 검색 쿼리 날림
@@ -162,7 +295,7 @@ def es_embed_query(settings:dict, esindex:str, query:str,
 
     # 5. 결과 리턴
     # - 쿼리 응답 결과값에서 _id, _score, _source 등을 뽑아내고 내림차순 정렬후 결과값 리턴
-    print(f'\t==>es_embed_query:\n{response}')
+    print(f'=>본문검색결과\n{response}\n')
     
     rfilename = []
     count = 0

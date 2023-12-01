@@ -10,7 +10,37 @@ import yaml # pip install PyYAML
 import time
 import pytz
 from datetime import datetime
+import re
 
+# 랜덤한 문자열 만드는 함수 
+def generate_random_string(length):
+    letters = string.ascii_letters
+    return ''.join(random.choice(letters) for _ in range(length))
+
+# 문자열 치환
+# 테스트 예제
+#input_string = "This is a <br> test &gt; string &lt; with &quot;special&quot; characters &nbsp;&amp;"
+#output_string = to_replace(input_string)
+#print(output_string)
+def to_replace(input_str):
+    if input_str is None:
+        return None
+
+    return_str = input_str
+
+    return_str = re.sub(r'<br>', '\n', return_str)
+    return_str = re.sub(r'&gt;', '>', return_str)
+    return_str = re.sub(r'&lt;', '<', return_str)
+    return_str = re.sub(r'&quot;', '', return_str)
+    return_str = re.sub(r'&nbsp;', ' ', return_str)
+    return_str = re.sub(r'&amp;', '&', return_str)
+
+    return return_str
+
+
+#######################################################################################################
+# myutils 클래스
+#######################################################################################################
 class MyUtils:
     
     def __init__(self, yam_file_path:str):
@@ -32,9 +62,11 @@ class MyUtils:
     #########################################################################################
     # 로그메시지
     #########################################################################################
-    def log_message(self, message:str):
-
-        folder = self.settings['LOG_PATH']
+    def log_message(self, message:str, log_folder:str=""):
+        if len(log_folder) <= 0:
+            folder = self.settings['LOG_PATH']
+        else:
+            folder = log_folder
        
         # 한국 시간대 설정
         korea_tz = pytz.timezone('Asia/Seoul')
@@ -92,6 +124,27 @@ class MyUtils:
         if score < 2.0:
             formatted_score = "{:.0f}".format((score-1)*100)
         return formatted_score
+
+    #########################################################################################
+    # 폴더(서브폴더포함)에 있는 파일들의 풀경로를 얻어오는 함수
+    # 출처 : https://thispointer.com/python-how-to-get-list-of-files-in-directory-and-sub-directories/
+    #########################################################################################
+    def getListOfFiles(self, dirName):
+        # create a list of file and sub directories 
+        # names in the given directory 
+        listOfFile = os.listdir(dirName)
+        allFiles = list()
+        # Iterate over all the entries
+        for entry in listOfFile:
+            # Create full path
+            fullPath = os.path.join(dirName, entry)
+            # If entry is a directory then get the list of files in this directory 
+            if os.path.isdir(fullPath):
+                allFiles = allFiles + self.getListOfFiles(fullPath)
+            else:
+                allFiles.append(fullPath)
+
+        return allFiles
 
     #########################################################################################
     # es mapping 정보

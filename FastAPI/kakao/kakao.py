@@ -56,7 +56,7 @@ from utils import IdManager, NaverSearchAPI, GoogleSearchAPI, ES_Embed_Text, MyU
 # 전역 변수로 선언 => 함수 내부에서 사용할때 global 해줘야 함.
 # 설정값 settings.yaml 파일 로딩
 
-myutils = MyUtils(yam_file_path='./data/settings.yaml')
+myutils = MyUtils(yam_file_path='./data/settings_128.yaml')
 settings = myutils.get_options()
 assert len(settings) > 2, f'load settings error!!=>len(settigs):{len(settings)}'
 myutils.seed_everything()  # seed 설정
@@ -72,6 +72,8 @@ openai.api_key = settings['GPT_TOKEN']# **GPT  key 지정
 # 모델 - GPT 3.5 Turbo 지정
 # => 모델 목록은 : https://platform.openai.com/docs/models/gpt-4 참조
 gpt_model = settings['GPT_MODEL']  #"gpt-4"#"gpt-3.5-turbo" #gpt-4-0314
+
+SCRAPING_WEB_MAX_LEN = 8000  # 웹 및 문서url 스크래핑 할때 최대 길이
 #---------------------------------------------------------------------------
 # 클래스 초기화
 # chabot3함수에서 중복 질문 방지를 위한 id 관리 클래스 초기화
@@ -91,7 +93,7 @@ google_api = GoogleSearchAPI(api_key=settings['GOOGLE_API_KEY'], search_engine_i
 mapping = myutils.get_mapping_esindex() # es mapping index 가져옴.
 
 # 회사본문검색 이전 답변 저장.(순서대로 회사검색, 웹문서검색, AI응답답변)
-index_name:str = "preanswer"
+index_name:str = settings['ES_PREANSWER_INDEX_NAME']
 preanswer_embed_classification:list = ["company", "web", "ai"]  
 # es 임베딩 생성
 preanswer_embed = ES_Embed_Text(es_url=settings['ES_URL'], index_name=index_name, mapping=mapping, 
@@ -123,8 +125,8 @@ def scraping_web(url:str, srcfilepath:str, tarfilepath:str):
             shaai.extract(srcPath=srcfilepath, tgtPath=tarfilepath)   # srcPath 경로 문서내용추출후 tgtPath파일로 저장
             
             text = webscraping.readlines_file(filepath=tarfilepath, min_len=20) # 파일 한줄씩 읽어와서 text로 리턴
-            if len(text) > 4000:
-                text = text[0:3999]
+            if len(text) > SCRAPING_WEB_MAX_LEN:
+                text = text[0:SCRAPING_WEB_MAX_LEN-1]
         except Exception as e:
             print(f'extract error=>{e}')
             error = 1002
@@ -338,7 +340,6 @@ async def search_documents(esindex:str,
 
         return HTMLResponse(content=html_content)
 
-    
 #----------------------------------------------------------------------
 
 #=========================================================
@@ -550,7 +551,9 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
         system_prompt:str = settings['SYSTEM_PROMPT']
         f_min_score:float = settings['ES_SEARCH_MIN_SCORE']
         api_server_url:str = settings['API_SERVER_URL']
-            
+        qmethod:int = settings['ES_Q_METHOD']
+        es_index_name:str = settings['ES_INDEX_NAME']
+        
         if prompt:
             input_prompt = prompt
         else:
@@ -596,6 +599,7 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
         if user_mode == 5:
             label_str = "다시 요약.."
             
+        #--------------------------------     
         template = {
             "version": "2.0",
             "template": {
@@ -613,7 +617,7 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
         # 검색된 내용 카카오톡 쳇봇 Text 구성     
         if user_mode == 0:  # 회사본문검색 
             # weburl = '10.10.4.10:9000/es/qaindex/docs?query='회사창립일은언제?'&search_size=3&qmethod=2&show=1
-            webLinkUrl = api_server_url+'/es/qaindex/docs?query='+query+'&search_size=4&qmethod=2&show=1'
+            webLinkUrl = f"{api_server_url}/es/{es_index_name}/docs?query={query}&search_size=4&qmethod={qmethod}&show=1"
    
             template["template"]["outputs"].append({
                 "textCard": {
@@ -650,13 +654,36 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
                 }
             })
         elif user_mode == 5: # URL 요약
-            template["template"]["outputs"].append({
-                "textCard": {
-                    "title": '💫' + query,
-                    "description": '(time:' + str(formatted_elapsed_time) + ')\n' + response
-                }
-            })
             
+            if len(response) > 330: # 응답 길이가 너무 크면 simpletext로 처리함
+                text = f"💫{query}\n\n(time:{str(formatted_elapsed_time)})\n{response}"
+                template = {
+                    "version": "2.0",
+                    "template": {
+                        "outputs": [
+                            {
+                                "simpleText": {
+                                    "text": text
+                                }
+                            }
+                        ],
+                        "quickReplies": [
+                            {
+                                "messageText": '?'+query,
+                                "action": "message",
+                                "label": label_str
+                            }
+                          ]
+                    }
+                }
+            else:
+                template["template"]["outputs"].append({
+                    "textCard": {
+                        "title": '💫' + query,
+                        "description": '(time:' + str(formatted_elapsed_time) + ')\n' + response
+                    }
+                })
+
         # 유사한 질문이 있으면 추가
         #myutils.log_message(f"\t[call_callback]preanswer_docs\n{preanswer_docs}\n")
         similar_query(preanswer_docs=preanswer_docs, template=template)
@@ -718,7 +745,7 @@ async def chabot3(content: Dict):
     assert 0 <= qmethod <= 2, 'Error: qmethod should be in the range 0 to 2'
        
     search_size:int = 4      # 회사본문 검색 계수
-    esindex:str = "qaindex"  # qaindex    
+    esindex:str = settings['ES_INDEX_NAME']#"qaindex"  # qaindex    
    
     bFind_docs:bool = True   # True이면 회사본문임베딩 찾은 경우
     content:dict = {}
@@ -873,11 +900,12 @@ async def chabot3(content: Dict):
         try:
             if s_site == "naver":
                 # 네이버 검색
-                classification=['webkr', 'blog', 'news']
+                classification=['news', 'webkr', 'blog']
                 # 랜덤하게 2개 선택
                 #selected_items = random.sample(classification, 2)
-                random.shuffle(classification)  #랜덤하게 3개 섞음
-                s_contexts, s_best_contexts, s_error = naver_api.search_naver(query=query, classification=classification, start=random.randint(1, 2), display=8)
+                #random.shuffle(classification)  #랜덤하게 3개 섞음
+                #start=random.randint(1, 2)
+                s_contexts, s_best_contexts, s_error = naver_api.search_naver(query=query, classification=classification, start=1, display=6)
             else: # 구글 검색
                 s_contexts, s_best_contexts, s_error = google_api.search_google(query=query, page=2) # page=2이면 20개 검색
                 s_str = "구글"
@@ -891,8 +919,8 @@ async def chabot3(content: Dict):
         # prompt 구성
         if len(s_contexts) > 0 and s_error == 0:
             for idx, con in enumerate(s_contexts):
-                if con['descript'] and con['link']:
-                    s_context += con['descript']+'\n\n'
+                if con['descript'] and con['title']:
+                    s_context += f"{con['title']}\n{con['descript']}\n\n"
                                
             # text-davinci-003 모델에서, 프롬프트 길이가 총 1772 넘어가면 BadRequest('https://api.openai.com/v1/completions') 에러 남.
             # 따라서 context 길이가 1730 이상이면 1730까지만 처리함.
@@ -922,8 +950,8 @@ async def chabot3(content: Dict):
         
         context, error = scraping_web(url=query, srcfilepath=srcfilepath, tarfilepath=tarfilepath)
         if len(context) > 300:
-            if len(context) > 4000:
-                context = context[0:3999]
+            if len(context) > SCRAPING_WEB_MAX_LEN:
+                context = context[0:SCRAPING_WEB_MAX_LEN-1]
             
             prompt = f'{context}\n\nQ:위 내용을 요약해줘. A:'
             search_str = "💫URL 내용 요약중.."
@@ -1089,7 +1117,6 @@ async def chabot3(content: Dict):
         }
     
     json_response = JSONResponse(content=template)
-    
     return json_response
 
 #----------------------------------------------------------------------

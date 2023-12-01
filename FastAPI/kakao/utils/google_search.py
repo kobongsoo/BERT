@@ -1,5 +1,6 @@
 # 출처 : https://www.delftstack.com/ko/howto/python/python-google-search-api/
 import requests
+from .utils import to_replace
 
 class GoogleSearchAPI:
     
@@ -34,15 +35,18 @@ class GoogleSearchAPI:
                 for i, search_item in enumerate(search_items, start=1):
                     try:
                         long_description = search_item["pagemap"]["metatags"][0]["og:description"]
+                        long_description = to_replace(long_description)
                     except KeyError:
                         long_description = "N/A"
-
+                    
                     # get the title of the page
                     title = search_item.get("title")
-
+                    title = to_replace(title)
+                    
                     # get the page snippet
                     descript = search_item.get("snippet")
-
+                    descript = to_replace(descript)
+                    
                     # alternatively, you also can get the HTML snippet (bolded keywords)
                     html_snippet = search_item.get("htmlSnippet")
 
