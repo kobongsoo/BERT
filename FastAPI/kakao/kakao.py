@@ -337,18 +337,19 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
         #-----------------------------------------------------------------------
         # user_mode==6(이미지 OCR 텍스트 추출)인 경우, 이미지에서 TEXT 추출 후 prompt 구성
         google_vision_error:int = 0
+        google_vision_url:str = query # url 저장해둠.
         if user_mode == 6:
-            res, google_vision_error=google_vision.ocr_url(url=query)
+            res, google_vision_error=google_vision.ocr_url(url=google_vision_url)
             if google_vision_error == 0:
                 if len(res) > 0:
                     response = res[0]
                     query=f"이미지에서 검출된 글자 수: {len(res[0])}"    
                 else:
                     response = "⚠️이미지에서 글자를 검출 하지 못했습니다."
-                    query='이미지에서 추출한 내용 없음..'    
+                    query='이미지에 글자 없음..'    
             else:
-                response = f"⚠️이미지에서 글자 검출중 오류가 발생하였습니다.\n\n{res}"
-                query='이미지 검출 에러..'      
+                response = f"⚠️이미지에서 글자 검출 중 오류가 발생하였습니다.\n\n{res}"
+                query='이미지 글자 검출시 에러..'      
                            
         #-----------------------------------------------------------------------
         
@@ -366,8 +367,18 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
             #-----------------------------------------------------------------------
             # GPT text 생성
             if gpt_model.startswith("gpt-"):
+                preanswer_list:list = []
+                
+                # AI 검색(user_mode=2) 일대만 이전 GPT 답변 목록 얻어옴
+                if user_mode == 2: # AI 검색(user_mode=2) 
+                    preanswers = userdb.select_assistants(user_id=user_id)
+                    if preanswers != -1:
+                        for preanswer in preanswers:
+                            if preanswer['preanswer']:
+                                preanswer_list.append(preanswer['preanswer'])
+
                 response, status = generate_text_GPT2(gpt_model=gpt_model, prompt=input_prompt, system_prompt=system_prompt, 
-                                                      stream=True, timeout=20) #timeout=20초면 2번 돌게 되므로 총 40초 대기함
+                                                      assistants=preanswer_list, stream=True, timeout=20) #timeout=20초면 2번 돌게 되므로 총 40초 대기함
             else:
                 response, status = generate_text_davinci(gpt_model=gpt_model, prompt=input_prompt, stream=True, timeout=20)
 
@@ -376,7 +387,12 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
                 if user_mode < 5:
                     res, prequery_docs, status1 = prequery_embed.delete_insert_doc(doc={'query':query, 'response':response},
                                                                                classification=prequery_embed_classification[user_mode])
-                     # 로그만 남기고 진행
+                    
+                    # AI 검색일때만 이전 답변 저장
+                    if user_mode == 2: # AI 검색(user_mode=2) 
+                        userdb.insert_assistants(user_id=user_id, preanswer=response)
+                    
+                    # 로그만 남기고 진행
                     if status1 != 0:
                         myutils.log_message(f'[call_callback][error]==>insert_doc:{res}\n')
             else:
@@ -545,6 +561,20 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
                         ]
                     }
                 })
+            elif google_vision_error != 0:
+                template["template"]["outputs"].append({
+                    "textCard": {
+                        "title": '📷' + query,
+                        "description": '(time:' + str(formatted_elapsed_time) + ')\n' + response,
+                         "buttons": [
+                            {
+                                "action": "message",
+                                "label": "📷글자검출 다시하기..",
+                                "messageText": '@'+google_vison_url
+                            }
+                        ]
+                    }
+                })
             else:
                 template["template"]["outputs"].append({
                     "textCard": {
@@ -645,7 +675,7 @@ async def chabot3(content1: Dict):
     # prefix에 ?, !붙여서 질문하면 이전 질문 검색 안함.
     prequery_search = True   # True=이전질문 검색함.
     prefix_query1 = query1[0]
-    if prefix_query1 == '?' or prefix_query1 == '!':
+    if prefix_query1 == '?' or prefix_query1 == '!' or prefix_query1 == '@':
         query = query1[1:]
         prequery_search = False
     else:
@@ -668,8 +698,8 @@ async def chabot3(content1: Dict):
     if webscraping.is_url(query) == True and query_format == "":
         user_mode = 5    
         
-    # 입력 format이 image이면 사용자 모드는 6(이미지 OCR)로 설정
-    if query_format == "image":
+    # 입력 format이 image 혹은  이미지에서 글자다시 검출인경우(prefix_query1 == '@').. 사용자 모드는 6(이미지 OCR)로 설정
+    if query_format == "image" or prefix_query1 == '@':
         user_mode = 6  
      
     # prefix_query1 이 '!' 이면 '이미지내용 요약' 임.
@@ -852,7 +882,11 @@ async def chabot3(content1: Dict):
     #----------------------------------------
     # 6=이미지 ocr
     if user_mode == 6:
-        ocr_url = content1['params']['media']['url']
+        if prefix_query1 == '@':  # 이미지에서 글자다시 검출인경우..
+            ocr_url = query
+        else:
+            ocr_url = content1['params']['media']['url']
+            
         query = ocr_url # query로는 url 입력
         search_str = "📷이미지에서 글자 검출중.."
     #----------------------------------------    
@@ -920,6 +954,9 @@ def set_userinfo(content, user_mode:int):
         return 1002
 
     userdb.insert_user_mode(user_id, user_mode) # 해당 사용자의 user_id 모드를 0로 업데이트
+    
+    userdb.delete_assistants(user_id=user_id)   # 이전 질문 내용 모두 제거
+ 
     return 0
  
 #-----------------------------------------------------------
@@ -1015,8 +1052,8 @@ async def chabot3(content: Dict):
 async def searchai(content: Dict):
     if set_userinfo(content=content["userRequest"], user_mode=2) != 0:
         return
-    
-    title = "🤖AI 응답 모드\n질문을 하면 모아이가 알아서 답변을 해줍니다."
+       
+    title = "🤖AI 응답 모드\n새로운 대화를 시작합니다.\n질문을 하면 모아이가 알아서 답변을 합니다."
     descript = '''답변은 최대⏰30초 걸릴 수 있으며,종종 엉뚱한 답변도 합니다.
     '''
     template = {

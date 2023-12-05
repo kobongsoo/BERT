@@ -83,26 +83,29 @@ def generate_text_davinci(gpt_model:str, prompt:str,
 # => 아래 1번 함수와 차이점은 timeout(초)를 설정할수 있음.
 #-----------------------------------------
 def generate_text_GPT2(gpt_model:str, prompt:str, system_prompt:str="", 
-                       timeout:int=20, stream:bool=False):
+                       assistants:list=[], timeout:int=20, stream:bool=False):
     
     error = 0
     answer:str = ""
+    messages:list = []
     start_time = time.time()
     
-    messeges=[]
-    if system_prompt:
-        messeges = [
-                {"role": "system", "content": system_prompt},
-                {'role': 'user','content': prompt}
-            ]
-    else:
-        messeges = [
-                {'role': 'user','content': prompt}
-            ]
+    if len(system_prompt) > 0:
+        messages.append( {"role": "system", "content": system_prompt} )
+    
+    if len(assistants) > 0:
+        for assistant in assistants:
+            if assistant:
+                messages.append( {"role": "assistant", "content": assistant} )
+    
+    if len(prompt) > 0:
+        messages.append( {"role": "user", "content": prompt} )
+        
+    print(f'messages:{messages}')
     
     data = {
         'model': gpt_model,
-        'messages': messeges,
+        'messages': messages,
         'max_tokens': 1024,
         'temperature':0.5,# temperature 0~2 범위 : 작을수록 정형화된 답변, 클수록 유연한 답변(2는 엉뚱한 답변을 하므로, 1.5정도가 좋은것 같음=기본값은=1)
         'stream': stream,
@@ -161,10 +164,11 @@ def generate_text_GPT2(gpt_model:str, prompt:str, system_prompt:str="",
 # 캐싱을 위한 데코레이터 설정
 #@lru_cache(maxsize=256)
 def generate_text_GPT(gpt_model:str, prompt:str, system_prompt:str="",
-                     stream:bool=False):
+                     assistants:list=[], stream:bool=False):
     
     error = 0
     answer:str = ""
+    messages:list = []
     assert gpt_model, f'gpt_model is empty'
     assert prompt, f'prompt is empty'
     
@@ -173,16 +177,16 @@ def generate_text_GPT(gpt_model:str, prompt:str, system_prompt:str="",
     #print()
     
     # 메시지 설정
-    messages=[]
-    if system_prompt:
-        messages = [
-                {"role": "system", "content": system_prompt},
-                {'role': 'user','content': prompt}
-            ]
-    else:
-        messages = [
-                {'role': 'user','content': prompt}
-            ]
+    if len(system_prompt) > 0:
+        messages.append( {"role": "system", "content": system_prompt} )
+    
+    if len(assistants) > 0:
+        for assistant in assistants:
+            if assistant:
+                messages.append( {"role": "assistant", "content": assistant} )
+    
+    if len(prompt) > 0:
+        messages.append( {"role": "user", "content": prompt} )
          
     try:
         # ChatGPT-API 호출하기

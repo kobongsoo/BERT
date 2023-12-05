@@ -1,6 +1,7 @@
 #!pip install pysqlite
 import sqlite3 as sq
 import pandas as pd
+import uuid
 #--------------------------------------------------------------------------------
 # 호출 예시
 # from utils import sqliteDB
@@ -29,6 +30,8 @@ class SqliteDB:
         assert dbname, f'dbname is empty'
         
         self.dbname = dbname
+        
+        self.assistants_len = 3  # gpt 이전 대화 저장 계수
         
         # 연결할 때
         self.conn = sq.connect(self.dbname)
@@ -184,6 +187,64 @@ class SqliteDB:
             dbquery = f"DELETE FROM setting WHERE id = '{user_id}'"
             self.c.execute(dbquery)
             self.conn.commit()
-   #----------------------------------------------           
-   
-    
+    #----------------------------------------------           
+    # gpt 지난 기억 assistants 메시지 관련
+    def select_assistants(self, user_id:str):
+        assert user_id, f'user_id is empty'
+        
+        assistants:list = []
+        dbquery = f"SELECT * FROM assistants WHERE id='{user_id}'"
+        df = pd.read_sql_query(dbquery, self.conn)
+               
+        if len(df) > 0:
+            for idx in range(len(df)):
+                data:dict = {}
+                data['id']=df['id'][idx]
+                data['uid']=df['uid'][idx]
+                data['preanswer']=df['preanswer'][idx]
+                assistants.append(data)
+
+            return assistants
+        else:
+            return -1
+        
+    # insert_assistants
+    def insert_assistants(self, user_id:str, preanswer:str):
+        
+        assert user_id, f'user_id is empty'
+        assert preanswer, f'preanswer is empty'
+        unique_id:str = ""
+        
+        try:
+            
+            res = self.select_assistants(user_id)
+            print(f'[insert_assistants]=>res:{res}')
+            
+            if res != -1: # 3개 이상이면 맨 앞에서 삭제
+                if len(res) > self.assistants_len-1:
+                    unique_id = res[0]['uid']
+                    dbquery = f"DELETE FROM assistants WHERE id = '{user_id}' and uid = '{unique_id}'"
+                    self.c.execute(dbquery)
+                    self.conn.commit()
+            
+            # UUID4를 사용하여 랜덤한 유니크한 ID 생성
+            unique_id:str = str(uuid.uuid4())
+            
+            dbquery = f"INSERT INTO assistants (uid, id, preanswer) VALUES ('{unique_id}','{user_id}', '{preanswer}')"
+            print(f'[insert_assistants]=>dbquery:{dbquery}')
+            self.c.execute(dbquery)
+            self.conn.commit()
+            return 0
+        except Exception as e:
+            print(f'insert_assistants=>error:{e}')
+            return 1001
+        
+    # assistants 테이블 :해당 id 있으면 삭제
+    def delete_assistants(self, user_id:str):
+        assert user_id, f'user_id is empty'
+        res = self.select_assistants(user_id)
+        
+        if res != -1: # 있으면 모두 제거
+            dbquery = f"DELETE FROM assistants WHERE id = '{user_id}'"
+            self.c.execute(dbquery)
+            self.conn.commit()

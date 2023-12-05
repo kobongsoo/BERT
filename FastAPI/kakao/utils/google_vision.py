@@ -30,14 +30,22 @@ class Google_Vision:
         image = vision.Image()
         image.source.image_uri = url
     
-        response = self.client.text_detection(image=image)
-        texts = response.text_annotations
-        #print(f'texts:\n{texts}\n')
-        
         res:list = []
-        if response.error.message:
-            res.append(f'{response.error.message}\nFor more info on error messages, check: https://cloud.google.com/apis/design/errors')
-            return res, 1001
+        #time.sleep(1)
+        
+        for idx in range(2):
+            response = self.client.text_detection(image=image)
+            texts = response.text_annotations
+            #print(f'texts:\n{texts}\n')
+        
+            if response.error.message:
+                if idx == 0:
+                    continue
+                else:
+                    res.append(f'{response.error.message}\nFor more info on error messages, check: https://cloud.google.com/apis/design/errors')
+                    return res, 1001
+            else:
+                break
         
         for text in texts:
             res.append(text.description)
