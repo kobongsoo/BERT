@@ -39,10 +39,13 @@ class Google_Vision:
             #print(f'texts:\n{texts}\n')
         
             if response.error.message:
+                error:str = f'{response.error.message}\nFor more info on error messages, check: https://cloud.google.com/apis/design/errors'
+                print(f'count:{idx}\n{error}')
+                
                 if idx == 0:
                     continue
                 else:
-                    res.append(f'{response.error.message}\nFor more info on error messages, check: https://cloud.google.com/apis/design/errors')
+                    res.append(error)
                     return res, 1001
             else:
                 break

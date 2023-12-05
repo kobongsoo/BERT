@@ -31,7 +31,7 @@ class SqliteDB:
         
         self.dbname = dbname
         
-        self.assistants_len = 3  # gpt 이전 대화 저장 계수
+        self.assistants_len = 2  # gpt 이전 대화 저장 계수
         
         # 연결할 때
         self.conn = sq.connect(self.dbname)

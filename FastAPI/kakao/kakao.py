@@ -570,7 +570,7 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
                             {
                                 "action": "message",
                                 "label": "📷글자검출 다시하기..",
-                                "messageText": '@'+google_vison_url
+                                "messageText": '@'+google_vision_url
                             }
                         ]
                     }
@@ -739,33 +739,38 @@ async def chabot3(content1: Dict):
                         
                 # 정확도 스코어 구함
                 format_prequery_score = myutils.get_es_format_score(prequery_score)
-                     
-                template = {
+                pre_descript =   f'💬예전 질문과 답변입니다. (유사도:{format_prequery_score}%)\nQ:{prequery}\n{prequery_response}'  
+                pre_template = {
                     "version": "2.0",
-                    "useCallback": False,
                     "template": {
-                        "outputs": [
-                        {
-                            "textCard": {
-                                "title": query1,
-                                "description": f'💬예전 질문과 답변입니다. (유사도:{format_prequery_score}%)\nQ:{prequery}\n{prequery_response}'
-                            }
-                        }
-                      ],
+                        "outputs": [],
                         "quickReplies": [
-                        {
-                            "action": "message",
-                            "label": "다시 검색..",
-                            "messageText": '?'+query
+                            {
+                                "action": "message",
+                                "label": "다시검색..",
+                                "messageText": '?'+query
+                            }
+                          ]
                         }
-                      ]
                     }
-                }
-                
+                if len(pre_descript) > 330:
+                    pre_template["template"]["outputs"].append({
+                        "simpleText": {
+                            "text": f'{query1}\n\n{pre_descript}'
+                        }
+                    })
+                else:
+                    pre_template["template"]["outputs"].append({
+                        "textCard": {
+                            "title": query1,
+                            "description": pre_descript
+                        }
+                    })
+                    
                 # 유사한 질문이 있으면 추가
-                similar_query(prequery_docs=prequery_docs, template=template)
+                similar_query(prequery_docs=prequery_docs, template=pre_template)
                   
-                json_response = JSONResponse(content=template)
+                json_response = JSONResponse(content=pre_template)
 
                 # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 user_id 제거
                 id_manager.remove_id_all(user_id) # id 제거
