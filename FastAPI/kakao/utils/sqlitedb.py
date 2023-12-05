@@ -133,7 +133,7 @@ class SqliteDB:
     #----------------------------------------------    
     # setting 관련 
     # setting 테이블 : id 입력 시 해당 site(naver, google) 출력 
-    # userdb.execute('CREATE TABLE setting(id TEXT, site TEXT, preanswer TEXT)')  # setting 테이블 생성
+    # userdb.execute('CREATE TABLE setting(id TEXT, site TEXT, prequery TEXT)')  # setting 테이블 생성
     def select_setting(self, user_id:str):
         assert user_id, f'user_id is empty'
         
@@ -146,26 +146,26 @@ class SqliteDB:
             response:dict={}
             response['id']=df['id'][0]
             response['site']=df['site'][0]
-            response['preanswer']=df['preanswer'][0]
+            response['prequery']=df['prequery'][0]
             return response
         else:
             return -1
         
     # search_site 테이블 :id 있으면 site 업데이트, 없으면 추가
-    def insert_setting(self, user_id:str, site:str, preanswer:int):
+    def insert_setting(self, user_id:str, site:str, prequery:int):
         
         assert user_id, f'user_id is empty'
         assert site, f'site is empty'
-        assert preanswer >=0, f'preanswer is wrong'
+        assert prequery >=0, f'prequery is wrong'
         
         try:
             res = self.select_setting(user_id)
             #print(f'[insert_setting]=>res:{res}')
             
             if res == -1: # 없으면 추가
-                dbquery = f"INSERT INTO setting (id, site, preanswer) VALUES ('{user_id}', '{site}', {preanswer})"
+                dbquery = f"INSERT INTO setting (id, site, prequery) VALUES ('{user_id}', '{site}', {prequery})"
             else: # 있으면 업데이트
-                dbquery = f"UPDATE setting SET site='{site}', preanswer={preanswer} WHERE id = '{user_id}'"
+                dbquery = f"UPDATE setting SET site='{site}', prequery={prequery} WHERE id = '{user_id}'"
 
             print(f'[insert_setting]=>dbquery:{dbquery}')
             self.c.execute(dbquery)

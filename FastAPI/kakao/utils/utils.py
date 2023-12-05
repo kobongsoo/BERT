@@ -11,7 +11,19 @@ import time
 import pytz
 from datetime import datetime
 import re
+import string
 
+#로컬파일 삭제
+def delete_local_file(filepath:str):
+    if len(filepath) < 1:
+        return
+    
+    try:
+        os.remove(filepath)
+        print(f"File deleted: {filepath}")
+    except FileNotFoundError:
+        print(f"File not found: {filepath}")
+        
 # 랜덤한 문자열 만드는 함수 
 def generate_random_string(length):
     letters = string.ascii_letters
@@ -189,7 +201,7 @@ class MyUtils:
               "enabled": "true"
             },
             "properties": {
-              "answer": {
+              "query": {
                 "type": "text"
               },
               "response": {
@@ -198,7 +210,7 @@ class MyUtils:
               "classification" : {
                 "type": "text"
               },
-              "answer_vector": {
+              "qr_vector": {
                 "type": "dense_vector",
                 "dims": self.settings['E_OUT_DIMENSION']
               }

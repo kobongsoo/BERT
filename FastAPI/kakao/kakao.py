@@ -51,6 +51,7 @@ from utils import load_embed_model, async_embedding, index_data, async_es_embed_
 from utils import async_chat_search, remove_prequery, get_title_with_urllink, make_prompt
 from utils import generate_text_GPT2, generate_text_davinci
 from utils import IdManager, NaverSearchAPI, GoogleSearchAPI, ES_Embed_Text, MyUtils, SqliteDB, WebScraping
+from utils import Google_Vision
 
 #----------------------------------------------------------------------
 # 전역 변수로 선언 => 함수 내부에서 사용할때 global 해줘야 함.
@@ -93,15 +94,20 @@ google_api = GoogleSearchAPI(api_key=settings['GOOGLE_API_KEY'], search_engine_i
 mapping = myutils.get_mapping_esindex() # es mapping index 가져옴.
 
 # 회사본문검색 이전 답변 저장.(순서대로 회사검색, 웹문서검색, AI응답답변)
-index_name:str = settings['ES_PREANSWER_INDEX_NAME']
-preanswer_embed_classification:list = ["company", "web", "ai"]  
+index_name:str = settings['ES_PREQUERY_INDEX_NAME']
+prequery_embed_classification:list = ["company", "web", "ai"]  
 # es 임베딩 생성
-preanswer_embed = ES_Embed_Text(es_url=settings['ES_URL'], index_name=index_name, mapping=mapping, 
+prequery_embed = ES_Embed_Text(es_url=settings['ES_URL'], index_name=index_name, mapping=mapping, 
                               bi_encoder=BI_ENCODER1, float_type=settings["E_FLOAT_TYPE"], uid_min_score=0.10)
 
 # url 웹스크래핑
 webscraping = WebScraping()
 shaai = MShaAI() # mpowerai(synap 문서필터)
+
+# 이미지 OCR
+# google_vision 인증 json 파일 => # 출처: https://yunwoong.tistory.com/148
+service_account_jsonfile_path = "./data/vison-ocr-406902-3f2c14c7457f.json"
+google_vision = Google_Vision(service_account_jsonfile_path=service_account_jsonfile_path)
 #---------------------------------------------------------------------------
 # url 스크래핑 한후 synap으로 문서내용 추출하는 함수 
 # url: 추출할 url(문서url 혹은 웹페이지), srcfilepath: url 다운로드후 저장할 파일경로, tarfilepath: synap으로 내용 추출후 저장할 파일 경로
@@ -148,129 +154,6 @@ async def root():
     return { "MoI(모아이)":"카카오톡 연동 AI 모델", "1.임베딩모델": settings["E_MODEL_PATH"], "2.LLM모델": settings["GPT_MODEL"], "3.ES" : settings["ES_URL"]}
 #----------------------------------------------------------------------
 
-#=========================================================
-# GET : 입력 문장 리스트에 대한 임베딩값 리턴(비동기)
-# => http://127.0.0.1:9000/vectors?sentence="오늘은 비가 온다"&sentence="오늘은 날씨가 좋다"
-# - in : 문장 리스트 (예: ['오늘 날씨가 좋다', '내일은 비가 온다'] )
-# - out: 문장 리스트에 대한 임베딩 벡터
-#=========================================================
-@app.get("/vectors", status_code=200)
-async def get_vector(sentences: List[str] = Query(..., description="sentences", min_length=1, max_length=255, alias="sentence")):
-
-    # embedding 함수를 async 함수로 wrapping한 async_embedding 함수를 실행합니다.
-    try:
-        embeddings = await async_embedding(paragraphs=sentences, bi_encoder=BI_ENCODER1, float_type=settings["E_FLOAT_TYPE"])
-    except Exception as e:
-        error = f'async_embedding fail({settings["ES_URL"]})'
-        msg = f'{error}=>{e}'
-        myutils.log_message(f'[error] /vectors {msg}')
-        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
-        
-    embeddings_str = [",".join(str(elem) for elem in sublist) for sublist in embeddings]
-    return {"vectors": embeddings_str}
-#----------------------------------------------------------------------
-
-#=========================================================
-# POST: es/{인덱스명}/docs (입력 docs(문서)에 대한 임베딩값 구하고 ElasticSearch(이하:ES) 추가.(동기))
-# => http://127.0.0.1:9000/es/{인덱스명}/docs
-# - in : docs: 문서 (예: ['오늘 날씨가 좋다', '내일은 비가 온다'] ), titles: 문서제목, uids(문서 고유id)
-# - in : esindexname : ES 인덱스명, createindex=True(True=무조건 인덱스생성. 만약 있으면 삭제후 생성/ Flase=있으면 추가, 없으면 생성)
-# - in : infilepath : True이면 documnets에 filepath 입력되고, 이때는 file를 로딩함. False이면 documents로는 문서내용이 들어옴.
-# - out: ES 성공 실패??
-#=========================================================
-class DocsEmbedIn(BaseModel):
-    uids: list       # uid(문서 고유id)->rfile_name
-    titles: list     # 제목->rfiletext
-    documents: list  # 문서내용 혹은 file 경로 (infilepath=True이면, filepath 입력됨)
-    
-@app.post("/es/{esindex}/docs")    
-def embed_documents(esindex:str, Data:DocsEmbedIn, infilepath:bool=False, createindex:bool=False):
-    error:str = 'success'
-        
-    documents = Data.documents
-    uids = Data.uids
-    titles = Data.titles
-    
-    ES_URL = settings['ES_URL']
-    myutils.log_message(f'[info] /es/{esindex}/docs start-----\nES_URL:{ES_URL}, esindex:{esindex}, createindex:{createindex}, uids:{uids}, titles:{titles}')
-
-    # 인자 검사
-    if len(documents) < 1:
-        error = 'documents len < 1'
-    elif len(uids) < 1:
-        error = 'uid not found'
-    elif len(titles) < 1:
-        error = 'titles not found'
-    elif not esindex:
-        error = 'esindex not found'
-     
-    if error != 'success':
-        myutils.log_message(f'[error] /embed/es {error}')
-        raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
-    
-    # 1.elasticsearch 접속
-    try:
-        es = Elasticsearch(ES_URL)
-        myutils.log_message(f'[info] /embed/es 1.Elasticsearch connect success=>{ES_URL}')
-    except Exception as e:
-        error = f'Elasticsearch connect fail({ES_URL})'
-        msg = f'{error}=>{e}'
-        myutils.log_message(f'[error] /embed/es {msg}')
-        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
-        
-    #myutils.log_message(settings, f'es.info:{es.info()}')
-
-    # 2. 추출된 문서들 불러와서 df로 만듬
-    try:              
-        df_contexts = make_docs_df(mydocuments=documents, mytitles=titles, myuids=uids, infilepath=infilepath) # myutils/kss_utils.py
-        myutils.log_message(f'[info] /embed/es 2.load_docs success')
-    except Exception as e:
-        error = f'load docs fail'
-        msg = f'{error}=>{e}'
-        myutils.log_message(f'[error] /embed/es {msg}')
-        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
-                                                                    
-    # 3. 문장 추출
-    try:
-        doc_sentences = get_sentences(df=df_contexts, 
-                                      remove_sentnece_len=settings['REMOVE_SENTENCE_LEN'], 
-                                      remove_duplication=settings['REMOVE_DUPLICATION']) # myutils/kss_utils.py
-        
-        myutils.log_message(f'[info] /embed/es 3.get_sentences success=>len(doc_sentences):{len(doc_sentences)}')
-    except Exception as e:
-        error = f'get_sentences fail'
-        msg = f'{error}=>{e}'
-        myutils.log_message(f'[error] /embed/es {msg}')
-        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
-   
-    # 4.ES 인덱스 생성
-    try:
-        ES_INDEX_FILE = settings['ES_INDEX_FILE']
-        create_index(es=es, index_file_path=ES_INDEX_FILE, index_name=esindex, create=createindex) # myutils/es_utils.py
-        myutils.log_message(f'[info] /embed/es 4.create_index success=>index_file:{ES_INDEX_FILE}, index_name:{esindex}')
-    except Exception as e:
-        error = f'create_index fail'
-        msg = f'{error}=>{e}'
-        myutils.log_message(f'[error] /embed/es {msg}')
-        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
-
-    # 5. index 처리
-    try:    
-        # utils/es_embed.py        
-        index_data(es=es, df_contexts=df_contexts, doc_sentences=doc_sentences, 
-                   es_index_name=esindex, out_dimension=settings['E_OUT_DIMENSION'], num_clusters=settings['NUM_CLUSTERS'], 
-                   num_clusters_variable=settings['NUM_CLUSTERS_VARIABLE'], embedding_method=settings['E_METHOD'], clu_mode=settings['CLU_MODE'],
-                   clu_outmode=settings['CLU_OUTMODE'], bi_encoder=BI_ENCODER1, float_type=settings['E_FLOAT_TYPE'],
-                   seed=settings['SEED'], batch_size=settings['ES_BATCH_SIZE'])
-        
-        myutils.log_message(f'[info] /embed/es 5.index_data success\nend-----\n')
-    except Exception as e:
-        error = f'index_data fail'
-        msg = f'{error}=>{e}'
-        myutils.log_message(f'[error] /embed/es {msg}')
-        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
-
-#----------------------------------------------------------------------
 #=========================================================
 # GET : es/{인덱스명}/docs 검색(비동기)
 # => http://127.0.0.1:9000/es/{인덱스}/docs?query=쿼리문장&search_size=5
@@ -383,122 +266,20 @@ async def search_documents_uid(esindex:str,
     return {"query":query, "docs": docs}
 #----------------------------------------------------------------------
 
-#=========================================================
-# DELETE : ES/{인덱스명}/docs 검색(비동기)
-# => http://127.0.0.1:9000/es/{인덱스}/docs?uid=rfile_name
-# - in : uid=삭제할 문서 유니크한 id
-# - out: ??
-#=========================================================
-@app.delete("/es/{esindex}/docs")
-async def delete_documents(esindex:str,
-                           uids:str = Query(...,min_length=1)):
-    error:int = 0
-    uids = uids.strip()
-    myutils.log_message(f'[info] t==>delete /es/{esindex}/docs : id:{uids}')
-    
-    es_url = settings['ES_URL']
-    
-    try:
-        error = await async_es_embed_delete(esindex=esindex, uids=uids, es_url=es_url)
-    except Exception as e:
-        error = f'async_es_embed_delete fail'
-        msg = f'{error}=>{e}'
-        myutils.log_message(f'[error] delete /es/{esindex}/docs {msg}')
-        raise HTTPException(status_code=404, detail=msg, headers={"X-Error": error},)
-        
-    if error != 0:
-        raise HTTPException(status_code=404, detail=error, headers={"X-Error": error},)
-#----------------------------------------------------------------------
-
-#=========================================================================================
-# 체팅 UI
-# - gpt 이용
-#========================================================================================= 
-
-#=========================================================
-# 메인 bart_chat.html 호출하는 api  
-#=========================================================
-@app.get("/chat")
-async def form(request: Request):
-    return templates.TemplateResponse("chat01.html", {"request": request})
-
-#=========================================================
-# 검색 처리 api
-#=========================================================
-@app.post("/es/{esindex}/chat")
-async def search_documents(esindex:str,
-                     request: Request
-                     ): 
-    
-    start_time = time.time()
-    
-    form = await request.form()
-    search_size = 3
-    
-    query = form.get("query").strip()
-    prefix_query = query[0]
-           
-    prequery = form.get("prequery").strip()
-    checkdocsstr = form.get("checkdocs")
-    #print(f'==>checkdocsstr :{checkdocsstr}')
-    
-    # 내용검색 체크버튼 값은 False일때 None으로 들어오고, True이면 on으로 들어옴. 따라서 None으로 들어오면 True 해줌.
-    checkdocs = False
-    if checkdocsstr != None:
-        checkdocs=True
-       
-    #print(f'1) /es/{esindex}/docs/bard/chat')
-    #print(f'2) prequery:{prequery}')
-    #print(f'3) query:{query}')
-    
-    # 이전 답변/응답 문단들 계수가 4를 넘으면, 가장오래된 문단을 제거하고, 각 문단별 <hr> 구분자를 넣어서 prequery를 만든다.
-    prequery = remove_prequery(prequery, 4)
-
-    # 새로운 대화 시도인 경우, 기존 preanswer 초기화 함.
-    if query.startswith("?새로운 대화"):
-        checkdocs=False
-        prequery=""
-   
-    print(f'\t==>search_documents: checkdocs :{checkdocs}')
-     
-    # 검색 시작.
-    question, answer, context1 = await async_chat_search(settings=settings, esindex=esindex, query=query, 
-                                                         search_size=search_size, bi_encoder=BI_ENCODER1, checkdocs=checkdocs)
-        
-    # context에서 title만 뽑아내서 url링크 만듬.
-    if context1:
-        titles_str = get_title_with_urllink(context=context1, data_folder='')
-    else:
-        titles_str =''
-        
-     # 소요된 시간을 계산합니다.
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-
-    # html로 표기할때 중간에 "(쌍따옴표) 있으면 안되므로 , 쌍따옴표를 '(홑따옴표)로 치환
-    question = question.replace('"',"'")
-    answer = answer.replace('"',"'") + '\n( 응답시간:' + str(elapsed_time) + ')'
-    prequery = prequery.replace('"',"'")
-    titles_str = titles_str.replace('"',"'")
- 
-    myutils.log_message(f'[info] \t==>search_documents: question:{question}, answer:{answer}')
-    
-    return templates.TemplateResponse("chat01.html", {"request": request, "question":question, "answer": answer, "preanswer": prequery, "titles": titles_str})
-
 #----------------------------------------------------------------------
 # 유사한 쿼리 quickReplies 추가하기 위한 코드 
-def similar_query(preanswer_docs:list, template:dict):
-    for idx, pdocs in enumerate(preanswer_docs):
+def similar_query(prequery_docs:list, template:dict):
+    for idx, pdocs in enumerate(prequery_docs):
         if idx == 0:
             continue
             
-        if preanswer_docs[idx]['answer'] and preanswer_docs[1]['score']:            
-            preanswer_score = preanswer_docs[idx]['score']
-            if preanswer_score > 1.60:  # 1.60 이상일때만 유사한 질문을 보여줌
+        if prequery_docs[idx]['query'] and prequery_docs[1]['score']:            
+            prequery_score = prequery_docs[idx]['score']
+            if prequery_score > 1.60:  # 1.60 이상일때만 유사한 질문을 보여줌
                 additional_structure = {
-                    "messageText": preanswer_docs[idx]['answer'],
+                    "messageText": prequery_docs[idx]['query'],
                     "action": "message",
-                    "label": f"{preanswer_docs[idx]['answer']}({myutils.get_es_format_score(preanswer_score)}%)"
+                    "label": f"{prequery_docs[idx]['query']}({myutils.get_es_format_score(prequery_score)}%)"
                 }
 
                 template["template"]["quickReplies"].append(additional_structure)
@@ -529,7 +310,6 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
     async with httpx.AsyncClient() as client:
         
         await asyncio.sleep(1)
-        
         error:str = ''
         errormsg:str = ''
         response:str = ''
@@ -554,41 +334,63 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
         qmethod:int = settings['ES_Q_METHOD']
         es_index_name:str = settings['ES_INDEX_NAME']
         
-        if prompt:
-            input_prompt = prompt
-        else:
-            input_prompt = query
-            
-        #myutils.log_message(f"\t[call_callback]==>input_prompt: {input_prompt}, system_prompt:{system_prompt}\n")
-        #--------------------------------
-        # GPT text 생성
-        if gpt_model.startswith("gpt-"):
-            response, status = generate_text_GPT2(gpt_model=gpt_model, prompt=input_prompt, system_prompt=system_prompt, 
-                                                  stream=True, timeout=20) #timeout=20초면 2번 돌게 되므로 총 40초 대기함
-        else:
-            response, status = generate_text_davinci(gpt_model=gpt_model, prompt=input_prompt, stream=True, timeout=20)
-         
-        # GPT text 생성 성공이면=>질문과 답변을 저정해둠.
-        preanswer_docs:list=[]
-        if status == 0:
-            if user_mode != 5:
-                res, preanswer_docs, status1 = preanswer_embed.delete_insert_doc(doc={'answer':query, 'response':response},
-                                                                           classification=preanswer_embed_classification[user_mode])
-                 # 로그만 남기고 진행
-                if status1 != 0:
-                    myutils.log_message(f'[call_callback][error]==>insert_doc:{res}\n')
-        else:
-            if status == 1001: # time out일때
-                query = "응답 시간 초과"
-                response = "⚠️AI 응답이 없습니다. 잠시 후 다시 질문해 주세요.\n(" + response + ")"
+        #-----------------------------------------------------------------------
+        # user_mode==6(이미지 OCR 텍스트 추출)인 경우, 이미지에서 TEXT 추출 후 prompt 구성
+        google_vision_error:int = 0
+        if user_mode == 6:
+            res, google_vision_error=google_vision.ocr_url(url=query)
+            if google_vision_error == 0:
+                if len(res) > 0:
+                    response = res[0]
+                    query=f"이미지에서 검출된 글자 수: {len(res[0])}"    
+                else:
+                    response = "⚠️이미지에서 글자를 검출 하지 못했습니다."
+                    query='이미지에서 추출한 내용 없음..'    
             else:
-                query = "응답 에러"
-                response = "⚠️AI 에러가 발생하였습니다. 잠시 후 다시 질문해 주세요.\n(" + response + ")"
-                    
-            error = f'generate_text_xxx fail=>model:{gpt_model}'
-            myutils.log_message(f'[call_callback][error]==>call_callback:{error}=>{response}\n')
-            docs = []  # docs 초기화
-             
+                response = f"⚠️이미지에서 글자 검출중 오류가 발생하였습니다.\n\n{res}"
+                query='이미지 검출 에러..'      
+                           
+        #-----------------------------------------------------------------------
+        
+        #-----------------------------------------------------------------------
+        # user_mode==6(이미지 OCR 텍스트 추출)이 아닌 경우에만 gpt 실행
+        prequery_docs:list=[]
+        if user_mode != 6:
+            # 프롬프트 구성
+            if prompt:
+                input_prompt = prompt
+            else:
+                input_prompt = query
+
+            #myutils.log_message(f"\t[call_callback]==>input_prompt: {input_prompt}, system_prompt:{system_prompt}\n")
+            #-----------------------------------------------------------------------
+            # GPT text 생성
+            if gpt_model.startswith("gpt-"):
+                response, status = generate_text_GPT2(gpt_model=gpt_model, prompt=input_prompt, system_prompt=system_prompt, 
+                                                      stream=True, timeout=20) #timeout=20초면 2번 돌게 되므로 총 40초 대기함
+            else:
+                response, status = generate_text_davinci(gpt_model=gpt_model, prompt=input_prompt, stream=True, timeout=20)
+
+            # GPT text 생성 성공이면=>질문과 답변을 저정해둠.
+            if status == 0:
+                if user_mode < 5:
+                    res, prequery_docs, status1 = prequery_embed.delete_insert_doc(doc={'query':query, 'response':response},
+                                                                               classification=prequery_embed_classification[user_mode])
+                     # 로그만 남기고 진행
+                    if status1 != 0:
+                        myutils.log_message(f'[call_callback][error]==>insert_doc:{res}\n')
+            else:
+                if status == 1001: # time out일때
+                    query = "응답 시간 초과"
+                    response = "⚠️AI 응답이 없습니다. 잠시 후 다시 질문해 주세요.\n(" + response + ")"
+                else:
+                    query = "응답 에러"
+                    response = "⚠️AI 에러가 발생하였습니다. 잠시 후 다시 질문해 주세요.\n(" + response + ")"
+
+                error = f'generate_text_xxx fail=>model:{gpt_model}'
+                myutils.log_message(f'[call_callback][error]==>call_callback:{error}=>{response}\n')
+                docs = []  # docs 초기화
+        #-----------------------------------------------------------------------      
         myutils.log_message(f"\t[call_callback]==>답변: {response}\n")
         
         # 소요된 시간을 계산합니다.
@@ -596,23 +398,30 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
         formatted_elapsed_time = "{:.2f}".format(end_time - start_time)
         
         label_str:str = "다시 검색.."
-        if user_mode == 5:
-            label_str = "다시 요약.."
-            
-        #--------------------------------     
-        template = {
-            "version": "2.0",
-            "template": {
-                "outputs": [],
-                "quickReplies": [
-                        {
-                            "messageText": '?'+query,
-                            "action": "message",
-                            "label": label_str
-                        }
-                      ]
+        if user_mode == 5: 
+            label_str = "다시 요약.."    
+        #--------------------------------
+        if user_mode == 6 or user_mode == 7: # 이미지 OCR 인 경우
+            template = {
+                "version": "2.0",
+                "template": {
+                    "outputs": []
+                    }
                 }
-            }
+        else:  # 이미지 OCR이 아닌 경우.
+            template = {
+                "version": "2.0",
+                "template": {
+                    "outputs": [],
+                    "quickReplies": [
+                            {
+                                "action": "message",
+                                "label": label_str,
+                                "messageText": '?'+query
+                            }
+                          ]
+                    }
+                }
         #--------------------------------
         # 검색된 내용 카카오톡 쳇봇 Text 구성     
         if user_mode == 0:  # 회사본문검색 
@@ -646,15 +455,32 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
                     ]
                 }
             })
-        elif user_mode == 2:  # AI 검색
-            template["template"]["outputs"].append({
-                "textCard": {
-                    "title": '🤖' + query,
-                    "description": '(time:' + str(formatted_elapsed_time) + ')\n' + response
+        elif user_mode == 2 or user_mode == 7:  # AI 검색(user_mode=2) 혹은 이미지OCR 내용 요약(user_mode==7) 인 경우
+            if len(response) > 330: # 응답 길이가 너무 크면 simpletext로 처리함
+                text = f"💫{query}\n\n(time:{str(formatted_elapsed_time)})\n{response}"
+                if user_mode == 2:
+                    query = '🤖' + query
+                    
+                template = {
+                    "version": "2.0",
+                    "template": {
+                        "outputs": [
+                            {
+                                "simpleText": {
+                                    "text": text
+                                }
+                            }
+                        ]
+                    }
                 }
-            })
-        elif user_mode == 5: # URL 요약
-            
+            else:
+                template["template"]["outputs"].append({
+                    "textCard": {
+                        "title": query,
+                        "description": '(time:' + str(formatted_elapsed_time) + ')\n' + response
+                    }
+                })
+        elif user_mode == 5: # URL 요약           
             if len(response) > 330: # 응답 길이가 너무 크면 simpletext로 처리함
                 text = f"💫{query}\n\n(time:{str(formatted_elapsed_time)})\n{response}"
                 template = {
@@ -669,9 +495,9 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
                         ],
                         "quickReplies": [
                             {
-                                "messageText": '?'+query,
                                 "action": "message",
-                                "label": label_str
+                                "label": label_str,
+                                "messageText": '?'+query,
                             }
                           ]
                     }
@@ -683,10 +509,53 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
                         "description": '(time:' + str(formatted_elapsed_time) + ')\n' + response
                     }
                 })
-
+        elif user_mode == 6: # 이미지 OCR
+            if len(response) > 330 and google_vision_error==0: # 응답 길이가 너무 크면 simpletext로 처리함
+                text = f"📷{query}\n\n(time:{str(formatted_elapsed_time)})\n{response}"
+                template = {
+                    "version": "2.0",
+                    "template": {
+                        "outputs": [
+                            {
+                                "simpleText": {
+                                    "text": text
+                                }
+                            }
+                        ],
+                        "quickReplies": [
+                            {
+                                "action": "message",
+                                "label": "이미지내용요약..",
+                                "messageText": '!'+response
+                            }
+                          ]
+                    }
+                }
+            elif len(response) > 40 and google_vision_error==0: # 40글자보다는 커야 이미지 내용 요약 처리함.
+                template["template"]["outputs"].append({
+                    "textCard": {
+                        "title": '📷' + query,
+                        "description": '(time:' + str(formatted_elapsed_time) + ')\n' + response,
+                        "buttons": [
+                            {
+                                "action": "message",
+                                "label": "이미지내용요약..",
+                                "messageText": '!'+response
+                            }
+                        ]
+                    }
+                })
+            else:
+                template["template"]["outputs"].append({
+                    "textCard": {
+                        "title": '📷' + query,
+                        "description": '(time:' + str(formatted_elapsed_time) + ')\n' + response
+                    }
+                })
+                       
         # 유사한 질문이 있으면 추가
-        #myutils.log_message(f"\t[call_callback]preanswer_docs\n{preanswer_docs}\n")
-        similar_query(preanswer_docs=preanswer_docs, template=template)
+        #myutils.log_message(f"\t[call_callback]prequery_docs\n{prequery_docs}\n")
+        similar_query(prequery_docs=prequery_docs, template=template)
         
         #----------------------------------------
         for i in range(3):
@@ -712,29 +581,30 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
         myutils.log_message(f"\t[call_callback][end]==============\n")
  
         return callback_response
+
 #=========================================================
 # 카카오 쳇봇 연동 테스트
 #=========================================================                     
 @app.post("/chatbot3")
-async def chabot3(content: Dict):
+async def chabot3(content1: Dict):
 
     #await asyncio.sleep(1)
     
     global settings
     settings = myutils.get_options()
-    content1 = content["userRequest"]
+    content1 = content1["userRequest"]
     myutils.log_message(f'[start]==============\nt\[chabot3]==>content1:{content1}\n')
     
-    query1:str = content["userRequest"]["utterance"]  # 질문
-    callbackurl:str = content["userRequest"]["callbackUrl"] # callbackurl
-    user_id:str = content["userRequest"]["user"]["id"]
-    #myutils.log_message(f't\[chabot3]==>user_id:{user_id}\n')
+    query1:str = content1["utterance"]  # 질문
+    callbackurl:str = content1["callbackUrl"] # callbackurl
+    user_id:str = content1["user"]["id"]
     
     # 쿼리가 이미지인지 파악하기 위해 type을 얻어옴.'params': {'surface': 'Kakaotalk.plusfriend', 'media': {'type': 'image', 'url':'https://xxxx'}...}
     query_format:str = ""
-    if 'media' in content["userRequest"]['params'] and 'type' in content["userRequest"]['params']['media']:
-        query_format = content["userRequest"]['params']['media']['type']
-      
+    ocr_url:str = ""
+    if 'media' in content1['params'] and 'type' in content1['params']['media']:
+        query_format = content1['params']['media']['type']
+        
     qmethod:int = settings['ES_Q_METHOD']
     system_prompt:str = settings['SYSTEM_PROMPT']
     gpt_model:str = settings['GPT_MODEL']
@@ -743,7 +613,8 @@ async def chabot3(content: Dict):
     assert user_id, f'Error:user_id is empty'
     assert callbackurl, f'Error:callbackurl is empty'
     assert 0 <= qmethod <= 2, 'Error: qmethod should be in the range 0 to 2'
-       
+    assert gpt_model, f'gpt_model is empty'
+    
     search_size:int = 4      # 회사본문 검색 계수
     esindex:str = settings['ES_INDEX_NAME']#"qaindex"  # qaindex    
    
@@ -752,17 +623,17 @@ async def chabot3(content: Dict):
     docs:list = []
     prompt:str = ''
     embed_context:str = ''
-
+    
     #-----------------------------------------------------------
     # id_manager 에 id가 존재하면 '이전 질문 처리중'이므로, return 시킴
     # 응답 처리중에는 다른 질문할수 없도록 lock 기능을 위한 해당 user_id 가 있는지 검색
     if id_manager.check_id_exists(user_id):
         myutils.log_message(f't\[chabot3]==>이전 질문 처리중:{user_id}\n')
         return
-    #-----------------------------------------------------------
-    # 동영상이나 이미지 입력은 차단
-    if query_format != "":
-        template = simpletext_template(text = f'⚠️이미지나 동영상은 입력 할수 없습니다.')
+    #-----------------------------------------------------------        
+    # 동영상이나 입력은 차단
+    if query_format != "" and query_format != "image":
+        template = simpletext_template(text = f'⚠️동영상은 입력 할수 없습니다.')
         json_response = JSONResponse(content=template)
         return json_response
     #-----------------------------------------------------------
@@ -771,12 +642,12 @@ async def chabot3(content: Dict):
     id_manager.add("0", user_id) # mode와 user_id 추가
     
     #-----------------------------------------------------------
-    # prefix에 ? 붙여서 질문하면 이전 질문 검색 안함.
-    preanswer_search = True   # True=이전질문 검색함.
+    # prefix에 ?, !붙여서 질문하면 이전 질문 검색 안함.
+    prequery_search = True   # True=이전질문 검색함.
     prefix_query1 = query1[0]
-    if prefix_query1 == '?':
+    if prefix_query1 == '?' or prefix_query1 == '!':
         query = query1[1:]
-        preanswer_search = False
+        prequery_search = False
     else:
         query = query1     
     #-------------------------------------     
@@ -788,40 +659,47 @@ async def chabot3(content: Dict):
         return
     #-------------------------------------
     
-    # 사용자 모드(0=회사본문검색, 1=웹문서검색, 2=AI응답모드, 5=URL 요약) 얻어옴.
+    # 사용자 모드(0=회사본문검색, 1=웹문서검색, 2=AI응답모드) 얻어옴.
     user_mode = userdb.select_user_mode(user_id)
     if user_mode == -1:
         user_mode = 0
         
     # 쿼리가 url 이면 사용자 모드는 5(URL 요약)로 설정
     if webscraping.is_url(query) == True and query_format == "":
-        user_mode = 5        
+        user_mode = 5    
         
+    # 입력 format이 image이면 사용자 모드는 6(이미지 OCR)로 설정
+    if query_format == "image":
+        user_mode = 6  
+     
+    # prefix_query1 이 '!' 이면 '이미지내용 요약' 임.
+    if prefix_query1 == '!':
+        user_mode = 7
     #------------------------------------
     # 설정 값 얻어옴
-    setting = userdb.select_setting(user_id=user_id) # 해당 사용자의 site, preanswer 등을 얻어옴
+    setting = userdb.select_setting(user_id=user_id) # 해당 사용자의 site, prequery 등을 얻어옴
     s_site:str = "naver" # 웹검색 사이트 기본은 네이버 
-    e_preanswer:int = 1  # 예전 유사질문 검색 (기본은 허용)
+    e_prequery:int = 1  # 예전 유사질문 검색 (기본은 허용)
     
     if setting != -1:
         s_site = setting.get('site', s_site)
-        e_preanswer = setting.get('preanswer', e_preanswer)
+        e_prequery = setting.get('prequery', e_prequery)
         
-    #myutils.log_message(f'\t[chatbot3]==>s_site:{s_site},  e_preanswer:{e_preanswer}')
+    #myutils.log_message(f'\t[chatbot3]==>s_site:{s_site},  e_prequery:{e_prequery}')
     #-------------------------------------
     # 이전 질문 검색(회사본문검색=0, 웹문서검색=1) 일때만 
-    if preanswer_search == True and user_mode < 5 and e_preanswer == 1: 
-        preanswer_docs = preanswer_embed.embed_search(query=query, classification=preanswer_embed_classification[user_mode])
+    if prequery_search == True and user_mode < 5 and e_prequery == 1: 
+        prequery_docs = prequery_embed.embed_search(query=query, classification=prequery_embed_classification[user_mode])
         
-        if len(preanswer_docs) > 0:
-            preanswer_score = preanswer_docs[0]['score']
-            preanswer_response = preanswer_docs[0]['response']
-            preanswer = preanswer_docs[0]['answer']
-            preanswer_id = preanswer_docs[0]['_id']
-            myutils.log_message(f'\t[chatbot3]==>이전질문:{preanswer}(score:{preanswer_score}, id:{preanswer_id})\n이전답변:{preanswer_response}')
+        if len(prequery_docs) > 0:
+            prequery_score = prequery_docs[0]['score']
+            prequery_response = prequery_docs[0]['response']
+            prequery = prequery_docs[0]['query']
+            prequery_id = prequery_docs[0]['_id']
+            myutils.log_message(f'\t[chatbot3]==>이전질문:{prequery}(score:{prequery_score}, id:{prequery_id})\n이전답변:{prequery_response}')
                 
             # 1.80 이상일때만 이전 답변 보여줌.
-            if preanswer_score >= 1.80:  
+            if prequery_score >= 1.80:  
                 if user_mode == 0:
                     query1 = f'📃{query}'
                 elif user_mode == 1:
@@ -830,7 +708,7 @@ async def chabot3(content: Dict):
                     query1 = f'🤖{query}'
                         
                 # 정확도 스코어 구함
-                formatted_preanswer_score = myutils.get_es_format_score(preanswer_score)
+                format_prequery_score = myutils.get_es_format_score(prequery_score)
                      
                 template = {
                     "version": "2.0",
@@ -840,22 +718,22 @@ async def chabot3(content: Dict):
                         {
                             "textCard": {
                                 "title": query1,
-                                "description": f'💬예전 질문과 답변입니다. (유사도:{formatted_preanswer_score}%)\nQ:{preanswer}\n{preanswer_response}'
+                                "description": f'💬예전 질문과 답변입니다. (유사도:{format_prequery_score}%)\nQ:{prequery}\n{prequery_response}'
                             }
                         }
                       ],
                         "quickReplies": [
                         {
-                            "messageText": '?'+query,
                             "action": "message",
-                            "label": "다시 검색.."
+                            "label": "다시 검색..",
+                            "messageText": '?'+query
                         }
                       ]
                     }
                 }
                 
                 # 유사한 질문이 있으면 추가
-                similar_query(preanswer_docs=preanswer_docs, template=template)
+                similar_query(prequery_docs=prequery_docs, template=template)
                   
                 json_response = JSONResponse(content=template)
 
@@ -867,7 +745,7 @@ async def chabot3(content: Dict):
     #------------------------------------
     # 설정 값 얻어옴 
     search_str:str = ""
-    # 회사 문서(인덱싱 데이터) 검색
+    # 0=회사 문서(인덱싱 데이터) 검색
     if user_mode == 0:
         
         try:
@@ -889,7 +767,7 @@ async def chabot3(content: Dict):
             
         search_str = "🔍회사본문검색 완료. 답변 대기중.."
     #-------------------------------------
-    # 네이버 검색
+    # 1=네이버 검색
     s_error:int = 0
     s_context:str = ''
     s_best_contexts:list = []
@@ -934,12 +812,12 @@ async def chabot3(content: Dict):
             search_str = f"🔍{s_str}검색 없음. 답변 대기중.."
             
     #----------------------------------------
-    # AI 응답 모드
+    # 2=AI 응답 모드
     if user_mode == 2:
         prompt = settings['PROMPT_NO_CONTEXT'].format(query=query)  
         search_str = "🤖AI 답변 대기중.."
     #----------------------------------------
-    # URL 모드
+    # 5=URL 모드
     if user_mode == 5:
         srcfilepath = './tmp/'+str(user_id)+'.url' # 파일경로는 userid.url로 함.
         tarfilepath = './tmp/'+str(user_id)+'.mpower'
@@ -972,6 +850,19 @@ async def chabot3(content: Dict):
             json_response = JSONResponse(content=template)
             return json_response
     #----------------------------------------
+    # 6=이미지 ocr
+    if user_mode == 6:
+        ocr_url = content1['params']['media']['url']
+        query = ocr_url # query로는 url 입력
+        search_str = "📷이미지에서 글자 검출중.."
+    #----------------------------------------    
+    # 7=이미지내용 요약
+    if user_mode == 7:
+        prompt = f'{query}\nQ:위 내용을 알기쉽게 정리해 주세요.' 
+        search_str = "이미지 내용 요약중.."
+        query = "📷이미지 내용 요약 결과.."
+     #----------------------------------------    
+    
     # 응답 메시지 출력 및 콜백 호출  
     # 회사본문검색(user_mode==0 )인데 검색에 맞는 내용을 못찾으면(bFind_docs == False), gpt 콜백 호출하지 않고, 답을 찾지 못했다는 메시지 출력함.       
     if user_mode==0 and bFind_docs == False:
@@ -1167,12 +1058,12 @@ async def setting_save(request: Request):
     form = await request.form()
     user_id = form.get("user_id")
     search_site = form.get("search_engine")
-    pre_answer = form.get("preanswer")
+    pre_query = form.get("prequery")
     
-    #myutils.log_message(f"\t[setting]==>setting_save=>pre_answer:{pre_answer}/{type(pre_answer)}\n")
+    #myutils.log_message(f"\t[setting]==>setting_save=>pre_query:{pre_query}/{type(pre_query)}\n")
     
     # 변경값으로 셋팅.
-    error = userdb.insert_setting(user_id=user_id, site=search_site, preanswer=int(pre_answer)) # 해당 사용자의 user_id site를 업데이트
+    error = userdb.insert_setting(user_id=user_id, site=search_site, prequery=int(pre_query)) # 해당 사용자의 user_id site를 업데이트
     setting_success:bool = False
     if error == 0:
         setting_success = True
@@ -1180,7 +1071,7 @@ async def setting_save(request: Request):
         myutils.log_message(f"\t[setting]==>setting_save fail!\n")
         
     return templates.TemplateResponse("setting.html", {"request": request, "user_id":user_id, "search_site": search_site, 
-                                                       "pre_answer": int(pre_answer), "setting_success": setting_success })
+                                                       "pre_query": int(pre_query), "setting_success": setting_success })
     
 # setting.html 로딩    
 @app.get("/setting/form")
@@ -1190,15 +1081,15 @@ async def setting_form(request:Request, user_id:str):
     setting = userdb.select_setting(user_id=user_id) # 해당 사용자의 site를 얻어옴
     
     search_site:str = "naver" # 웹검색 사이트 (기본은 naver)
-    pre_answer=1   # 예전 유사 질문 검색(기본=1(검색함))
+    pre_query:int=1   # 예전 유사 질문 검색(기본=1(검색함))
     if setting != -1 and setting['site']:
         search_site = setting['site']
-        pre_answer = setting['preanswer']
+        pre_query = setting['prequery']
         
-    #myutils.log_message(f"\t[setting]==>setting_form=>user_id:{user_id}, search_site:{search_site}, preanswer:{pre_answer}\n")
+    #myutils.log_message(f"\t[setting]==>setting_form=>user_id:{user_id}, search_site:{search_site}, prequery:{pre_query}\n")
     
     return templates.TemplateResponse("setting.html", {"request": request, "user_id":user_id, 
-                                                       "search_site": search_site, "pre_answer":pre_answer})
+                                                       "search_site": search_site, "pre_query":pre_query})
 
 @app.post("/setting")
 async def setting(content: Dict):
@@ -1208,8 +1099,8 @@ async def setting(content: Dict):
     api_server_url:str = settings['API_SERVER_URL']
     
     search_site:str = "naver" # 웹검색 사이트 (기본은 naver)
-    pre_answer=1   # 예전 유사 질문 검색(기본=1(검색함))
-    pre_answer_str:str = '검색함'
+    pre_query:int=1   # 예전 유사 질문 검색(기본=1(검색함))
+    pre_query_str:str = '검색함'
     user_mode_list:list = ['회사본문검색(1)','웹검색(2)','AI응답모드(3)']   
     user_mode_str:str = "없음"
     
@@ -1223,13 +1114,13 @@ async def setting(content: Dict):
     
     if setting != -1 and setting['site']:
         search_site = setting['site']
-        pre_answer = setting['preanswer']
+        pre_query = setting['prequery']
      
-    if pre_answer != 1:
-        pre_answer_str:str = '검색안함'
+    if pre_query != 1:
+        pre_query_str:str = '검색안함'
         
     linkurl = f'{api_server_url}/setting/form?user_id={user_id}'
-    descript = f'🧒 사용자ID: {user_id}\n\n🕹 현재 동작모드: {user_mode_str}\n💬 에전유사 질문검색: {pre_answer_str}\n🌐 웹검색 사이트: {search_site}\n\n예전유사 질문검색, 웹검색 사이트 변경을 원하시면 설정하기를 눌러 변경해 주세요.'
+    descript = f'🧒 사용자ID: {user_id}\n\n🕹 현재 동작모드: {user_mode_str}\n💬 에전유사 질문검색: {pre_query_str}\n🌐 웹검색 사이트: {search_site}\n\n예전유사 질문검색, 웹검색 사이트 변경을 원하시면 설정하기를 눌러 변경해 주세요.'
     
     template = {
         "version": "2.0",

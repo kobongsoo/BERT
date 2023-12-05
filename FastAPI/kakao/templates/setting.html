@@ -41,16 +41,16 @@
 		<br>
 		{{ user_id[35:] }}
 		<br>
-		<!--{{ pre_answer }}-->
+		<!--{{ pre_query }}-->
 		</span>
         <form action="/setting/save" method="POST">
 		<span style="font-size: 40px; color: black; font-weight: 200; font-family: Arial, sans-serif;">
 			<br>
 			💬예전 유사한 질문 검색
 			<br>
-			<input type="radio" name="preanswer" value=1 {% if pre_answer == 1 %}checked{% endif %} style="font-size:30px; width:36px;height:36px">
+			<input type="radio" name="prequery" value=1 {% if pre_query == 1 %}checked{% endif %} style="font-size:30px; width:36px;height:36px">
 				검색함
-			<input type="radio" name="preanswer" value=0 {% if pre_answer == 0 %}checked{% endif %} style="font-size:30px; width:36px;height:36px">
+			<input type="radio" name="prequery" value=0 {% if pre_query == 0 %}checked{% endif %} style="font-size:30px; width:36px;height:36px">
 				검색안함
 			<br>
 			<br>

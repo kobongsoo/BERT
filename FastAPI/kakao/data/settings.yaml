@@ -11,12 +11,12 @@ E_METHOD: 1   # 임베딩 방식 (0=문장클러스터링, 1=문장평균임베�
 E_FLOAT_TYPE: 'float16' # 임베딩 출력 벡터 타입('float32', 'float16')
   
 # ES 관련 전역 변수
-ES_URL: 'http://'  # ES 서버 주소
+ES_URL: 'http://10.10.4.10:9200/'  # ES 서버 주소
   
 # 인덱스 파일 경로 => **인덱싱 1개만 할거면 아래 Q_METHOD=2로 변경해야 함. ** 인덱싱 계수에 따라 NUM_CLUSTERS 값도 변경해야함.
 ES_INDEX_FILE: './data/mpower10u_768d_1.json'  
-ES_INDEX_NAME: 'qaindex_128d_5'           # 회사본문검색 인덱스 명칭 
-ES_PREANSWER_INDEX_NAME: 'preanswer_128d' # 이전질문 인덱스 명칭
+ES_INDEX_NAME: 'qaindex'           # 회사본문검색 인덱스 명칭 
+ES_PREQUERY_INDEX_NAME: 'prequery' # 이전질문 인덱스 명칭
   
 ES_Q_METHOD: 2     # 검색시 ES 스크립트 어떤형식으로 만들지.(0=임베딩이 여러개일때 MAX(기본), 1=임베딩이 여러개일때 평균, 2=임베딩이1개일때)
 ES_BATCH_SIZE: 20  # 배치 사이즈 = 20이면 입력된 docs이 20개 이상이면, 최대 20개씩 ES에 인덱싱함.

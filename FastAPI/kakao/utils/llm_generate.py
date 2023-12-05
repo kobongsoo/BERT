@@ -103,7 +103,7 @@ def generate_text_GPT2(gpt_model:str, prompt:str, system_prompt:str="",
     data = {
         'model': gpt_model,
         'messages': messeges,
-        'max_tokens': 512,
+        'max_tokens': 1024,
         'temperature':0.5,# temperature 0~2 범위 : 작을수록 정형화된 답변, 클수록 유연한 답변(2는 엉뚱한 답변을 하므로, 1.5정도가 좋은것 같음=기본값은=1)
         'stream': stream,
         #'top_p': 0.1,      # 기본값은 1 (0.1이라고 하면 10% 토큰들에서 출력 토큰들을 선택한다는 의미)

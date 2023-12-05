@@ -11,12 +11,12 @@ E_METHOD: 0             # 임베딩 방식 (0=문장클러스터링, 1=문장평
 E_FLOAT_TYPE: 'float16' # 임베딩 출력 벡터 타입('float32', 'float16')
   
 # ES 관련 전역 변수
-ES_URL: 'http:'  # ES 서버 주소
+ES_URL: 'http://'  # ES 서버 주소
   
 # 인덱스 파일 경로 => **인덱싱 1개만 할거면 아래 Q_METHOD=2로 변경해야 함. ** 인덱싱 계수에 따라 NUM_CLUSTERS 값도 변경해야함.
 ES_INDEX_FILE: './data/mpower10u_128d_10.json'  # './data/mpower10u_768d_1.json'  
 ES_INDEX_NAME: 'qaindex_128_10'           # 회사본문검색 인덱스 명칭 
-ES_PREANSWER_INDEX_NAME: 'preanswer_128' # 이전질문 인덱스 명칭
+ES_PREQUERY_INDEX_NAME: 'prequery_128' # 이전질문 인덱스 명칭
 
 ES_Q_METHOD: 0     # 검색시 ES 스크립트 어떤형식으로 만들지.(0=임베딩이 여러개일때 MAX(기본), 1=임베딩이 여러개일때 평균, 2=임베딩이1개일때)
 ES_BATCH_SIZE: 20  # 배치 사이즈 = 20이면 입력된 docs이 20개 이상이면, 최대 20개씩 ES에 인덱싱함.
@@ -39,8 +39,10 @@ REMOVE_SENTENCE_LEN: 8     # 문장 길이가 8이하면 제거
 REMOVE_DUPLICATION: False  # 중복된 문장 제거(*중복된 문장 제거 안할때 1%정도 정확도 좋음)
     
 SYSTEM_PROMPT: "" # "답은 2줄로 요약해주세요."           # 시스템 프롬프트
-PROMPT_CONTEXT: '{context}\n\nQ:{query}?.요약해줘. A:'   # 내용(컨텍스트)이 있을때 내용에 대해 질문할때 프롬프트
-PROMPT_NO_CONTEXT: 'Q:{query}?.요약해줘. A:'             # 일반 질문 프롬프트
+#PROMPT_CONTEXT: '{context}\n\nQ:{query}?.요약해줘. A:'   # 내용(컨텍스트)이 있을때 내용에 대해 질문할때 프롬프트
+#PROMPT_NO_CONTEXT: 'Q:{query}?.요약해줘. A:'             # 일반 질문 프롬프트
+PROMPT_CONTEXT: '{context}\n\nQ:{query}?. A:'   # 내용(컨텍스트)이 있을때 내용에 대해 질문할때 프롬프트
+PROMPT_NO_CONTEXT: 'Q:{query}?. A:'             # 일반 질문 프롬프트
     
 GPT_TOKEN: 'sk-'           # openai key
 GPT_MODEL: "" #모델 종류 : text-davinci-003, gpt-3.5-turbo, gpt-4, gpt-3.5-turbo-1106

@@ -22,5 +22,5 @@ from .translate_utils import *
 from .sqlitedb import *
 
 from .web_scraping import *
-
+from .google_vision import *
 
