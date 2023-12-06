@@ -471,9 +471,9 @@ async def call_callback(settings:dict, user_id:str, user_mode:int, callbackurl:s
                     ]
                 }
             })
-        elif user_mode == 2 or user_mode == 7:  # AI 검색(user_mode=2) 혹은 이미지OCR 내용 요약(user_mode==7) 인 경우
+        elif user_mode == 2 or user_mode == 7:  # 채팅모드(user_mode=2) 혹은 이미지OCR 내용 요약(user_mode==7) 인 경우
             if len(response) > 330: # 응답 길이가 너무 크면 simpletext로 처리함
-                text = f"💫{query}\n\n(time:{str(formatted_elapsed_time)})\n{response}"
+                text = f"🤖{query}\n\n(time:{str(formatted_elapsed_time)})\n{response}"
                 if user_mode == 2:
                     query = '🤖' + query
                     
@@ -1058,8 +1058,8 @@ async def searchai(content: Dict):
     if set_userinfo(content=content["userRequest"], user_mode=2) != 0:
         return
        
-    title = "🤖AI 응답 모드\n새로운 대화를 시작합니다.\n질문을 하면 모아이가 알아서 답변을 합니다."
-    descript = '''답변은 최대⏰30초 걸릴 수 있으며,종종 엉뚱한 답변도 합니다.
+    title = "🤖채팅하기\n새로운 대화를 시작합니다.\n모아이와 질문을 주고받으면서 채팅하세요."
+    descript = '''질문을 이어가면서 대화할 수 있습니다.
     '''
     template = {
         "version": "2.0",
@@ -1075,13 +1075,13 @@ async def searchai(content: Dict):
                     "buttons": [
                     {
                       "action":  "message",
-                      "label": "봄을 주제로 노래가사 써줘",
-                      "messageText": "봄을 주제로 노래가사 써줘"
+                      "label": "봄 여행지 추천 목록",
+                      "messageText": "봄 여행지 추천 목록"
                     },
                     {
                       "action":  "message",
-                      "label": "AI 강의 목차 만들어줘",
-                      "messageText": "AI 강의 목차 만들어줘"
+                      "label": "목록들을 설명해줘",
+                      "messageText": "목록들을 설명해줘"
                     }
                   ]
                  }

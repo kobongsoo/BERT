@@ -31,7 +31,7 @@ class SqliteDB:
         
         self.dbname = dbname
         
-        self.assistants_len = 2  # gpt 이전 대화 저장 계수
+        self.assistants_len = 3  # gpt 이전 대화 저장 계수
         
         # 연결할 때
         self.conn = sq.connect(self.dbname)
@@ -165,6 +165,10 @@ class SqliteDB:
             res = self.select_setting(user_id)
             #print(f'[insert_setting]=>res:{res}')
             
+            # 800 글자보다 크면 799 글자까지만 저장해둠.
+            if len(prequery) > 800:
+                prequery = prequery[0:799]
+                
             if res == -1: # 없으면 추가
                 dbquery = f"INSERT INTO setting (id, site, prequery) VALUES ('{user_id}', '{site}', {prequery})"
             else: # 있으면 업데이트
