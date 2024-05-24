@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+        <head>
+            <title>모아이-PDF 파일 올리기</title>
+			<br>
+				🧒사용자 ID :
+			<br>
+			{{ user_id[:35] }}
+			<br>
+
+        </head>
+        <body>
+            <h2>PDF 파일을 선택해 주세요</h2>
+            <form action="/upload" method="post" enctype="multipart/form-data">
+                <input type="file" name="file">
+				<input type="hidden" name="user_id" value="{{user_id}}">
+                <input type="submit" value="Upload">
+            </form>
+        </body>
+    </html>
